@@ -1,0 +1,68 @@
+# 被替换的 SaaS 声明。分类法 id 必须与工具条目里的 replaces 引用一致。
+[[vendor]]
+id = "datadog"
+name = "Datadog"
+
+[[vendor]]
+id = "datadog-logs"
+name = "Datadog Logs"
+
+[[vendor]]
+id = "datadog-apm"
+name = "Datadog APM"
+
+[[vendor]]
+id = "datadog-profiler"
+name = "Datadog Continuous Profiler"
+
+[[vendor]]
+id = "new-relic"
+name = "New Relic"
+
+[[vendor]]
+id = "grafana-cloud"
+name = "Grafana Cloud"
+
+[[vendor]]
+id = "splunk"
+name = "Splunk"
+
+[[vendor]]
+id = "papertrail"
+name = "Papertrail"
+
+[[vendor]]
+id = "sentry"
+name = "Sentry"
+
+[[vendor]]
+id = "aws-xray"
+name = "AWS X-Ray"
+
+[[vendor]]
+id = "honeycomb"
+name = "Honeycomb"
+
+[[vendor]]
+id = "logz-io"
+name = "Logz.io"
+
+[[vendor]]
+id = "uptimerobot"
+name = "UptimeRobot"
+
+[[vendor]]
+id = "statuspage"
+name = "Atlassian Statuspage"
+
+[[vendor]]
+id = "pagerduty"
+name = "PagerDuty"
+
+[[vendor]]
+id = "opsgenie"
+name = "Atlassian Opsgenie"
+
+[[vendor]]
+id = "elastic-cloud"
+name = "Elastic Cloud"

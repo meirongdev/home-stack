@@ -1,0 +1,28 @@
+slug       = "grafana"
+name       = "Grafana"
+summary    = "可观测性可视化层。接 Prometheus / Loki / Tempo 等，看板与告警面板的事实标准。"
+license    = "AGPL-3.0"
+language   = "Go"
+categories = ["all-in-one"]
+replaces   = ["grafana-cloud", "datadog"]
+self_host  = ["Docker", "Compose", "HelmChart", "Operator", "DebRpm"]
+hosted     = true
+
+detail = """
+它本身不存任何数据，只是查询与渲染层：靠数据源插件把 PromQL / LogQL / TraceQL / SQL 发给后端，再把结果画成面板。\
+自带统一告警（Unified Alerting）与通知策略，所以也能当告警的判断与派发中枢用。"""
+
+requires = [
+  "SQLite（默认）或 PostgreSQL / MySQL 存自身配置",
+]
+
+watch = [
+  "2021 年起是 AGPL-3.0，要嵌进商业产品得先看清授权；permissive 的替代是 CNCF 的 Perses",
+  "看板 JSON 手工点出来会漂移，多环境务必上 provisioning 或 dashboards-as-code",
+  "告警状态存在它自己的数据库里，不挂盘就会随重启丢失",
+]
+
+[links]
+site = "https://grafana.com/oss/grafana/"
+repo = "https://github.com/grafana/grafana"
+docs = "https://grafana.com/docs/grafana/latest/"

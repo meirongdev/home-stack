@@ -1,0 +1,35 @@
+slug       = "grafana-oncall"
+name       = "Grafana OnCall"
+summary    = "值班与告警编排。轮值表、升级策略、与 Alertmanager 集成。"
+license    = "AGPL-3.0"
+language   = "Python"
+categories = ["alerts"]
+replaces   = ["pagerduty", "opsgenie"]
+self_host  = ["Docker", "Compose", "HelmChart"]
+hosted     = true
+
+detail = """
+自托管的 on-call 系统：轮值表、升级链（多久没人应答就往上叫）、告警去重与静默，接 Alertmanager 与 Grafana 告警。\
+架构是 Django + Celery + Redis，运维面比一般的通知网关重不少。"""
+
+requires = [
+  "PostgreSQL 或 MySQL",
+  "Redis",
+  "Celery worker",
+]
+
+watch = [
+  "已有部署还能继续跑，但上游 API 与 Cloud Connection 已在 2026-03-24 停服 —— 原先靠它的手机推送 / 短信 / 电话要改走 ntfy、Gotify 或自备 Twilio",
+  "新项目不要从这里起步 —— 单人运维用 Alertmanager 的 grouping / silences 加 ntfy 或 Gotify 推送就够，轮值与升级链是团队规模的需求",
+]
+
+[links]
+site = "https://grafana.com/docs/oncall/latest/"
+repo = "https://github.com/grafana/oncall"
+docs = "https://grafana.com/docs/oncall/latest/set-up/open-source/"
+
+[upstream]
+status = "Archived"
+as_of  = "2026-03-24"
+note   = "OSS 版 2025-03-11 进入维护模式，2026-03-24 仓库归档；Cloud Connection（手机推送 / 短信 / 电话）同日停服。"
+source = "https://grafana.com/docs/oncall/latest/set-up/open-source/"

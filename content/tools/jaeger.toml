@@ -1,0 +1,27 @@
+slug       = "jaeger"
+name       = "Jaeger"
+summary    = "CNCF 毕业的分布式链路追踪后端。OTel 采集，支持多种存储后端。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["traces"]
+replaces   = ["datadog-apm", "new-relic", "honeycomb", "aws-xray"]
+self_host  = ["Docker", "Compose", "HelmChart"]
+hosted     = false
+
+detail = """
+v2（2024-11）把整个后端重建在 OpenTelemetry Collector 框架上，原生收 OTLP（4317 / 4318），配置文件就是 otelcol 风格的 receiver / processor / exporter。\
+存储走扩展：Cassandra、Elasticsearch / OpenSearch、ClickHouse 等。"""
+
+requires = [
+  "存储后端：Cassandra 或 Elasticsearch / OpenSearch（内存模式只够试用）",
+]
+
+watch = [
+  "v1 已于 2025-12-31 EOL，还在跑 v1 的要规划升级 —— v2 的配置不能照搬 v1 的命令行参数",
+  "它只做链路，指标与日志要另外配",
+]
+
+[links]
+site = "https://www.jaegertracing.io/"
+repo = "https://github.com/jaegertracing/jaeger"
+docs = "https://www.jaegertracing.io/docs/latest/"

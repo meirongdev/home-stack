@@ -1,0 +1,29 @@
+slug       = "thanos"
+name       = "Thanos"
+summary    = "Prometheus 的横向扩展与长期存储层。全局查询、对象存储、跨集群高可用。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["metrics"]
+replaces   = ["grafana-cloud", "datadog"]
+self_host  = ["Docker", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+给已有的 Prometheus 加 sidecar，把 TSDB 块上传到对象存储；\
+Querier 做跨实例的全局查询与去重（这也是 Prometheus 高可用双跑的标准解法），Compactor 做压缩与降采样。\
+不用换掉现有 Prometheus 是它最大的优势。"""
+
+requires = [
+  "对象存储",
+  "已有的 Prometheus",
+]
+
+watch = [
+  "组件较多（sidecar / store / query / compact / ruler），运维面比单 Prometheus 大一截",
+  "Compactor 必须全局只有一个实例在跑，跑重了会损坏对象存储里的块",
+]
+
+[links]
+site = "https://thanos.io/"
+repo = "https://github.com/thanos-io/thanos"
+docs = "https://thanos.io/tip/thanos/getting-started.md/"

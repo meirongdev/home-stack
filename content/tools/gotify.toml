@@ -1,0 +1,25 @@
+slug       = "gotify"
+name       = "Gotify"
+summary    = "自托管消息推送服务器。REST API + WebSocket，Android 客户端。"
+license    = "MIT"
+language   = "Go"
+categories = ["alerts"]
+replaces   = ["pagerduty"]
+self_host  = ["Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+单二进制，数据库默认 SQLite（也支持 PostgreSQL / MySQL）。\
+token 分两类：application token 用来发、client token 用来收，可以给每个告警源单独发一个并随时吊销。\
+消息 REST 进、WebSocket 出，带 priority 与 markdown extras。\
+服务端支持编译进 Go 插件做扩展。"""
+
+watch = [
+  "只有 Android 客户端，iOS 没有官方 app",
+  "走反向代理时要放通 WebSocket 升级，否则消息只能靠轮询",
+]
+
+[links]
+site = "https://gotify.net/"
+repo = "https://github.com/gotify/server"
+docs = "https://gotify.net/docs/"

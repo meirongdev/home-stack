@@ -1,0 +1,36 @@
+# 信号分类声明。id 必须与工具条目里的 categories 引用一致。
+[[category]]
+id = "metrics"
+name = "指标"
+
+[[category]]
+id = "logs"
+name = "日志"
+
+[[category]]
+id = "traces"
+name = "链路"
+
+[[category]]
+id = "apm"
+name = "APM"
+
+[[category]]
+id = "errors"
+name = "错误追踪"
+
+[[category]]
+id = "uptime"
+name = "可用性"
+
+[[category]]
+id = "profiling"
+name = "性能剖析"
+
+[[category]]
+id = "alerts"
+name = "告警"
+
+[[category]]
+id = "all-in-one"
+name = "全家桶"

@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/site",
+  "crates/dev",
+  "crates/xtask",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+axum = { version = "0.8", default-features = false }
+maud = "0.27"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.9"
+serde_json = "1.0"
+tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "net"] }

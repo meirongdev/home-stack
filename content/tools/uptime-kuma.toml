@@ -1,0 +1,24 @@
+slug       = "uptime-kuma"
+name       = "Uptime Kuma"
+summary    = "自托管监控面板。HTTP / TCP / ping 探针 + 通知，状态页开箱即用。"
+license    = "MIT"
+language   = "JavaScript"
+categories = ["uptime"]
+replaces   = ["uptimerobot", "statuspage"]
+self_host  = ["Docker", "Compose"]
+hosted     = false
+
+detail = """
+Node.js + SQLite 的自托管探活面板：HTTP(s)、TCP、Ping、DNS、证书到期、docker 容器等探针，90 多种通知渠道，公开状态页开箱可用。\
+UI 里点几下就能配完，是 homelab 里最省事的可用性监控。"""
+
+watch = [
+  "单实例设计，没有官方高可用方案",
+  "它自己挂了就没人报警 —— 关键路径要再挂一个外部探活（Healthchecks 或第三方）",
+  "v2 是较大的架构变更并含数据库迁移，从 v1 升级前务必备份",
+]
+
+[links]
+site = "https://uptime.kuma.pet/"
+repo = "https://github.com/louislam/uptime-kuma"
+docs = "https://github.com/louislam/uptime-kuma/wiki"

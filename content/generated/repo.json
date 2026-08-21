@@ -1,0 +1,266 @@
+{
+  "fetched_at": "2026-08-21",
+  "repos": {
+    "alertmanager": {
+      "full_name": "prometheus/alertmanager",
+      "host": "github",
+      "latest_release": "v0.34.0",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-16",
+      "stars": 8589
+    },
+    "cadvisor": {
+      "full_name": "google/cadvisor",
+      "host": "github",
+      "latest_release": "v0.60.5",
+      "license": null,
+      "pushed_at": "2026-07-20",
+      "released_at": "2026-07-11",
+      "stars": 19375
+    },
+    "fluent-bit": {
+      "full_name": "fluent/fluent-bit",
+      "host": "github",
+      "latest_release": "v5.1.1",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-16",
+      "stars": 8050
+    },
+    "glitchtip": {
+      "full_name": "glitchtip/glitchtip",
+      "host": "gitlab",
+      "latest_release": null,
+      "license": null,
+      "pushed_at": "2026-08-03",
+      "released_at": null,
+      "stars": 163
+    },
+    "goaccess": {
+      "full_name": "allinurl/goaccess",
+      "host": "github",
+      "latest_release": null,
+      "license": "MIT",
+      "pushed_at": "2026-08-20",
+      "released_at": null,
+      "stars": 20827
+    },
+    "gotify": {
+      "full_name": "gotify/server",
+      "host": "github",
+      "latest_release": "v3.0.0",
+      "license": null,
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-07-18",
+      "stars": 15764
+    },
+    "grafana": {
+      "full_name": "grafana/grafana",
+      "host": "github",
+      "latest_release": "v13.2.0",
+      "license": "AGPL-3.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-18",
+      "stars": 76336
+    },
+    "grafana-alloy": {
+      "full_name": "grafana/alloy",
+      "host": "github",
+      "latest_release": "v1.18.1",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-06",
+      "stars": 3451
+    },
+    "grafana-oncall": {
+      "full_name": "grafana/oncall",
+      "host": "github",
+      "latest_release": "v1.16.11",
+      "license": "AGPL-3.0",
+      "pushed_at": "2026-03-24",
+      "released_at": "2026-02-11",
+      "stars": 3888
+    },
+    "graylog": {
+      "full_name": "Graylog2/graylog2-server",
+      "host": "github",
+      "latest_release": null,
+      "license": null,
+      "pushed_at": "2026-08-21",
+      "released_at": null,
+      "stars": 8113
+    },
+    "healthchecks": {
+      "full_name": "healthchecks/healthchecks",
+      "host": "github",
+      "latest_release": "v4.3",
+      "license": "BSD-3-Clause",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-07-14",
+      "stars": 10269
+    },
+    "jaeger": {
+      "full_name": "jaegertracing/jaeger",
+      "host": "github",
+      "latest_release": "v2.20.0",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-20",
+      "released_at": "2026-07-20",
+      "stars": 23124
+    },
+    "kube-prometheus-stack": {
+      "full_name": "prometheus-community/helm-charts",
+      "host": "github",
+      "latest_release": "kube-prometheus-stack-88.5.3",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-21",
+      "stars": 6173
+    },
+    "loki": {
+      "full_name": "grafana/loki",
+      "host": "github",
+      "latest_release": "v3.7.6",
+      "license": "AGPL-3.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-06",
+      "stars": 28771
+    },
+    "netdata": {
+      "full_name": "netdata/netdata",
+      "host": "github",
+      "latest_release": "v2.11.0",
+      "license": "GPL-3.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-12",
+      "stars": 80249
+    },
+    "node-exporter": {
+      "full_name": "prometheus/node_exporter",
+      "host": "github",
+      "latest_release": "v1.12.1",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-07-14",
+      "stars": 13710
+    },
+    "ntfy": {
+      "full_name": "binwiederhier/ntfy",
+      "host": "github",
+      "latest_release": "v2.27.0",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-20",
+      "released_at": "2026-08-04",
+      "stars": 33653
+    },
+    "openobserve": {
+      "full_name": "openobserve/openobserve",
+      "host": "github",
+      "latest_release": "v0.92.2",
+      "license": "AGPL-3.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-17",
+      "stars": 21380
+    },
+    "otel-collector": {
+      "full_name": "open-telemetry/opentelemetry-collector",
+      "host": "github",
+      "latest_release": "v0.159.0",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-17",
+      "stars": 7430
+    },
+    "prometheus": {
+      "full_name": "prometheus/prometheus",
+      "host": "github",
+      "latest_release": "v3.14.0",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-18",
+      "stars": 65768
+    },
+    "pyroscope": {
+      "full_name": "grafana/pyroscope",
+      "host": "github",
+      "latest_release": "v2.2.1",
+      "license": "AGPL-3.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-06",
+      "stars": 11632
+    },
+    "sentry": {
+      "full_name": "getsentry/sentry",
+      "host": "github",
+      "latest_release": "26.8.0",
+      "license": null,
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-15",
+      "stars": 44587
+    },
+    "signoz": {
+      "full_name": "SigNoz/signoz",
+      "host": "github",
+      "latest_release": "v0.138.0",
+      "license": null,
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-19",
+      "stars": 31906
+    },
+    "sloth": {
+      "full_name": "slok/sloth",
+      "host": "github",
+      "latest_release": "v0.16.0",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-06-19",
+      "released_at": "2026-04-04",
+      "stars": 2538
+    },
+    "tempo": {
+      "full_name": "grafana/tempo",
+      "host": "github",
+      "latest_release": "v3.0.3",
+      "license": "AGPL-3.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-13",
+      "stars": 5446
+    },
+    "thanos": {
+      "full_name": "thanos-io/thanos",
+      "host": "github",
+      "latest_release": "v0.42.4",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-17",
+      "released_at": "2026-07-30",
+      "stars": 14180
+    },
+    "uptime-kuma": {
+      "full_name": "louislam/uptime-kuma",
+      "host": "github",
+      "latest_release": "2.5.0",
+      "license": "MIT",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-01",
+      "stars": 90433
+    },
+    "vector": {
+      "full_name": "vectordotdev/vector",
+      "host": "github",
+      "latest_release": "vdev-v0.3.15",
+      "license": "MPL-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-18",
+      "stars": 22424
+    },
+    "victoriametrics": {
+      "full_name": "VictoriaMetrics/VictoriaMetrics",
+      "host": "github",
+      "latest_release": "v1.150.0",
+      "license": "Apache-2.0",
+      "pushed_at": "2026-08-21",
+      "released_at": "2026-08-17",
+      "stars": 17574
+    }
+  }
+}

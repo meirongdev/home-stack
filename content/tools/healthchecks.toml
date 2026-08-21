@@ -1,0 +1,28 @@
+slug       = "healthchecks"
+name       = "Healthchecks"
+summary    = "cron 任务心跳监控。没收到 ping 就告警，判定「该跑没跑」。"
+license    = "BSD-3-Clause"
+language   = "Python"
+categories = ["uptime"]
+replaces   = ["uptimerobot"]
+self_host  = ["Docker", "Compose"]
+hosted     = true
+
+detail = """
+dead man's switch 模式：每个检查一个 URL，cron 或备份脚本跑完 curl 一下，超过宽限期没收到就告警。\
+它抓的是「该跑却没跑」这一类静默失败 —— 这种故障普通探活看不见，因为没有任何东西在报错，只是什么都没发生。"""
+
+requires = [
+  "PostgreSQL（小规模可用 SQLite）",
+]
+
+watch = [
+  "它只看心跳有没有到，不看任务内部做对了没有",
+  "它自己挂了就不会有人再收到告警 —— 给它本身也配一个外部心跳",
+  "通知全靠出站 SMTP / webhook，出口被墙掉就静默失效",
+]
+
+[links]
+site = "https://healthchecks.io/"
+repo = "https://github.com/healthchecks/healthchecks"
+docs = "https://healthchecks.io/docs/"

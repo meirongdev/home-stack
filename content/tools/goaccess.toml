@@ -1,0 +1,24 @@
+slug       = "goaccess"
+name       = "GoAccess"
+summary    = "实时 Web 日志分析器。终端或 HTML 报告，零依赖轻量。"
+license    = "MIT"
+language   = "C"
+categories = ["logs"]
+replaces   = ["splunk", "papertrail"]
+self_host  = ["SingleBinary", "Docker"]
+hosted     = false
+
+detail = """
+C 写的单二进制，没有数据库也没有服务端进程。日志格式用 log-format / date-format 声明式描述（COMBINED、CLOUDFRONT 等常见格式有预置），所以非标准格式也能解析。\
+终端里出实时面板，或导出自包含 HTML；加 --real-time-html 就带一个 WebSocket 把报告变成实时刷新的页面。\
+GeoIP 需要单独挂 mmdb 库。"""
+
+watch = [
+  "它分析的是 Web 访问日志这一类数据，不是通用日志系统",
+  "跨天的长期趋势要自己维护 --persist / --restore 的数据库文件，默认是一次性的",
+]
+
+[links]
+site = "https://goaccess.io/"
+repo = "https://github.com/allinurl/goaccess"
+docs = "https://goaccess.io/man"

@@ -1,0 +1,29 @@
+slug       = "openobserve"
+name       = "OpenObserve"
+summary    = "全栈可观测性，S3 存储。日志 + 指标 + 链路，声称成本低一个量级。"
+license    = "AGPL-3.0"
+language   = "Rust"
+categories = ["all-in-one", "logs", "metrics", "traces"]
+replaces   = ["datadog", "splunk", "elastic-cloud"]
+self_host  = ["Docker", "Compose", "HelmChart"]
+hosted     = true
+
+detail = """
+Rust 写，日志/指标/链路统一以 parquet 落对象存储，schema 自动演进。\
+摄入侧支持 OTLP 与各种 agent，管道里可以用 VRL 做转换与富化。\
+单节点二进制即可起步（本地盘也行），横向扩展时切集群模式。\
+自带 UI、告警与仪表盘，不用再拼 Grafana。"""
+
+requires = [
+  "对象存储（S3 兼容）或本地盘",
+]
+
+watch = [
+  "「成本低 10 倍」这类数字来自上游自己的基准，落到自己的数据形态上必须复测",
+  "版本迭代很快（仍是 0.x），升级前读 breaking change",
+]
+
+[links]
+site = "https://openobserve.ai/"
+repo = "https://github.com/openobserve/openobserve"
+docs = "https://openobserve.ai/docs/"

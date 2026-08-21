@@ -1,0 +1,37 @@
+#!/bin/sh
+# 提交前的快检查（毫秒级）。慢的门禁在 pre-push。
+# 绕过：git commit --no-verify —— 但请在 commit message 里写明为什么。
+set -u
+cd "$(git rev-parse --show-toplevel)" || exit 1
+H=".githooks"
+
+if [ -t 1 ]; then BOLD=$(printf '\033[1m'); RED=$(printf '\033[31m'); GRN=$(printf '\033[32m'); OFF=$(printf '\033[0m')
+else BOLD=; RED=; GRN=; OFF=; fi
+
+command -v python3 >/dev/null 2>&1 || {
+  printf "%spre-commit: 找不到 python3%s，检查脚本跑不了。\n" "$RED" "$OFF"
+  printf "  装好 python3，或本次用 git commit --no-verify 跳过。\n"; exit 1; }
+
+printf "%spre-commit%s\n" "$BOLD" "$OFF"
+fail=0
+python3 "$H/checks/hygiene.py" --staged || fail=1
+python3 "$H/checks/docs.py"             || fail=1
+
+# Rust 门禁：只在已经有 Cargo 工程之后才生效（段 1 之前这里是空的）
+if [ -f Cargo.toml ]; then
+  if git diff --cached --name-only --diff-filter=ACM | grep -q '\.rs$'; then
+    if cargo fmt --all --check >/dev/null 2>&1; then
+      printf "  格式 ✓  cargo fmt\n"
+    else
+      printf "  %s格式 ✗%s  cargo fmt --all --check 不通过\n" "$RED" "$OFF"
+      printf "      help:  跑 cargo fmt --all 后重新 git add\n"
+      fail=1
+    fi
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  printf "\n%s提交已拦下。%s 修完再提；确需跳过用 git commit --no-verify。\n" "$RED" "$OFF"
+  exit 1
+fi
+printf "%s  全部通过%s\n" "$GRN" "$OFF"

@@ -1,0 +1,29 @@
+slug       = "signoz"
+name       = "SigNoz"
+summary    = "开源可观测性平台。APM + 链路 + 指标 + 日志，OTel 原生。"
+license    = "MIT"
+language   = "Go"
+categories = ["all-in-one", "apm", "traces", "metrics", "logs"]
+replaces   = ["datadog", "new-relic", "honeycomb"]
+self_host  = ["Docker", "Compose", "HelmChart"]
+hosted     = true
+
+detail = """
+自带一个 OTel Collector 发行版把三种信号写进 ClickHouse，前端是完整的 APM 视角：\
+服务列表、端点级 p50/p95/p99、错误率、服务拓扑图，以及从慢请求直接跳到对应 trace。\
+查询有可视化构建器也能写 ClickHouse SQL。它替代的是 Datadog APM 那一块，不是又一个看板工具。"""
+
+requires = [
+  "ClickHouse",
+  "自带的 OTel Collector 组件",
+]
+
+watch = [
+  "核心 MIT，ee/ 与 cmd/enterprise/ 是商业授权 —— 开源核心模式",
+  "主要运维成本是 ClickHouse；版本仍在 0.x，升级前读 changelog",
+]
+
+[links]
+site = "https://signoz.io/"
+repo = "https://github.com/SigNoz/signoz"
+docs = "https://signoz.io/docs/"

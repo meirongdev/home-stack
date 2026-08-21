@@ -1,0 +1,24 @@
+slug       = "netdata"
+name       = "Netdata"
+summary    = "实时指标监控，毫秒级粒度。零配置自动采集，附带告警与看板。"
+license    = "GPL-3.0"
+language   = "C"
+categories = ["metrics", "uptime"]
+replaces   = ["datadog", "new-relic"]
+self_host  = ["Docker", "HelmChart", "DebRpm"]
+hosted     = true
+
+detail = """
+C 写的 agent，默认每秒采一次，装上就自动发现几百种服务并直接出图。\
+自带的 dbengine 分层存储把高频数据逐层降采样落盘（秒级 → 分钟级 → 小时级），所以单机也能留住长周期趋势。\
+内置无监督异常检测与告警引擎，多机汇总走 streaming 到 parent 节点，也能整体导出给 Prometheus。"""
+
+watch = [
+  "默认高频 + 自动发现，指标基数很大；长期存储与多机汇总要显式规划 parent 或导出",
+  "云端注册与匿名遥测默认开启，纯离线部署要显式关掉",
+]
+
+[links]
+site = "https://www.netdata.cloud/"
+repo = "https://github.com/netdata/netdata"
+docs = "https://learn.netdata.cloud/"

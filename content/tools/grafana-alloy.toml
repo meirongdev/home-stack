@@ -1,0 +1,23 @@
+slug       = "grafana-alloy"
+name       = "Grafana Alloy"
+summary    = "OTel Collector 的分发版，Grafana 生态一体化采集与路由。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["metrics", "logs", "traces"]
+replaces   = ["datadog", "splunk", "new-relic"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+内核是上游 otelcol 的组件集，外面套一层自有配置语言与组件图模型，把 Prometheus 抓取、日志采集、eBPF 剖析拼成一条声明式流水线。\
+它是 Grafana Agent（2025-11 EOL）与 Promtail（2026-03 EOL）的共同接替者。"""
+
+watch = [
+  "配置语言是 Alloy 自有的，不是 OTel 的 YAML —— 和上游 otelcol 配置不能直接互换",
+  "许可证是 Apache-2.0，和 Grafana 本体的 AGPL-3.0 不同",
+]
+
+[links]
+site = "https://grafana.com/oss/alloy/"
+repo = "https://github.com/grafana/alloy"
+docs = "https://grafana.com/docs/alloy/latest/"

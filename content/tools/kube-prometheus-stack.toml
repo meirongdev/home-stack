@@ -1,0 +1,31 @@
+slug       = "kube-prometheus-stack"
+name       = "kube-prometheus-stack"
+summary    = "K8s 可观测性全家桶。Prometheus + Alertmanager + Grafana + 开箱告警规则。"
+license    = "Apache-2.0"
+language   = "Helm"
+categories = ["all-in-one", "metrics", "alerts"]
+replaces   = ["datadog", "new-relic"]
+self_host  = ["HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+一个 Helm chart，把 Prometheus Operator 与它管的那一整套组件、外加一批为通用 K8s 集群写好的告警规则打成一包。\
+关键是 Operator：抓取目标用 ServiceMonitor / PodMonitor CRD 声明，不用手写 prometheus.yml。\
+K8s 上从零到有监控的最短路径，代价是默认配置很重。"""
+
+requires = [
+  "Kubernetes",
+  "Helm 3",
+  "PersistentVolume（Prometheus / Grafana 持久化）",
+]
+
+watch = [
+  "CRD 由 chart 安装，但升级时 Helm 不会更新 CRD —— major 升级前要手工 apply",
+  "默认抓取面很大，小集群上 Prometheus 的内存是第一个瓶颈：先关掉用不到的 ServiceMonitor",
+  "默认告警规则是为通用集群写的，k3s / 单节点上会有一批天生红的规则要静默",
+]
+
+[links]
+site = "https://github.com/prometheus-community/helm-charts"
+repo = "https://github.com/prometheus-community/helm-charts"
+docs = "https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"

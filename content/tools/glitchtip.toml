@@ -1,0 +1,29 @@
+slug       = "glitchtip"
+name       = "GlitchTip"
+summary    = "轻量错误追踪，Sentry 协议兼容。小团队的低运维替代。"
+license    = "MIT"
+language   = "Python"
+categories = ["errors"]
+replaces   = ["sentry"]
+self_host  = ["Docker", "Compose"]
+hosted     = false
+
+detail = """
+Django + Celery + PostgreSQL，实现 Sentry 的上报协议与 DSN 格式，所以 Sentry 官方 SDK 只改一个 DSN 就能指过来。\
+功能是 Sentry 的子集：错误分组与去重、通知、uptime 监控。\
+换来的是一两个容器、几百 MB 内存就能跑起来 ——对照 Sentry 自托管那十几个容器，这是它存在的全部理由。"""
+
+requires = [
+  "PostgreSQL",
+  "Redis（Celery 队列）",
+]
+
+watch = [
+  "性能监控 / 会话重放 / profiling 这些 Sentry 的重头功能它都没有",
+  "代码托管在 GitLab，不在 GitHub —— 按 GitHub 星数找项目会漏掉它",
+]
+
+[links]
+site = "https://glitchtip.com/"
+repo = "https://gitlab.com/glitchtip/glitchtip"
+docs = "https://glitchtip.com/documentation"

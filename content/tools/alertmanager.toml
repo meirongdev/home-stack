@@ -1,0 +1,29 @@
+slug       = "alertmanager"
+name       = "Alertmanager"
+summary    = "Prometheus 告警的路由、去重与发送中枢。grouping / inhibition / silences。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["alerts"]
+replaces   = ["pagerduty", "opsgenie"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+单二进制，接收 Prometheus 推来的告警，做三件事：grouping（按标签把同一批告警合成一条通知）、inhibition（高优先级告警压制低优先级）、silence（临时静默）。\
+路由是一棵按标签匹配的树，决定每条告警落到哪个 receiver。\
+多副本用 gossip 互相同步已发送状态，所以横向扩容不会重复发。"""
+
+requires = [
+  "Prometheus 或其他能调用 v2 告警 API 的来源",
+]
+
+watch = [
+  "它只负责发，不负责判断 —— 告警规则住在 Prometheus 侧，这里改不了阈值",
+  "silence 与通知去重状态存在 --storage.path，容器化不挂盘的话重启就全丢",
+  "配置改完要 SIGHUP 或 POST /-/reload，写错了只在日志里报，界面上看不出来",
+]
+
+[links]
+site = "https://prometheus.io/docs/alerting/latest/alertmanager/"
+repo = "https://github.com/prometheus/alertmanager"
+docs = "https://prometheus.io/docs/alerting/latest/configuration/"

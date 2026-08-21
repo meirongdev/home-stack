@@ -1,0 +1,30 @@
+# https://editorconfig.org
+root = true
+
+# 基线沿用仓库现状：LF、末尾换行、无行尾空格、空格缩进（实测 13 份文档全部符合）。
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# rustfmt 默认值，写在这里是为了让不跑 rustfmt 的编辑器也对齐
+[*.rs]
+indent_size = 4
+max_line_length = 100
+
+# 内容条目（content/*.toml）、Cargo.toml、wrangler.jsonc、GitHub Actions、Markdown
+[*.{toml,json,jsonc,yml,yaml,js,md}]
+indent_size = 2
+
+# Markdown 是手工折行的，宽度按**显示列**判断（中文是双宽字符），实际约 80–90 列。
+# max_line_length 数的是字符数，对中文会误判成「还没到限」，所以关掉、靠人眼把握。
+#
+# trim_trailing_whitespace 在这里保持开启（继承 [*]）：本仓库不使用
+# 「行尾双空格 = 硬换行」那种写法，实测 0 处，所以裁空格是安全的。
+# 若日后要用硬换行，改用 <br> 或空行，不要靠不可见的空格。
+[*.md]
+indent_size = 2
+max_line_length = off

@@ -1,0 +1,25 @@
+slug       = "prometheus"
+name       = "Prometheus"
+summary    = "CNCF 毕业的指标事实标准。拉模型 + PromQL + 本地 TSDB，指标监控的默认选择。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["metrics", "alerts"]
+replaces   = ["datadog", "new-relic", "grafana-cloud"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+抓取端点、按 15s 一个 sample 存进本地 TSDB，查询走 PromQL。\
+3.x 起支持原生直方图（v3.8 转 stable）、UTF-8 指标名，以及一个需要显式开启的 OTLP 接收端点（/api/v1/otlp/v1/metrics）。\
+长期存储、跨实例全局查询与高可用都不在它职责内，交给 Thanos 或 VictoriaMetrics。"""
+
+watch = [
+  "单机 TSDB 没有副本概念，高可用只能双跑再去重（Thanos），或换一套自带副本的时序库（VictoriaMetrics 集群版）",
+  "内存与 active series 数正相关，通常是集群里最大的单一内存消耗者",
+  "OTLP 接收要显式开 feature flag，不是默认行为",
+]
+
+[links]
+site = "https://prometheus.io/"
+repo = "https://github.com/prometheus/prometheus"
+docs = "https://prometheus.io/docs/prometheus/latest/getting_started/"

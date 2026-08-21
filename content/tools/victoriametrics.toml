@@ -1,0 +1,23 @@
+slug       = "victoriametrics"
+name       = "VictoriaMetrics"
+summary    = "高压缩比、低资源的指标库。PromQL 兼容，单机即可扛很大规模。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["metrics"]
+replaces   = ["datadog", "grafana-cloud", "new-relic"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+单二进制就能扛很大规模的指标库，压缩比与内存占用都优于 Prometheus，查询语言 MetricsQL 是 PromQL 的超集。\
+同生态还有 VictoriaLogs（日志）与 VictoriaTraces（链路）两个独立组件，可以拼出一整套不依赖对象存储的自托管方案。"""
+
+watch = [
+  "MetricsQL 是超集，一旦用了扩展语法就锁在它上面",
+  "vmagent / vmalert / vmauth / vmbackup 是分开的二进制，全家桶要自己拼与自己升级",
+]
+
+[links]
+site = "https://victoriametrics.com/"
+repo = "https://github.com/VictoriaMetrics/VictoriaMetrics"
+docs = "https://docs.victoriametrics.com/"

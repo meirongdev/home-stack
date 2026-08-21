@@ -1,0 +1,28 @@
+slug       = "node-exporter"
+name       = "node_exporter"
+summary    = "主机指标采集器。CPU / 内存 / 磁盘 / 网络，Prometheus 生态标配。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["metrics"]
+replaces   = ["datadog"]
+self_host  = ["SingleBinary", "Docker", "DebRpm"]
+hosted     = false
+
+detail = """
+从 /proc 与 /sys 读宿主机指标：CPU、内存、磁盘、文件系统、网络、负载、systemd 单元状态。\
+collector 按需开关，textfile collector 是把自定义脚本产出的指标接进来的正规入口。\
+Prometheus 生态里最没有争议的一块拼图。"""
+
+requires = [
+  "Linux（/proc 与 /sys 可读）",
+]
+
+watch = [
+  "跑在容器里要挂 /proc /sys 与宿主根，并加 --path.rootfs，否则读到的是容器视角的假数据",
+  "它只看宿主机，容器级指标要 cAdvisor 或 CRI stats",
+]
+
+[links]
+site = "https://prometheus.io/docs/guides/node-exporter/"
+repo = "https://github.com/prometheus/node_exporter"
+docs = "https://github.com/prometheus/node_exporter#collectors"

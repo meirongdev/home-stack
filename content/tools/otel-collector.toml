@@ -1,0 +1,25 @@
+slug       = "otel-collector"
+name       = "OpenTelemetry Collector"
+summary    = "遥测数据的采集、处理与转发中枢。单一 Agent 接 metrics / logs / traces。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["all-in-one", "metrics", "logs", "traces"]
+replaces   = ["datadog", "new-relic", "splunk"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+receiver → processor → exporter 的管道，三种信号共用一套配置模型。\
+既能当节点上的 agent，也能当集群中心的 gateway 做采样、批处理、脱敏与多后端扇出。\
+core 与 contrib 两个发行版，绝大多数实用组件在 contrib 里。"""
+
+watch = [
+  "core 发行版组件极少，实际部署一般用 contrib 或用 ocb 自己裁一个最小镜像",
+  "组件成熟度分 alpha / beta / stable，上生产前要逐个确认自己用到的那几个",
+  "版本号仍是 0.x，minor 之间偶有配置 breaking change",
+]
+
+[links]
+site = "https://opentelemetry.io/docs/collector/"
+repo = "https://github.com/open-telemetry/opentelemetry-collector"
+docs = "https://opentelemetry.io/docs/collector/configuration/"

@@ -1,0 +1,28 @@
+slug       = "cadvisor"
+name       = "cAdvisor"
+summary    = "容器资源使用指标采集器。kubelet 内建，配合 Prometheus 抓取。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["metrics"]
+replaces   = ["datadog", "new-relic"]
+self_host  = ["Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+读 cgroup 与容器运行时接口，导出容器级的 CPU / 内存 / 网络 / 文件系统指标（container_* 系列），暴露在 kubelet 的 /metrics/cadvisor 上。\
+所以 K8s 上通常不需要单独部署，裸 Docker 环境才需要自己起一个。"""
+
+requires = [
+  "容器运行时（cgroup v1 或 v2）",
+]
+
+watch = [
+  "Kubernetes 的 KEP-2371 正在把 pod / 容器统计切到 CRI（containerd）来源，kubelet 内嵌的 cAdvisor 指标是被规划淡出的路径 —— 新建看板别把 container_* 当永久契约",
+  "在 K8s 上再单独部署一份，等于和 kubelet 内嵌的那份重复采集，白烧一份资源",
+  "它只看容器，宿主机层面的指标要 node_exporter",
+]
+
+[links]
+site = "https://github.com/google/cadvisor"
+repo = "https://github.com/google/cadvisor"
+docs = "https://github.com/google/cadvisor/blob/master/docs/README.md"

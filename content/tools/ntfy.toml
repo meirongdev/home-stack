@@ -1,0 +1,24 @@
+slug       = "ntfy"
+name       = "ntfy"
+summary    = "自托管推送服务。HTTP POST 即推送到手机，支持订阅与访问控制。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["alerts"]
+replaces   = ["pagerduty"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+单二进制 + SQLite 的推送服务：HTTP POST 到一个 topic 就推到手机。\
+iOS 与 Android 都有官方客户端，支持 ACL、优先级、附件、点击动作与 UnifiedPush。\
+Grafana OnCall OSS 停掉手机推送后，自托管告警落地到手机的常见接盘方案。"""
+
+watch = [
+  "公共实例 ntfy.sh 上 topic 名就等于密码 —— 要隔离就自托管并开启 auth",
+  "自托管时 iOS 推送仍需经上游 APNs 通道（配 upstream-base-url），不是纯自给自足",
+]
+
+[links]
+site = "https://ntfy.sh/"
+repo = "https://github.com/binwiederhier/ntfy"
+docs = "https://docs.ntfy.sh/"

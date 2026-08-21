@@ -1,0 +1,11 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+site = { path = "../site" }
+toml.workspace = true
+serde.workspace = true
+serde_json.workspace = true

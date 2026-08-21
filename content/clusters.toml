@@ -1,0 +1,8 @@
+# FieldNote 用集群标识。id 必须与 FieldNote.clusters 引用一致。
+[[cluster]]
+id = "homelab"
+name = "homelab (k3s)"
+
+[[cluster]]
+id = "oracle-k3s"
+name = "oracle-k3s"

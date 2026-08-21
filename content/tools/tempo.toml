@@ -1,0 +1,27 @@
+slug       = "tempo"
+name       = "Grafana Tempo"
+summary    = "分布式链路后端。对象存储 + TraceQL，与 OTel 协议原生集成。"
+license    = "AGPL-3.0"
+language   = "Go"
+categories = ["traces"]
+replaces   = ["datadog-apm", "new-relic", "honeycomb"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+只依赖对象存储的链路后端 —— 不需要 Cassandra 或 Elasticsearch，这是它相对 Jaeger 的主要卖点。\
+TraceQL 查询，metrics-generator 可以从 trace 生成 service graph 与 span 指标。"""
+
+requires = [
+  "对象存储",
+]
+
+watch = [
+  "按 trace ID 直查很快；复杂条件搜索依赖 TraceQL 与足够的索引配置，别按全文搜索的预期用它",
+  "metrics-generator 会额外产生一份指标写入压力，容量要一起算",
+]
+
+[links]
+site = "https://grafana.com/oss/tempo/"
+repo = "https://github.com/grafana/tempo"
+docs = "https://grafana.com/docs/tempo/latest/"

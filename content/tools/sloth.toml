@@ -1,0 +1,26 @@
+slug       = "sloth"
+name       = "Sloth"
+summary    = "SLO 即代码。从 Prometheus 指标生成 SLO / 错误预算告警规则。"
+license    = "Apache-2.0"
+language   = "Go"
+categories = ["alerts", "metrics"]
+replaces   = ["datadog"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+SLO 即代码：输入一份 SLO 声明（YAML 或 K8s CRD），生成 Prometheus 的记录规则与多窗口多燃烧率（multi-window multi-burn-rate）告警规则 —— 把 Google SRE 那套模板化，不用自己手写六条窗口不同的 alert 表达式。"""
+
+requires = [
+  "Prometheus，或 Prometheus Operator 的 CRD",
+]
+
+watch = [
+  "它只生成规则，SLI 本身的指标要你已经有",
+  "发布节奏偏慢（v0.16.0 停在 2026-04）",
+]
+
+[links]
+site = "https://sloth.dev/"
+repo = "https://github.com/slok/sloth"
+docs = "https://sloth.dev/introduction/"

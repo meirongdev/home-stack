@@ -1,0 +1,28 @@
+slug       = "loki"
+name       = "Grafana Loki"
+summary    = "日志聚合。只索引标签不索引正文，S3 兼容后端，成本远低于 ELK。"
+license    = "AGPL-3.0"
+language   = "Go"
+categories = ["logs"]
+replaces   = ["datadog-logs", "splunk", "papertrail", "elastic-cloud", "logz-io"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+一个 stream 由一组标签唯一确定，正文只压缩成 chunk 进对象存储、完全不建全文索引，索引里只有标签（当前默认 TSDB 索引）。\
+LogQL 因此是两段式：先用标签选择器把 stream 范围缩到足够小，再在内容上做过滤与聚合。\
+这个设计决定了它的成本优势和它的痛点 ——标签选不准，查询就是全量扫描。"""
+
+requires = [
+  "对象存储（S3 / GCS / MinIO 等）；单机可先用文件系统",
+]
+
+watch = [
+  "高基数标签是 Loki 的头号事故源 —— request_id / user_id / trace_id 绝对不能进标签",
+  "单进程（monolithic）与微服务模式的运维复杂度差一个量级，homelab 用前者",
+]
+
+[links]
+site = "https://grafana.com/oss/loki/"
+repo = "https://github.com/grafana/loki"
+docs = "https://grafana.com/docs/loki/latest/"

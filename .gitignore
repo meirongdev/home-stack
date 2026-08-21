@@ -1,0 +1,47 @@
+# ⚠️ .gitignore 不支持行尾注释 —— 注释必须独占一行，否则会被当成 pattern 的一部分。
+
+# ── Rust ──────────────────────────────────────────────────────────────
+/target/
+**/*.rs.bk
+
+# Cargo.lock 要提交，不要加进本文件。
+# 这是可部署应用（crates/dev + crates/edge）不是库，构建可复现性取决于它 ——
+# 而 wasm32 那条依赖树尤其经不起「某个传递依赖悄悄升版后编不过」。
+
+# ── 构建产物 ──────────────────────────────────────────────────────────
+# worker-build 的输出
+/build/
+# 站点产物；Pagefind 索引它（npx pagefind --site dist）
+/dist/
+# wrangler 的本地状态与缓存
+.wrangler/
+
+# ── ⚠️ 密钥：绝不能进仓库 ─────────────────────────────────────────────
+# wrangler 的本地变量文件（线上密钥走 GitHub Secrets / wrangler secret）
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+!.env.example
+
+# ── Node ──────────────────────────────────────────────────────────────
+# 只用 npx 跑 pagefind / wrangler，但 npx 会落盘
+/node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ── 编辑器 / 操作系统 ─────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*~
+
+# ── ⚠️ 不要忽略 content/generated/ ────────────────────────────────────
+# 那里的 repo.json / footprint.json 是 **committed 产物**，不是构建临时物：
+#   1. 一次抓取失败不该让站点变空（fetch 是 fail-soft 的）；
+#   2. git 历史顺带成为「这些数字什么时候变的」的记录。
+# 日后有人按「generated 一律忽略」的直觉把它加进来，症状是站点数字集体归零。
+# 见 docs/plans/2026-08-20-data-pipeline.md

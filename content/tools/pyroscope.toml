@@ -1,0 +1,29 @@
+slug       = "pyroscope"
+name       = "Pyroscope"
+summary    = "连续性能剖析后端。与 OTel Profiling 集成，火焰图按请求关联。"
+license    = "AGPL-3.0"
+language   = "Go"
+categories = ["profiling"]
+replaces   = ["datadog-profiler"]
+self_host  = ["Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+Grafana 的连续剖析后端（Pyroscope 与 Phlare 合并而来），存储结构沿用 Loki / Mimir 那一套：\
+对象存储加单进程 monolithic 或拆开的微服务模式。摄入侧接自家 SDK、eBPF agent，也吃标准 pprof。\
+Grafana 里有专门的火焰图面板，并能按 exemplar 从 trace 跳到对应 profile。"""
+
+requires = [
+  "对象存储（生产环境）",
+]
+
+watch = [
+  "eBPF 采集与 SDK 采集支持的语言不一样，选之前对一下自己的栈",
+  "AGPL-3.0 —— 纯自托管自用不受影响，但要把它嵌进对外售卖的产品里得先看清条款",
+  "连续剖析的存储量随采样频率与进程数线性涨，别按「反正是 profile 而已」估容量",
+]
+
+[links]
+site = "https://grafana.com/oss/pyroscope/"
+repo = "https://github.com/grafana/pyroscope"
+docs = "https://grafana.com/docs/pyroscope/latest/"

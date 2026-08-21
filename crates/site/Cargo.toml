@@ -1,0 +1,12 @@
+[package]
+name = "site"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+axum.workspace = true
+maud.workspace = true
+serde.workspace = true
+toml.workspace = true
+serde_json.workspace = true

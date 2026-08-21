@@ -1,0 +1,23 @@
+slug       = "fluent-bit"
+name       = "Fluent Bit"
+summary    = "轻量级日志采集器。内存占用极小，适合边车与嵌入式场景。"
+license    = "Apache-2.0"
+language   = "C"
+categories = ["logs"]
+replaces   = ["datadog-logs", "splunk", "papertrail"]
+self_host  = ["SingleBinary", "Docker", "DebRpm"]
+hosted     = false
+
+detail = """
+C 写的遥测采集器，常驻内存在 MB 量级。input → parser → filter → output 的流水线，输入侧有 tail / systemd / kubelet / OTLP，输出侧一百多个目的地。\
+2026 年 Kubernetes 上节点级日志采集的默认选择，也能收指标与链路。"""
+
+watch = [
+  "复杂加工能力不如 Vector（只有 Lua 与 WASM 两条扩展路径，没有 VRL 一类的转换语言），多行日志必须显式配 multiline parser",
+  "配置是自有格式（也支持 YAML），和 OTel Collector 的 pipeline 配置不能互换",
+]
+
+[links]
+site = "https://fluentbit.io/"
+repo = "https://github.com/fluent/fluent-bit"
+docs = "https://docs.fluentbit.io/"

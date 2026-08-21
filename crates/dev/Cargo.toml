@@ -1,0 +1,10 @@
+[package]
+name = "dev"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+site = { path = "../site" }
+axum = { workspace = true, default-features = true }
+tokio.workspace = true

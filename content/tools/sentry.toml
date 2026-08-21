@@ -1,0 +1,32 @@
+slug       = "sentry"
+name       = "Sentry"
+summary    = "错误追踪与 APM。异常分组、release 追踪、性能面板，覆盖前后端。"
+license    = "FSL-1.1-ALv2"
+language   = "Python"
+categories = ["errors", "apm"]
+replaces   = ["sentry"]
+self_host  = ["Docker", "Compose", "HelmChart"]
+hosted     = true
+
+detail = """
+错误追踪的事实标准：按 stack trace 指纹分组、release 与 regression 追踪、性能与链路、会话重放，前后端 SDK 覆盖最广。\
+自托管走官方 getsentry/self-hosted 的 docker compose。"""
+
+requires = [
+  "PostgreSQL",
+  "ClickHouse",
+  "Kafka",
+  "Redis",
+  "Relay / Snuba 等一整套组件",
+]
+
+watch = [
+  "自托管是十几个容器的一整套，官方建议内存 16GB 起 —— 小团队更适合 GlitchTip",
+  "FSL-1.1-ALv2：两年后自动转 Apache-2.0，当期禁止竞品用途",
+  "上游只支持单机 docker compose，不提供官方 K8s chart",
+]
+
+[links]
+site = "https://sentry.io/"
+repo = "https://github.com/getsentry/sentry"
+docs = "https://develop.sentry.dev/self-hosted/"

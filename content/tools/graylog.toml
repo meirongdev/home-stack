@@ -1,0 +1,29 @@
+slug       = "graylog"
+name       = "Graylog"
+summary    = "集中式日志管理。采集 + 搜索 + 告警 + 看板，自带 Web UI。"
+license    = "SSPL-1.0"
+language   = "Java"
+categories = ["logs"]
+replaces   = ["splunk", "papertrail", "elastic-cloud", "logz-io"]
+self_host  = ["Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+Java 服务 + OpenSearch/Elasticsearch（存日志）+ MongoDB（存配置）的三件套。\
+自带采集入口（GELF / Syslog / Beats）、全文搜索、streams 分流、告警与看板，是 ELK 的打包替代。"""
+
+requires = [
+  "OpenSearch 或 Elasticsearch",
+  "MongoDB",
+]
+
+watch = [
+  "SSPL-1.0 不是 OSI 认可的开源许可证，对外提供托管服务的场景要先读条款",
+  "三件套的资源底线明显高于只索引标签的 Loki 一类方案，小机器上跑不动",
+  "全文索引意味着存储成本随日志量线性涨，保留期要提前定",
+]
+
+[links]
+site = "https://graylog.org/products/source-available/"
+repo = "https://github.com/Graylog2/graylog2-server"
+docs = "https://go2docs.graylog.org/"

@@ -1,0 +1,25 @@
+slug       = "vector"
+name       = "Vector"
+summary    = "高性能可观测性数据管道。采集 / 转换 / 路由 logs 与 metrics，Rust 编写。"
+license    = "MPL-2.0"
+language   = "Rust"
+categories = ["logs", "metrics"]
+replaces   = ["datadog-logs", "splunk", "papertrail"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+单个静态二进制，没有运行时依赖，同一个程序既能当节点 agent 也能当中心 aggregator。\
+source → transform → sink 三段式，transform 写 VRL 脚本。\
+磁盘缓冲加端到端 ack（需要 source 与 sink 两端都支持该语义才成立）。\
+`vector top` 与 `vector tap` 能在线看每一级的吞吐和真实事件，调管道不用靠猜。"""
+
+watch = [
+  "traces 支持弱于 logs / metrics —— 纯链路管道走 OTel Collector 更合适",
+  "VRL 是自有转换语言，逻辑写复杂了就只有 Vector 能跑（迁移成本）",
+]
+
+[links]
+site = "https://vector.dev/"
+repo = "https://github.com/vectordotdev/vector"
+docs = "https://vector.dev/docs/"

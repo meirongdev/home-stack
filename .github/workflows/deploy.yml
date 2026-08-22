@@ -1,0 +1,87 @@
+# 部署到 Cloudflare Workers —— 走 Terraform，不走 wrangler。
+#
+# ⚠️ **状态：未验证。** `terraform apply` 从未成功执行过（配置本身已 validate + plan
+# 通过，见 docs/runbooks/deploy-cloudflare.md）。所以它**只能手动触发**：
+# 一个没跑过的部署流程自动跑在 main 上，就是那种「绿着的瞎子」。
+#
+# ☠️ **本 workflow 要求远端 state 后端。** Terraform 的 state 是「线上现在是什么」
+# 的唯一记录；CI 每次都是干净 runner，用本地 state 等于每次都从空开始 ——
+# 它会试图创建已经存在的 Worker，然后报错。没配 R2 后端就**不要**用 CI 部署，
+# 从工作站部署（那里 state 是持久的）。下面第一步就是 fail-closed 地检查这件事。
+name: deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # fail-closed：宁可在第一步就红，也不要用本地 state 跑出一个假成功。
+      - name: 确认配了远端 state 后端
+        run: |
+          if ! grep -qE '^\s*backend\s+"s3"' cloudflare/terraform/versions.tf; then
+            echo "::error::cloudflare/terraform/versions.tf 里没有启用的 backend 块。"
+            echo "CI 用本地 state 会在每次运行时试图重建已存在的资源 —— 见本文件顶部注释。"
+            exit 1
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      # 部署前把内容门禁再跑一遍：ci.yml 的绿灯是针对某个 commit 的，
+      # 手动触发部署时选的 ref 不一定是那个 commit。
+      - name: 内容校验
+        run: cargo run -p xtask -- validate
+      - name: render-diff
+        run: cargo run -p xtask -- render-diff
+
+      # Terraform 不编 Rust、不建 Pagefind 索引，而且 plan 阶段就要 lstat 资源目录。
+      - name: 资源层（静态导出 + Pagefind 索引）
+        run: cargo run -p xtask -- build-site
+
+      - name: 编 Worker wasm
+        run: |
+          cargo install -q worker-build
+          cd crates/edge && worker-build --release
+
+      - name: terraform init
+        working-directory: cloudflare/terraform
+        env:
+          # R2 后端走 S3 兼容协议，凭据是 R2 的 access key
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: terraform init -input=false
+
+      - name: terraform plan
+        working-directory: cloudflare/terraform
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: terraform plan -input=false -out=tfplan
+
+      # 分成 plan / apply 两步，且 apply 只吃刚才那份 plan 文件 ——
+      # 「apply 的不是我看过的那份 plan」是这类流水线最经典的意外。
+      - name: terraform apply
+        working-directory: cloudflare/terraform
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: terraform apply -input=false tfplan

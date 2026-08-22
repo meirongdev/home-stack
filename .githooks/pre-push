@@ -45,7 +45,11 @@ if [ -f Cargo.toml ]; then
   if rustup target list --installed 2>/dev/null | grep -q '^wasm32-unknown-unknown$'; then
     # wasm32 std 由 rustup 管理。工具链统一后（2026-08-21 卸载了 Homebrew rust），
     # 默认 cargo 就是 rustup 的，wasm32 直接编得过；只判「target 是否已装」即可。
-    gate "wasm32  编译约束" cargo check -p site --target wasm32-unknown-unknown
+    gate "wasm32  site"   cargo check -p site --target wasm32-unknown-unknown
+    # crates/edge 是线上入口；它的依赖只在 wasm32 上拉，宿主门禁一行都查不到它。
+    if [ -d crates/edge ]; then
+      gate "wasm32  edge"   cargo check -p edge --target wasm32-unknown-unknown
+    fi
   else
     printf "  %swasm32  跳过%s —— 没装 target。装：rustup target add wasm32-unknown-unknown\n" "$YLW" "$OFF"
   fi

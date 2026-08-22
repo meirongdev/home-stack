@@ -18,7 +18,7 @@
 | 文档（命名 / 文首 / 链接 / 索引 / 计数） | ✅ | ✅ |
 | `cargo fmt --check` | 改了 `.rs` 才跑 | ✅ |
 | `cargo clippy -D warnings` / `cargo test` | ❌ | ✅ |
-| `cargo check --target wasm32-unknown-unknown` | ❌ | ✅ |
+| `cargo check --target wasm32-unknown-unknown` | ❌ | ✅ `site` 与 `edge` 各一条 |
 | `xtask validate` / `xtask render-diff` | ❌ | ✅ |
 
 Rust 那几条在 `Cargo.toml` 出现之前自动跳过 —— 段 1 之前仓库只有文档，钩子照样能用。
@@ -28,12 +28,17 @@ Rust 那几条在 `Cargo.toml` 出现之前自动跳过 —— 段 1 之前仓�
 `docs/decisions/dual-target-axum.md` 把两条纪律明确外包给了 CI：
 
 1. **`cargo check --target wasm32-unknown-unknown`** —— `crates/site` 里每加一个依赖都要问
-   「它编得到 wasm32 吗」，这条靠 CI 兜住、不靠人记。
-2. **`xtask render-diff`** —— 两个编译目标必须渲染出**同一份 HTML**，不一致即硬失败。
-   这是段 2 的出口判据，且必须机制化可重复跑，而不是实施时对比一次。
+   「它编得到 wasm32 吗」，这条靠门禁兜住、不靠人记。
+   ⚠️ `crates/edge` 要**单独查一条**：它的依赖挂在 `cfg(target_arch = "wasm32")` 下，
+   宿主侧的 `fmt` / `clippy` / `test` 一行都看不到它 —— site 编得过但 edge 的胶水编不过，
+   等于线上没有站。
+2. **`xtask render-diff`** —— 不一致即硬失败。⚠️ 它当前比的是**两条内容路径**
+   （磁盘 vs 构建期内嵌），**不覆盖** wasm32 运行时的输出；那半个判据还没兑现，
+   见 `docs/ROADMAP.md` 开放项 13。
 
-钩子是这两条的**本地前哨**：在 dev 循环里就把漂移拦下，而不是等 CI 或线上才暴露。
-CI 仍然要建（`ROADMAP.md` 段 2）—— 钩子可以 `--no-verify`，CI 不行。
+钩子是这些的**本地前哨**：在 dev 循环里就把漂移拦下，而不是等 CI 或线上才暴露。
+CI 已经存在（`.github/workflows/ci.yml`，跑的是同一套加产物抽查）——
+钩子可以 `--no-verify`，CI 不行。
 
 ## 检查脚本
 

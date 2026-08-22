@@ -20,6 +20,7 @@ def classify(rel):
     if rel.startswith("docs/decisions/"):        return "adr"
     if rel.startswith("docs/plans/"):            return "plan"
     if rel.startswith("docs/reference/"):        return "reference"
+    if rel.startswith("docs/runbooks/"):        return "runbook"
     return "other"
 
 REQUIRED = {          # 分类 -> 必填文首字段
@@ -27,6 +28,9 @@ REQUIRED = {          # 分类 -> 必填文首字段
     "plan":      ["日期", "状态", "结论"],
     "living":    ["日期", "状态"],
     "reference": ["日期", "状态"],
+    # runbook 的「状态」回答的是「哪几步真跑通过」——
+    # 没验证过的步骤必须标出来，别让读者以为整篇都跑通了。
+    "runbook":   ["日期", "状态"],
     "index":     ["日期"],
     "root":      [],
     "other":     [],

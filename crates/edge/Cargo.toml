@@ -1,0 +1,18 @@
+[package]
+name = "edge"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+# 依赖只在 wasm32 上拉：`worker` 编不到宿主平台，而 `cargo test --workspace` /
+# `cargo clippy --all-targets` 是在宿主上跑的。这样宿主构建把本 crate 视作空壳，
+# 门禁不会因为「一个只为 wasm32 存在的 crate」而红。
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+site = { path = "../site" }
+worker = { version = "0.8", features = ["http", "axum"] }
+axum = { workspace = true }
+tower-service = "0.3"
+console_error_panic_hook = "0.1"

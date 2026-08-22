@@ -1,0 +1,50 @@
+// Cloudflare Workers 配置。放在 `crates/edge/` 而不是仓库根 ——
+// worker-build 构建的是「当前包」，wrangler 必须在这个目录里跑：
+//
+//   cd crates/edge && npx wrangler deploy
+//
+// ⚠️ 部署前必须先在仓库根跑 `cargo run -p xtask -- build-site`：
+// 资源目录（../../public）是那一步的产物，不在 git 里。
+{
+  "name": "home-stack",
+  // worker-build 的产物入口。build/worker/shim.mjs 只是一个向后兼容的
+  // 再导出（内容就是 `export * from '../index.js'`），真正的入口是 build/index.js。
+  // 保留 shim 路径是为了和官方模板/教程一致。
+  "main": "build/worker/shim.mjs",
+  "compatibility_date": "2026-08-22",
+
+  // worker-build 把 wasm 与 JS shim 产到 build/worker/。
+  // 它是 cargo 子命令，CI 里显式装（见 .github/workflows/deploy.yml）。
+  "build": {
+    "command": "worker-build --release"
+  },
+
+  "assets": {
+    // 只放构建期生成的客户端资源（当前只有 Pagefind 索引）。
+    // ⚠️ **绝对不要**把 dist/ 指到这里：那里是全站 HTML，
+    // 资源优先的顺序会让每个页面都被静态命中、Router 永远不被唤起 ——
+    // SSR 那半个架构就白搭了。见 docs/ARCHITECTURE.md 的路由表。
+    "directory": "../../public",
+
+    // 未命中**不要**由资源层兜底 —— 交给 Worker 渲染 404 页。
+    // ⚠️ 这其实是 Cloudflare 的**默认值**（另两个取值是 single-page-application
+    // 与 404-page）。显式写出来是为了让「404 由谁渲染」这件事在配置里有据可查，
+    // 不是因为不写就会出错 —— 别把它当成一处必须存在的魔法开关。
+    "not_found_handling": "none"
+
+    // 另一处关键配置 `run_worker_first` 先不写：它防的是「同名静态资源遮蔽
+    // 动态路由」，而 /calculator/*、/advisor/*、/api/* 这些路由目前还不存在
+    // （ADR calculator-advisor-justify-ssr，段 3 之后）。资源目录里也只有
+    // /pagefind/*，遮蔽不了任何东西。等那些路由落地时再加：
+    //   "run_worker_first": ["/calculator/*", "/advisor/*", "/api/*"]
+  },
+
+  "observability": {
+    "enabled": true
+  }
+
+  // 自定义域名先不配 —— 域名还没定（docs/ROADMAP.md 开放项 1）。
+  // 不配就部署到 <name>.<subdomain>.workers.dev，足够验证「公网可访问」。
+  // 定下来之后加：
+  //   "routes": [{ "pattern": "stack.meirong.dev", "custom_domain": true }]
+}

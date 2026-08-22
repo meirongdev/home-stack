@@ -1,0 +1,46 @@
+# home-stack 自己部署自己。用法：just build && just plan && just apply
+#
+# 别的项目要部署这个站点不必用这个 justfile —— 直接 source 到 modules/worker，
+# 见 modules/worker/README.md。这里只是那个模块的第一个消费者。
+#
+# ⚠️ 顺序不是习惯而是硬要求：Terraform 不编 Rust，也不建 Pagefind 索引。
+# 且 `plan` 阶段就会 lstat 资源目录 —— 没先 build 的话 plan 直接失败
+# （这是好事：响亮地失败，而不是静默部署一个空资源层）。
+
+repo := justfile_directory() / "../.."
+
+# 默认：把该跑的都列出来，不做任何事
+default:
+    @just --list
+
+# 门禁 + 构建产物（Worker wasm + 资源层）。apply 之前必须跑。
+build:
+    cd {{repo}} && cargo run -p xtask -- validate
+    cd {{repo}} && cargo run -p xtask -- render-diff
+    cd {{repo}} && cargo run -p xtask -- build-site
+    cd {{repo}}/crates/edge && worker-build --release
+
+init:
+    terraform init
+
+# 看将要发生什么。凭据从环境变量来：CLOUDFLARE_API_TOKEN
+plan:
+    terraform plan
+
+# 部署。⚠️ 先读 plan 的输出再确认，别盲 apply
+apply:
+    terraform apply
+
+# 回滚：把流量指回上一个版本。
+# Terraform 管的是「当前该部署哪个版本」，所以回滚 = 改 deployment 指向。
+# 最快的做法是 git revert 引起变更的那个 commit 再 build + apply ——
+# 内容/代码的真相源在 git，不在 Cloudflare。
+rollback-help:
+    @echo "1) git revert 引入问题的 commit"
+    @echo "2) just build && just apply"
+    @echo "或临时手工指定版本：terraform apply -replace=cloudflare_workers_deployment.this"
+    @echo "历史版本列表：npx wrangler deployments list（在 crates/edge/）"
+
+# 清掉构建产物（不动 state）
+clean:
+    rm -rf {{repo}}/dist {{repo}}/public {{repo}}/crates/edge/build

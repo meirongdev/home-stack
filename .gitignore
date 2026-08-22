@@ -9,12 +9,30 @@
 # 而 wasm32 那条依赖树尤其经不起「某个传递依赖悄悄升版后编不过」。
 
 # ── 构建产物 ──────────────────────────────────────────────────────────
-# worker-build 的输出
+# worker-build 的输出。⚠️ 两条都要：产物实际落在 crates/edge/build/，
+# 而 `/build/` 只匹配仓库根。worker-build 会在产物目录里自己写一个 `*` 的 .gitignore，
+# 但那是它的实现细节 —— 靠它等于「哪天它不写了，1 MB 的 wasm 就进仓库」。
 /build/
-# 站点产物；Pagefind 索引它（npx pagefind --site dist）
+crates/*/build/
+# 全站 HTML（xtask dump-html）——「退回纯静态站」那个逃生舱的产物，
+# 同时是 Pagefind 的输入
 /dist/
+# 资源层（xtask build-site 产的 Pagefind 索引）—— wrangler 上传的就是这个目录。
+# ⚠️ 它和 dist/ 必须分开：dist/ 里是 HTML，进了资源层就会遮蔽所有 SSR 路由
+/public/
 # wrangler 的本地状态与缓存
 .wrangler/
+
+# ── Terraform ─────────────────────────────────────────────────────────
+# provider 二进制与本地 state。⚠️ tfstate 里有资源 id 与部分敏感值，
+# 绝不进仓库 —— 长期应放 R2 后端（见 cloudflare/terraform/versions.tf）。
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+# .terraform.lock.hcl **要**提交：它锁 provider 版本与校验和，
+# 是「同一份配置在 CI 与本机解析出同一个 provider」的唯一保证。
+!.terraform.lock.hcl
 
 # ── ⚠️ 密钥：绝不能进仓库 ─────────────────────────────────────────────
 # wrangler 的本地变量文件（线上密钥走 GitHub Secrets / wrangler secret）

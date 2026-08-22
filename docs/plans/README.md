@@ -9,7 +9,7 @@
 
 | 方案 | 状态 | 结论 |
 |------|------|------|
-| [2026-08-20-content-model](2026-08-20-content-model.md) | ✅ 已完成（段 1） | 条目 schema、分类法、FieldNote 结构、`xtask validate` 的四类校验 |
+| [2026-08-20-content-model](2026-08-20-content-model.md) | ✅ 已完成（段 1） | 条目 schema、分类法、FieldNote 结构、`xtask validate` 的四类校验。⚠️ 这份规格里的分类法只有一层；2026-08-22 之上又加了「域」，校验也从四类扩到五类 —— 那不在本档案里，见 [../decisions/domain-layer-not-flat-categories.md](../decisions/domain-layer-not-flat-categories.md) |
 | [2026-08-20-data-pipeline](2026-08-20-data-pipeline.md) | 🟡 GitHub 侧已完成；Prometheus 侧待实施 | `xtask fetch`（GitHub GraphQL + homelab Prometheus）+ 夜间 CI；⚠️ fetch 必须 fail-soft |
 
 ## 一份方案写完之后

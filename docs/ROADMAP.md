@@ -1,7 +1,7 @@
 # Roadmap
 
 > 日期: 2026-08-22
-> 状态: 🚧 段 1 与段 4 的 GitHub 侧已完成；段 2 / 3 待实施
+> 状态: 🚧 段 1 已完成；段 2 的**代码**已完成、**未部署**；段 4 的 GitHub 侧已完成（含夜间 CI）；段 3 待实施
 > 本文只回答两件事：**还剩什么没做**，和**明确不做什么**。
 > 实施细节不写在这里 —— 每条都链到 [decisions/](decisions/README.md)（取舍）或
 > [plans/](plans/README.md)（规格）。
@@ -14,14 +14,36 @@
 **已生效**（段 1 + 段 4 的 GitHub 侧）：
 
 - `crates/site` 模型 + Maud 模板 + Router（零 I/O）、`crates/dev` → `cargo run -p dev` 上 `:8080`
-- `xtask validate`：引用未声明 / 孤儿分类 / slug 重复 / summary 超长，四类硬失败
+- `xtask validate`：引用未声明（含域） / 跨域分类 / 孤儿分类与孤儿域 / slug 重复 /
+  summary 超长，五类硬失败；顺带按域打印条目数
 - `xtask fetch`：从条目的 `links.repo` 一次 GraphQL 抓 stars / pushed_at / latest_release /
   license，产出 committed 的 `content/generated/repo.json`；工具页显示这些数字与 `fetched_at`，
-  许可证与上游交叉核对是常设检查
-- 29 条目录条目，收录范围限定在 homelab（判据见「明确不做」）
+  许可证与上游交叉核对是常设检查。⚠️ 两条条目的上游不在 GitHub/GitLab（Forgejo 在 Codeberg、
+  Proxmox VE 在自建 git），fetch 会跳过它们并告警 —— 这两条页面上没有活跃度数字
+- **97 条目录条目，分布在 10 个域**（compute 7 / networking 12 / storage 9 / gitops 11 /
+  secrets 6 / identity 6 / observability 29 / security 6 / iac 6 / data 5）。
+  域层设计见 [decisions/domain-layer-not-flat-categories.md](decisions/domain-layer-not-flat-categories.md)，
+  收录范围仍限定在 homelab（判据见「明确不做」）
 
-**未生效**：段 2（上边缘 + CI 双门禁）、段 3（FieldNote）、段 4 的 Prometheus 侧与夜间 CI。
-线上部署还不存在。下一步是段 2。
+**已生效**（段 2 的代码侧 + 段 4 的夜间 CI）：
+
+- `crates/site/build.rs` 构建期把 `content/` 内嵌成一张表 —— wasm32 没有文件系统，
+  这是线上唯一的数据来源；`crates/dev` 用的也是它，「本地看到的」与「线上渲染的」
+  内容不可能不一致
+- `crates/edge`（`worker` 0.8.5 + `#[event(fetch)]`，约 60 行）与 `crates/edge/wrangler.jsonc`
+- `xtask dump-html`（185 页 + 404.html → `dist/`，纯静态逃生舱从设想变成实物）、
+  `xtask render-diff`、`xtask build-site`（Pagefind 1.5.2 索引 → `public/`）
+- **站内搜索**：Pagefind 只索引 97 个工具页（列表页不进索引），按域做 facet
+- **CI 存在了**：`.github/workflows/ci.yml` 跑 9 道门禁，含 ADR 承诺外包给 CI 的
+  两条红线（wasm32 编译约束 ×2、render-diff）；`nightly-fetch.yml` 每夜刷上游活跃度
+
+**未生效**：段 3（FieldNote）、段 4 的 Prometheus 侧、HTMX 与 calculator / advisor。
+⚠️ **尚未部署**，但部署本身已经 IaC 化：`cloudflare/terraform/`（`cloudflare_worker` +
+`worker_version` + `workers_deployment`，provider 5.23.0）加一个 `justfile`，
+`just build && just plan && just apply` 三条命令。已验证到 `terraform plan` 全绿
+（`Plan: 3 to add`）、`worker-build --release` 实测包体 **346 KiB gz = Free 上限的 11%**；
+**只剩 `terraform apply`** 需要作者的账号（开放项 14）。
+步骤见 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md)，域名可以先不定（开放项 1 / 15）。
 
 ## 四段实施
 
@@ -30,28 +52,33 @@
 | 段 | 内容 | 出口判据 |
 |---|------|---------|
 | **1** | ✅ 已完成，见「现状」。规格见 [plans/2026-08-20-content-model.md](plans/2026-08-20-content-model.md) | 已验证 |
-| **2** | 上边缘。加 `crates/edge`、`wrangler.jsonc`、Pagefind 索引；`cloudflare/terraform` 加一条 DNS 记录。**同时建 CI 与两条门禁**：`cargo check --target wasm32-unknown-unknown`（依赖是否编得到 wasm32，不靠人记）与 `xtask render-diff`（两个目标逐字节比对，不一致即硬失败）—— 两条都是 [decisions/dual-target-axum.md](decisions/dual-target-axum.md) 承诺外包给 CI 的纪律，不能只停在 ADR 里 | 公网可访问；`crates/dev` 与线上渲染出**同一份 HTML**，且这条由 `render-diff` 在每次合并跑，不是实施时手工对比一次（这是判据不是「顺便看看」） |
-| **3** | 一手证据层。`FieldNote` 四态（Running/Retired/Rejected/Evaluating）+ 按状态筛选的视图。目标 10 条，全部取自 homelab 已有文档 —— [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md) 已点名 7 条可直接成稿，余 3 条实施时从 homelab `docs/records/*` 里挑 | 每条 FieldNote 的数字都能点回一份 decision/record 文档 |
-| **4** | 数据管道自动化。`xtask fetch` + GitHub Actions + Tailscale。规格见 [plans/2026-08-20-data-pipeline.md](plans/2026-08-20-data-pipeline.md) | 连续 7 天夜间构建全绿，且**人为断开 tailnet 时构建仍然成功** |
+| **2** | 🟡 代码与部署 IaC 均已完成、**未 apply**。已有：`crates/edge`、构建期内容内嵌、`dump-html` / `render-diff` / `build-site`、Pagefind 索引与搜索、CI 九道门禁、`cloudflare/terraform`（plan 已验证）。未有：真正 apply（缺 Cloudflare 凭据），以及 render-diff 的 wasm 运行时那一半（开放项 13） | 公网可访问 ❌；`render-diff` 每次合并跑 ✅（但只覆盖内容路径，不覆盖 wasm 运行时 —— 判据只兑现了一半） |
+| **3** | 一手证据层。`FieldNote` 四态（Running/Retired/Rejected/Evaluating）+ 按状态筛选的视图。目标 10 条，全部取自 homelab 已有文档 —— [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md) 已点名 7 条可直接成稿，余 3 条实施时从 homelab `docs/records/*` 里挑。⚠️ 分母已从 29 变成 97，「10 条」这个目标该怎么摊到域上是开放项 11 | 每条 FieldNote 的数字都能点回一份 decision/record 文档 |
+| **4** | 🟡 GitHub 侧已完成（`xtask fetch` + `nightly-fetch.yml` 每夜刷新并自动提交）。Prometheus 侧**有意不做** —— 见开放项 4：它只服务 FieldNote 的 footprint，而 FieldNote 现在是 0 条 | 连续 7 天夜间构建全绿（待观察）；「断开 tailnet 仍然成功」这条**当前空成立** —— 根本没有 tailnet 依赖 |
 
-段 1 与段 2 之间有天然止损点：若双目标编译在某个依赖上出意外，
-`crates/dev` 加一个遍历路由 dump HTML 的子命令就退回纯静态站，照样能上 Cloudflare ——
-只是失去 HTMX 那两个服务端交互。这个逃生舱是零 I/O 约束的副产品，不需要额外设计
-（见 [decisions/dual-target-axum.md](decisions/dual-target-axum.md)）。
+段 1 与段 2 之间那个天然止损点**已经变成实物**：`xtask dump-html` 把全站渲成
+`dist/`（185 页 + 404.html，含同一份 Pagefind 索引），任何静态托管都能直接上，
+只是失去 HTMX 那两个服务端交互。它每次 CI 都跑，所以是一条**验证过的**退路，
+不是一句设想（见 [decisions/dual-target-axum.md](decisions/dual-target-axum.md)）。
 
 ## 开放项
 
 | # | 项目 | 说明 |
 |---|------|------|
-| 1 | **域名未定** | 建议 `obs.meirong.dev`。定下来才能写 `cloudflare/terraform` 那条 DNS 记录（段 2 前置） |
+| 1 | **域名未定** | 项目已定名 Home Stack（开放项 9 已关），域名仍未定 —— 原先建议的 `obs.meirong.dev` 随范围扩大已不合适（不再只是 observability），建议 `stack.meirong.dev`。⚠️ 定域名同时要定 **DNS 由谁拥有**（开放项 15），那不是配置细节而是一个互斥选择。**不定也能部署**：`workers.dev` 子域足够兑现「公网可访问」 |
 | 3 | **playbook 做不做** | 是否每个 vendor 一份分阶段迁移指南。⚠️ 作者没做过这些迁移，硬写会违反「每个数字都要有出处」的纪律。倾向先不做，段 3 之后按实际经历补。见 [plans/2026-08-20-content-model.md](plans/2026-08-20-content-model.md#未决) |
 | 4 | **Prometheus 侧数据源是否值得** | 只服务少数几条 footprint，却要引入跨仓库 ACL 依赖（开放项 5）。等段 3 的 FieldNote 实际数量出来再定。见 [plans/2026-08-20-data-pipeline.md](plans/2026-08-20-data-pipeline.md#未决) |
 | 5 | **Tailscale ACL 跨仓库依赖** | 段 4 需要 homelab `tailscale/terraform` 放行 `tag:ci` 到中枢 Prometheus。⚠️ 两边都要留注释 —— 日后清 ACL 打断它的症状是「站点数字停止更新」，不会有人立刻发现 |
-| 6 | **首份 `reference/` 文档** | ⏰ 已到期：段 1 完成后内容模型已是生效事实，`docs/reference/content-model.md` 该建了 —— `plans/` 那份是冻结档案，不是现状（R1：建议 ≠ 事实） |
 | 7 | **homelab 仓库是否公开** | ⚠️ `FieldNote.decision` 是 `Url` 且**非 `Option`**，「每个数字都能追回出处」是本站立身之本。若 homelab 是私有仓库，读者点进去全是 404 —— 护城河在**读者侧不可验证**，等于没有。若不公开就得改字段设计（引用 + 摘录，而非裸 URL）。段 3 前置。见 [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md)、[plans/2026-08-20-content-model.md](plans/2026-08-20-content-model.md) |
-| 8 | **缺一篇「为什么是 Rust」的 ADR** | 5 条 ADR 论证了落点、双目标、内容模型、差异化、SSR 值不值，唯独最底层的语言选择是公理：[decisions/cloudflare-workers-not-pages.md](decisions/cloudflare-workers-not-pages.md) 把「Axum + Maud + HTMX」当既定前提带过，而 [decisions/typed-content-model-not-hugo.md](decisions/typed-content-model-not-hugo.md) 还主动禁掉了「Rust 更快」这个理由却没给替代。真实理由可能很朴素（想练 / 工具链已有 / Pagefind 本身就是 Rust）—— 但按本仓库「把隐假设显式化」的标准，该写出来。**理由待作者本人填，不代拟** |
-| 9 | **项目定名** | 三个名字在流通：`docs/README.md` H1 的「Probe Directory」、仓库目录名 `observability_directory`、拟用域名 `obs.meirong.dev`。与开放项 1 一起定 |
+| 8 | **缺一篇「为什么是 Rust」的 ADR** | 6 条 ADR 论证了落点、双目标、内容模型、差异化、SSR 值不值、域层，唯独最底层的语言选择是公理：[decisions/cloudflare-workers-not-pages.md](decisions/cloudflare-workers-not-pages.md) 把「Axum + Maud + HTMX」当既定前提带过，而 [decisions/typed-content-model-not-hugo.md](decisions/typed-content-model-not-hugo.md) 还主动禁掉了「Rust 更快」这个理由却没给替代。真实理由可能很朴素（想练 / 工具链已有 / Pagefind 本身就是 Rust）—— 但按本仓库「把隐假设显式化」的标准，该写出来。**理由待作者本人填，不代拟** |
 | 10 | **LICENSE 未定** | 仓库要公开（站点本身就是公开的），但根目录没有 LICENSE。内容与代码可能需分开授权 —— 常见做法是代码 MIT/Apache-2.0、条目文本与 FieldNote 用 CC BY 4.0 |
+| 11 | **FieldNote 目标怎么摊到 10 个域** | 段 3 的「10 条」是对着 29 条可观测条目定的，现在分母是 97。两种表述：「先把可观测那一域做满」（覆盖率集中、看得出深度）或「每个域至少 1 条」（广度好看、每域都浅）。⚠️ 无论选哪个，都不能为没跑过的工具编造 FieldNote —— 见 [decisions/domain-layer-not-flat-categories.md](decisions/domain-layer-not-flat-categories.md) 的 Consequences。段 3 前置 |
+| 12 | **跨域工具只登记主域，读者会找不到** | Cilium 记在网络域，从「安全加固」域里找不到它；Harbor 的漏洞扫描、Tetragon 与 Cilium 的关系同理。当前缓解只有 `detail` 里的一句话，不是机制。可选解法：域页面加一块「相关但登记在别处」的手写交叉引用（又一个要维护的分类法），或等 Pagefind 搜索（段 2）上线后认定「搜得到就够了」。⚠️ 先别急着改模型 —— 多值域已在 ADR 里被否决过 |
+| 13 | **render-diff 只兑现了一半** | [decisions/dual-target-axum.md](decisions/dual-target-axum.md) 承诺「两个目标逐字节比对」。现在比的是**两条内容路径**（磁盘 vs 构建期内嵌），覆盖「改了 TOML 内嵌表没跟上」这类漂移；**没有**比 wasm32 运行时的输出。补法：CI 里 `worker-build` + `wrangler dev` 起一个本地 Worker，用同一份 `all_paths()` 逐条 curl 再和 `dist/` 比对。⚠️ 在补上之前，不要把那条 ADR 的判据当已满足 |
+| 14 | **`terraform apply` 从未执行过** | 部署已 IaC 化（`cloudflare/terraform/`，3 个资源 + `justfile`）。已验证到 **`terraform plan` 全绿（`Plan: 3 to add`）**，provider 5.23.0；**只剩 `apply` 那一步没人跑过** —— 需要作者的 Cloudflare 账号。步骤与 token 最小权限见 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md)。⚠️ 第一次跑遇到的报错要回头补进 runbook |
+| 15 | **自定义域名归谁：待作者选，不再是设计缺口** | ✅ 两种归属模型现在都在 `modules/worker` 里实现了：`custom_domain`（Cloudflare 建记录）与 `route`（调用方建记录，模块只绑路由），同时设会被 precondition 拦下（已实测）。剩下的是一个**决定**：`meirong.dev` 的 DNS 由 homelab 的 Terraform 全量管理，那就该选 `route`。⚠️ 无论选哪个，**两边都要留注释** —— 和开放项 5（Tailscale ACL）同一类跨仓库依赖：日后有人清理另一侧，症状是站点域名突然不解析、而这一侧没有任何线索。⏸ 定下来之前先用 `workers.dev`（不碰任何 DNS） |
+| 16 | **CI 部署要求远端 state 后端** | ☠️ CI 每次都是干净 runner，本地 state 等于每次从空开始 —— 它会试图创建已存在的 Worker 然后报错。`versions.tf` 里有注释好的 R2（S3 兼容）后端块，与 homelab `docs/plans/architecture/2026-08-03-tf-state-r2.md` 的做法一致。⏸ 在配好之前**只从工作站部署**；`deploy.yml` 第一步已 fail-closed 地检查这件事 |
+| 17 | **没有任何 tag，外部消费者无法钉版本** | `modules/worker` 已经是可复用子模块，外部项目按 `?ref=<tag>` 消费它 —— 但仓库目前 **0 个 tag**，只能钉 `main`。⚠️ 钉 `main` 意味着消费方的部署内容会在它没改任何东西时变（内容与代码一起变）。第一次 `terraform apply` 成功、站点确实可访问之后就该打第一个 tag。⏸ 与开放项 10（LICENSE 未定）一起做 —— 让别人消费一个没有许可证的仓库不合适 |
 
 ## 明确不做
 
@@ -62,4 +89,6 @@
 | 用户账号 / 服务端持久化 shortlist | shortlist 走 localStorage（无服务端状态）。引入状态就等于引入数据库，整个零开销论证作废 |
 | 编辑评分 / 星级排名 | 正是典型的 listicle 形态，且无证据支撑 |
 | 为没跑过的工具编造 FieldNote | 覆盖率不均是诚实的。没有 FieldNote 的条目退化成元数据条目，那没什么不好 |
-| 收录企业规模 / 团队流程向的条目（多租户横向扩展、告警工作流编排、企业 agent 平台） | 读者是 homelab（k3s、单人运维）。**收录判据：homelab 读者真会问它 ∧ 作者能对它说出四态之一，缺一即不收。**值班轮值这类团队流程工具只在能给出迁出路径时留（Grafana OnCall 上游已归档，页面价值在「原先靠它的手机推送怎么迁」）。⚠️ 「太重跑不动」**不是**不收的理由 —— 那正是 `Rejected` 最该写的一页（Sentry / Graylog / Thanos 因此保留） |
+| 收录企业规模 / 团队流程向的条目（多租户横向扩展、告警工作流编排、企业 agent 平台） | 读者是 homelab（k3s、单人运维）。**收录判据：homelab 读者真会问它 ∧ 作者能对它说出四态之一，缺一即不收。**值班轮值这类团队流程工具只在能给出迁出路径时留（Grafana OnCall 上游已归档，页面价值在「原先靠它的手机推送怎么迁」）。⚠️ 「太重跑不动」**不是**不收的理由 —— 那正是 `Rejected` 最该写的一页（Sentry / Graylog / Thanos / Rook-Ceph / Keycloak 因此保留） |
+| 收录「自托管应用」本身（媒体库、RSS、笔记、相册、密码管理器） | 那是另一个目录。本站收的是**跑这些应用所需的底座**（计算、网络、存储、交付、密钥、身份、可观测、安全、IaC、数据）。判据同上一行：作者对 Jellyfin / Miniflux 说得出四态，但那些条目回答的是「我想看电影」而不是「我该选哪套底座」，混进来会让每个域的候选集失去可比性 |
+| 新增域时先声明域、后写条目 | 孤儿域是硬失败（零条目的域点进去是一张空页面）。**先写够条目，再声明域** —— 这条顺序由 `xtask validate` 强制，不靠自觉 |

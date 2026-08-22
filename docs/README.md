@@ -1,11 +1,14 @@
-# Probe Directory Docs
+# Home Stack Docs
 
 > 日期: 2026-08-22
 > 这是**入口索引**。设计事实都在下面链接的文档里，本页不复制副本。
 
 ## 这个项目是什么
 
-一个自托管可观测性工具目录，按「你要替换掉哪个 SaaS」索引，用 Rust 实现。
+一个 homelab 自托管技术选型目录，按**主题域**索引（计算底座 / 网络 / 存储 / 交付 /
+密钥 / 身份 / 可观测 / 安全 / IaC / 数据），用 Rust 实现。「替换哪个 SaaS」是第二根轴 ——
+它覆盖不到基建类条目，理由见
+[decisions/domain-layer-not-flat-categories.md](decisions/domain-layer-not-flat-categories.md)。
 核心差异化是**一手运维证据**：每个工具带作者真实跑过的 FieldNote（见
 [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md)）。
 
@@ -18,9 +21,11 @@
 | 想知道什么 | 读这个 |
 |-----------|--------|
 | 整体长什么样 | [ARCHITECTURE.md](ARCHITECTURE.md) — 单页总览：双目标编译、路由分工、栈选型、已知约束 |
-| 为什么是这个方案 | [decisions/](decisions/README.md) — 轻量 ADR，5 条 |
+| 为什么是这个方案 | [decisions/](decisions/README.md) — 轻量 ADR，6 条 |
 | 具体怎么建模 / 怎么抓数据 | [plans/](plans/README.md) — 带日期的规格，写完即冻结 |
 | 还剩什么没做 | [ROADMAP.md](ROADMAP.md) — 开放项 + 四段实施顺序 + 明确不做 |
+| 内容模型现在长什么样 | [reference/content-model.md](reference/content-model.md) — 字段、不变量、五类校验 |
+| 怎么把站点部署上去 | [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) — 六步 + 回滚 + ⚠️ 一个必须先定的 DNS 归属冲突 |
 
 ## 目录一览
 
@@ -29,9 +34,11 @@
 | 顶层 [ARCHITECTURE.md](ARCHITECTURE.md) / [ROADMAP.md](ROADMAP.md) | 现在打算长什么样 / 还剩什么没做 | **持续维护**，随决策变化更新 | 论证与步骤（只链不述，见下） |
 | [decisions/](decisions/README.md) | 为什么选 A 不选 B | 选型场景、被否决的选项、取舍 | 怎么做（步骤） |
 | [plans/](plans/README.md) | 当时打算怎么做 | 带日期的规格，**写完即冻结** | 需要长期维护的事实 |
+| [reference/](reference/README.md) | 现在是什么样 | **随实现变化持续更新**的生效事实 | 当时的判断与论证 |
+| [runbooks/](runbooks/README.md) | 照着做怎么做 | 可重复执行的操作步骤 + 哪几步**验证过** | 为什么这么做（只链不述） |
 
-`reference/` 目前仍不存在 —— 段 1 已完成，内容模型已是生效事实，按下方约定（**建议 ≠ 事实**）
-现在就该建第一份，见 [ROADMAP.md](ROADMAP.md) 开放项 6。
+首份 reference 已就位：[reference/content-model.md](reference/content-model.md)
+（内容模型 —— `plans/` 那份是冻结档案，不是现状）。
 
 ## 文档约定
 

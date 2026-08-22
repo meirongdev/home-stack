@@ -1,6 +1,6 @@
 # Decisions
 
-> 日期: 2026-08-20
+> 日期: 2026-08-22
 > 关键技术决策记录（轻量 ADR）：当时的场景、可选项、为什么这么选。
 
 | 决策 | 结论 |
@@ -10,8 +10,10 @@
 | [typed-content-model-not-hugo](typed-content-model-not-hugo.md) | 分类法用 newtype 而非 String，四类静默事故变构建失败；⚠️ 别用「Rust 更快」为它辩护 |
 | [field-notes-as-differentiator](field-notes-as-differentiator.md) | FieldNote 四态 Running/Retired/Rejected/Evaluating；每个数字必须能追回出处文档 |
 | [calculator-advisor-justify-ssr](calculator-advisor-justify-ssr.md) | calculator / advisor 是差异化数据（footprint / status）的消费端，这正是押上 SSR 架构的正当化理由 |
+| [domain-layer-not-flat-categories](domain-layer-not-flat-categories.md) | 目录从可观测扩到 homelab 全栈：加一层「域」，单值必填；跨域分类是硬失败。代价是跨域工具只登记主域 |
 
-> 本表按**依赖顺序**排，不按日期 —— 5 篇同日写成，日期给不出先后。
+> 本表按**依赖顺序**排，不按日期 —— 前 5 篇同日写成，日期给不出先后；
+> 第 6 篇（域层）晚于它们，且以 typed-content-model 为前提。
 > 谁是谁的前提，看各篇文首的 `关联` 字段。
 
 ## 写新 ADR

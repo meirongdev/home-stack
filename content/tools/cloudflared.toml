@@ -1,0 +1,30 @@
+slug       = "cloudflared"
+name       = "cloudflared (Tunnel)"
+summary    = "出站长连接把流量拉进内网：不用公网 IP、不开路由器端口，代价是入口归 Cloudflare。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["ingress"]
+replaces   = ["ngrok"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+在内网起一个客户端，主动连到 Cloudflare 边缘并注册一条 tunnel；外部请求先到 Cloudflare，再顺着这条已建立的连接回到内网服务。\
+因此不需要公网 IP、不需要在路由器上开端口，也不需要动家宽的 NAT。\
+路由规则（hostname → 内网地址）可以放在本地配置文件，也可以放在 Cloudflare dashboard。"""
+
+requires = [
+  "一个托管在 Cloudflare 的域名",
+]
+
+watch = [
+  "**这不是自托管的入口，是把入口外包**：边缘、TLS 终止与控制面都在 Cloudflare 一侧，可用性与流量可见性随之移交",
+  "本地 config 与 dashboard 是两个真相源，混用一定漂移 —— 一开始就选定一边",
+  "Free 计划对以非 HTML 大流量（视频、大文件分发）为主的用途有服务条款风险，媒体类服务别默认往这条路上放",
+]
+
+[links]
+site = "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/"
+repo = "https://github.com/cloudflare/cloudflared"
+docs = "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/"

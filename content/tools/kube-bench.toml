@@ -1,0 +1,29 @@
+slug       = "kube-bench"
+name       = "kube-bench"
+summary    = "按 CIS Kubernetes Benchmark 逐条检查集群配置，输出通过/失败与修复建议。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "security"
+categories = ["scanning"]
+self_host  = ["SingleBinary", "Docker", "Manifests"]
+hosted     = false
+
+detail = """
+把 CIS Kubernetes Benchmark 的检查项做成可执行版本：读各组件的启动参数、配置文件与文件权限，\
+逐条给出 PASS / FAIL / WARN 与对应的修复动作。以 Job 形式在节点上跑一次即可，不是常驻组件。\
+它检查的是**配置基线**，和 Trivy 那种查 CVE 的扫描不是一件事。"""
+
+requires = [
+  "在控制面/工作节点上以 hostPID 与宿主文件系统访问权限运行",
+]
+
+watch = [
+  "K3s / Talos 这类发行版的文件布局与 upstream 不同，需要选对 benchmark 版本，否则一堆 FAIL 是「找不到文件」而不是真问题",
+  "很多条目在单人 homelab 下不适用（审计日志外发、etcd 独立部署），照单全改反而增加脆弱性 —— 要先判断适用范围",
+  "它只看一次快照：配置漂移要靠定期重跑或策略引擎（Kyverno/Gatekeeper）持续约束",
+]
+
+[links]
+site = "https://github.com/aquasecurity/kube-bench"
+repo = "https://github.com/aquasecurity/kube-bench"
+docs = "https://aquasecurity.github.io/kube-bench/"

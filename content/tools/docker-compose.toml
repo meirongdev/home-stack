@@ -1,0 +1,29 @@
+slug       = "docker-compose"
+name       = "Docker Compose"
+summary    = "一份 YAML 描述一台机器上的一组容器。没上 K8s 之前的自托管默认形态。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "compute"
+categories = ["single-host"]
+self_host  = ["SingleBinary", "Docker"]
+hosted     = false
+
+detail = """
+把「若干容器 + 网络 + 卷」写成一个文件，`docker compose up -d` 起、`down` 停。\
+v2 起是用 Go 重写的 docker CLI 插件（`docker compose`，不再是 Python 的 `docker-compose`），\
+支持 profiles、`depends_on` 的健康检查条件与 `include`。它管一台机器，不做调度、不跨节点、也不自愈。"""
+
+requires = [
+  "Docker Engine（或 Podman 的 docker 兼容 socket）",
+]
+
+watch = [
+  "上游自托管项目的 README 几乎都给 compose 示例，这是它最大的实际价值 —— 但也意味着一旦上 K8s，这些示例都要自己翻译一遍",
+  "`kompose` 之类的转换工具只能给一个起点：卷、网络与健康检查的语义差异都要人来重判",
+  "重启策略不等于高可用：宿主机一停，一切皆停",
+]
+
+[links]
+site = "https://docs.docker.com/compose/"
+repo = "https://github.com/docker/compose"
+docs = "https://docs.docker.com/reference/compose-file/"

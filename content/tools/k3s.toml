@@ -1,0 +1,30 @@
+slug       = "k3s"
+name       = "K3s"
+summary    = "单二进制 Kubernetes 发行版，自带 containerd、CNI、入口与存储。homelab 的默认选择。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "compute"
+categories = ["k8s-distro"]
+self_host  = ["SingleBinary"]
+hosted     = false
+
+detail = """
+把 apiserver / controller-manager / scheduler / kubelet 与 containerd 打包进一个二进制，装机是一条 curl 管道。\
+默认还会一并装上 CoreDNS、Traefik（入口）、ServiceLB（klipper，用 host 端口伪装 LoadBalancer）、\
+local-path-provisioner 与 metrics-server，控制面状态默认存在本地 SQLite 而不是 etcd。\
+它是一个**完整的 upstream Kubernetes**（通过一致性认证），删掉的是云厂商 in-tree provider 与 alpha 特性，不是 API。"""
+
+requires = [
+  "一台 Linux（cgroup v2）；1 GB 内存能跑起来，装完应用就不够了",
+]
+
+watch = [
+  "默认组件是「安装时不要」而不是「装完再删」—— 要换 Cilium 或 Gateway API 入口，必须在 install 时 `--disable traefik --flannel-backend=none`，装完再拆会留下一堆孤儿资源",
+  "默认 SQLite 是单点：多控制面要么切内嵌 etcd（`--cluster-init`），要么外接数据库，这个决定在装机那一刻就定了",
+  "ServiceLB 直接占宿主机端口，和跑在同一台机器上的其他服务抢 80/443",
+]
+
+[links]
+site = "https://k3s.io/"
+repo = "https://github.com/k3s-io/k3s"
+docs = "https://docs.k3s.io/"

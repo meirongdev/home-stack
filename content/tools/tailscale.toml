@@ -1,0 +1,29 @@
+slug       = "tailscale"
+name       = "Tailscale"
+summary    = "WireGuard 数据面 + 托管控制面的组网层。客户端开源，协调服务器是 SaaS。"
+license    = "BSD-3-Clause"
+language   = "Go"
+domain     = "networking"
+categories = ["mesh-vpn"]
+self_host  = ["SingleBinary", "DebRpm", "Docker"]
+hosted     = true
+
+detail = """
+数据面是 WireGuard 点对点隧道，控制面负责密钥分发、设备授权、NAT 打洞协调与 ACL 下发。\
+ACL 写成一份集中的 tailnet policy 文件（可用 Terraform 管），配上 MagicDNS、subnet router（把一整个内网段接进来）\
+与 exit node。打洞失败时流量退回 DERP 中继，仍然可用但带宽与延迟会明显变化。"""
+
+requires = [
+  "一个 Tailscale 账号（控制面）；节点侧只要能出站 UDP",
+]
+
+watch = [
+  "**控制面不在你手上**：设备授权、密钥轮换与 ACL 生效都依赖 SaaS 可用；免费档有设备与用户数上限",
+  "它用 fwmark + 策略路由实现分流，和同样用 fwmark 的 CNI（Cilium）或裸 WireGuard 同机时可能撞车，症状是部分流量间歇走错路径",
+  "把它当「跨集群 Pod 网络」用是常见误用 —— 它做的是节点之间的 underlay，Pod 到 Pod 还要 CNI 层（如 ClusterMesh）自己解决",
+]
+
+[links]
+site = "https://tailscale.com/"
+repo = "https://github.com/tailscale/tailscale"
+docs = "https://tailscale.com/kb/"

@@ -1,36 +1,200 @@
-# 信号分类声明。id 必须与工具条目里的 categories 引用一致。
+# 域内分类声明。id 必须与工具条目里的 categories 引用一致，
+# domain 必须与该条目的 domain 一致 —— 跨域引用是硬失败（load.rs 校验 2）。
+#
+# 分类是**域内**的第二根轴：「指标」只在可观测域里有意义，「CNI」只在网络域里有意义。
+# 摊平成一层就得到一个三十多项、彼此不可比的平铺清单。
+
+# ── 计算底座 ──────────────────────────────────────────────────────────
 [[category]]
-id = "metrics"
-name = "指标"
+id     = "hypervisor"
+name   = "虚拟化"
+domain = "compute"
 
 [[category]]
-id = "logs"
-name = "日志"
+id     = "k8s-distro"
+name   = "K8s 发行版"
+domain = "compute"
 
 [[category]]
-id = "traces"
-name = "链路"
+id     = "single-host"
+name   = "单机容器编排"
+domain = "compute"
+
+# ── 网络与接入 ────────────────────────────────────────────────────────
+[[category]]
+id     = "cni"
+name   = "CNI"
+domain = "networking"
 
 [[category]]
-id = "apm"
-name = "APM"
+id     = "ingress"
+name   = "入口"
+domain = "networking"
 
 [[category]]
-id = "errors"
-name = "错误追踪"
+id     = "dns"
+name   = "DNS"
+domain = "networking"
 
 [[category]]
-id = "uptime"
-name = "可用性"
+id     = "mesh-vpn"
+name   = "跨机组网"
+domain = "networking"
 
 [[category]]
-id = "profiling"
-name = "性能剖析"
+id     = "certs"
+name   = "证书"
+domain = "networking"
+
+# ── 存储与备份 ────────────────────────────────────────────────────────
+[[category]]
+id     = "k8s-volumes"
+name   = "K8s 卷"
+domain = "storage"
 
 [[category]]
-id = "alerts"
-name = "告警"
+id     = "object-storage"
+name   = "对象存储"
+domain = "storage"
 
 [[category]]
-id = "all-in-one"
-name = "全家桶"
+id     = "backup"
+name   = "备份"
+domain = "storage"
+
+# ── 交付与 GitOps ─────────────────────────────────────────────────────
+[[category]]
+id     = "cd"
+name   = "持续交付"
+domain = "gitops"
+
+[[category]]
+id     = "ci"
+name   = "持续集成"
+domain = "gitops"
+
+[[category]]
+id     = "packaging"
+name   = "清单与打包"
+domain = "gitops"
+
+[[category]]
+id     = "dependency-updates"
+name   = "依赖更新"
+domain = "gitops"
+
+[[category]]
+id     = "registry"
+name   = "镜像仓库"
+domain = "gitops"
+
+[[category]]
+id     = "git-hosting"
+name   = "Git 托管"
+domain = "gitops"
+
+# ── 密钥与配置 ────────────────────────────────────────────────────────
+[[category]]
+id     = "secret-store"
+name   = "密钥后端"
+domain = "secrets"
+
+[[category]]
+id     = "secret-delivery"
+name   = "密钥交付"
+domain = "secrets"
+
+# ── 身份与访问 ────────────────────────────────────────────────────────
+[[category]]
+id     = "idp"
+name   = "身份提供方"
+domain = "identity"
+
+[[category]]
+id     = "forward-auth"
+name   = "入口层认证"
+domain = "identity"
+
+# ── 可观测 ────────────────────────────────────────────────────────────
+[[category]]
+id     = "metrics"
+name   = "指标"
+domain = "observability"
+
+[[category]]
+id     = "logs"
+name   = "日志"
+domain = "observability"
+
+[[category]]
+id     = "traces"
+name   = "链路"
+domain = "observability"
+
+[[category]]
+id     = "apm"
+name   = "APM"
+domain = "observability"
+
+[[category]]
+id     = "errors"
+name   = "错误追踪"
+domain = "observability"
+
+[[category]]
+id     = "uptime"
+name   = "可用性"
+domain = "observability"
+
+[[category]]
+id     = "profiling"
+name   = "性能剖析"
+domain = "observability"
+
+[[category]]
+id     = "alerts"
+name   = "告警"
+domain = "observability"
+
+[[category]]
+id     = "all-in-one"
+name   = "全家桶"
+domain = "observability"
+
+# ── 安全加固 ──────────────────────────────────────────────────────────
+[[category]]
+id     = "scanning"
+name   = "扫描与基线"
+domain = "security"
+
+[[category]]
+id     = "runtime-security"
+name   = "运行时防护"
+domain = "security"
+
+[[category]]
+id     = "policy"
+name   = "准入与策略"
+domain = "security"
+
+# ── 基础设施即代码 ────────────────────────────────────────────────────
+[[category]]
+id     = "declarative-infra"
+name   = "声明式基础设施"
+domain = "iac"
+
+[[category]]
+id     = "machine-config"
+name   = "主机配置"
+domain = "iac"
+
+# ── 数据服务 ──────────────────────────────────────────────────────────
+[[category]]
+id     = "relational"
+name   = "关系库"
+domain = "data"
+
+[[category]]
+id     = "cache"
+name   = "缓存"
+domain = "data"

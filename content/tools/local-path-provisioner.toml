@@ -1,0 +1,25 @@
+slug       = "local-path-provisioner"
+name       = "Local Path Provisioner"
+summary    = "把节点本地目录做成 PV 的最小 provisioner。K3s 默认存储类，零依赖零副本。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "storage"
+categories = ["k8s-volumes"]
+self_host  = ["Manifests", "HelmChart"]
+hosted     = false
+
+detail = """
+PVC 一来就在某个节点的本地路径下建一个目录，做成带 node affinity 的 PV。没有网络、没有副本、没有快照 ——\
+读写就是本地磁盘速度，运维面几乎为零。K3s 默认装的存储类就是它，单节点 homelab 里这通常是**正确**的选择：\
+副本要跨节点才有意义，单节点上的分布式存储只剩开销。"""
+
+watch = [
+  "PV 绑死在一个节点上：那个节点下线，用它的 Pod 就调度不出去（不是慢，是 Pending）",
+  "没有快照、没有副本 —— 备份必须在文件层另做（restic / Velero 的文件级备份），存储层不会帮你",
+  "默认路径在 /var/lib/rancher/... 之类的系统盘上，容量与系统盘共命运，扩容前先确认底层是哪块盘",
+]
+
+[links]
+site = "https://github.com/rancher/local-path-provisioner"
+repo = "https://github.com/rancher/local-path-provisioner"
+docs = "https://github.com/rancher/local-path-provisioner/blob/master/README.md"

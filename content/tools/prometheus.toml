@@ -3,6 +3,7 @@ name       = "Prometheus"
 summary    = "CNCF 毕业的指标事实标准。拉模型 + PromQL + 本地 TSDB，指标监控的默认选择。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["metrics", "alerts"]
 replaces   = ["datadog", "new-relic", "grafana-cloud"]
 self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]

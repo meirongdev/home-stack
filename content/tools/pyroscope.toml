@@ -3,6 +3,7 @@ name       = "Pyroscope"
 summary    = "连续性能剖析后端。与 OTel Profiling 集成，火焰图按请求关联。"
 license    = "AGPL-3.0"
 language   = "Go"
+domain     = "observability"
 categories = ["profiling"]
 replaces   = ["datadog-profiler"]
 self_host  = ["Docker", "HelmChart"]

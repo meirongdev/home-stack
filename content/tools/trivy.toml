@@ -1,0 +1,30 @@
+slug       = "trivy"
+name       = "Trivy"
+summary    = "一把扫全部：镜像漏洞、IaC 配置、K8s 清单、密钥硬编码、SBOM。CI 里最常见的那个。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "security"
+categories = ["scanning"]
+replaces   = ["snyk"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+扫描目标是多类的：容器镜像与文件系统里的包漏洞（OS 包 + 语言依赖）、Terraform/K8s/Dockerfile 的配置误用、\
+硬编码密钥、以及生成 SBOM。漏洞库是本地缓存的数据库，因此扫描本身不需要把镜像上传给任何人。\
+另有 trivy-operator 常驻集群，把「跑着的工作负载有哪些 CVE」变成 CRD 与指标。CNCF 项目。"""
+
+requires = [
+  "首次运行要拉漏洞库（几十 MB 到百 MB 级）；离线环境要预置或自建镜像源",
+]
+
+watch = [
+  "扫出来的多数 CVE 在 homelab 语境下不可利用（没有攻击面）—— 不定义「哪些等级必须处理」的话，它产出的是噪音而不是信号",
+  "常驻 operator 在小集群上是持续的 CPU 与内存开销，按 namespace 收窄扫描范围比全量扫更实际",
+  "「扫描通过」不代表安全：它只看已知 CVE 与已知误配置，配置逻辑漏洞与权限过宽不在它视野里",
+]
+
+[links]
+site = "https://trivy.dev/"
+repo = "https://github.com/aquasecurity/trivy"
+docs = "https://trivy.dev/latest/docs/"

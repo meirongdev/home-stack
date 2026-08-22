@@ -1,0 +1,26 @@
+slug       = "helm"
+name       = "Helm"
+summary    = "K8s 的打包与模板工具：chart + values 渲染成清单，release 状态存在集群里。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["packaging"]
+self_host  = ["SingleBinary"]
+hosted     = false
+
+detail = """
+一个 chart 是「Go template 写的清单 + 一份默认 values + 依赖声明」，`helm install` 渲染后 apply，\
+并把这次 release 的记录（含渲染结果）存成集群里的一个 Secret，用于 `helm rollback` 与 diff。\
+chart 从 HTTP chart repo 或 OCI registry 拉。绝大多数第三方组件的官方安装方式就是它，\
+所以即使你选择 Kustomize 派，也躲不开读 chart 的 values。CNCF 毕业项目。"""
+
+watch = [
+  "模板是文本拼接：缩进与类型错误只有渲染时才暴露，改完先 `helm template` 看输出，不要直接 upgrade",
+  "release 状态在集群里，和「Git 是唯一真相源」有张力 —— 交给 Argo CD/Flux 渲染时状态改由它们持有，`helm list` 就看不到了",
+  "chart 的 values 结构是上游的私有 API，大版本改名/挪层是常规操作，升级前必读 chart 的 upgrade notes",
+]
+
+[links]
+site = "https://helm.sh/"
+repo = "https://github.com/helm/helm"
+docs = "https://helm.sh/docs/"

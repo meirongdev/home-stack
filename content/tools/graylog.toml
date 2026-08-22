@@ -3,6 +3,7 @@ name       = "Graylog"
 summary    = "集中式日志管理。采集 + 搜索 + 告警 + 看板，自带 Web UI。"
 license    = "SSPL-1.0"
 language   = "Java"
+domain     = "observability"
 categories = ["logs"]
 replaces   = ["splunk", "papertrail", "elastic-cloud", "logz-io"]
 self_host  = ["Docker", "HelmChart"]

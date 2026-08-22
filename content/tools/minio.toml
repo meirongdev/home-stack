@@ -1,0 +1,37 @@
+slug       = "minio"
+name       = "MinIO"
+summary    = "曾经默认的自托管 S3。开源版先被砍掉管理 UI，随后进入维护模式并归档。"
+license    = "AGPL-3.0"
+language   = "Go"
+domain     = "storage"
+categories = ["object-storage"]
+replaces   = ["aws-s3", "cloudflare-r2", "backblaze-b2"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+S3 兼容对象存储，单二进制起步、纠删码（erasure coding）做冗余，多年来是自托管 S3 的默认答案 ——\
+Loki、Thanos、Velero、Harbor 这些组件的文档里几乎都拿它当示例后端。\
+它今天仍然能跑、协议仍然兼容，但**开源版已经不是一个在演进的产品**：先是管理能力从社区版 UI 里移除，\
+随后整个开源仓库进入维护模式并归档。"""
+
+requires = [
+  "裸盘或目录；纠删码模式要多块盘（单盘只能跑单节点无冗余）",
+]
+
+watch = [
+  "**开源仓库已归档**：不再有新功能，issue / PR 不再处理，官方包与镜像也不再发布 —— 新项目不该从这里起步",
+  "2025-05 起社区版 Web 控制台只剩对象浏览：用户与策略管理、生命周期、站点复制都进了商业版，运维只能走 `mc` 命令行",
+  "已有部署最现实的两条路：继续跑一个冻结版本（自己承担安全维护），或迁到别的 S3 实现（Garage、Ceph RGW）——迁移要按 bucket 校验 ACL 与生命周期规则，不只是 `mc mirror` 拷数据",
+]
+
+[links]
+site = "https://min.io/"
+repo = "https://github.com/minio/minio"
+docs = "https://min.io/docs/minio/kubernetes/upstream/"
+
+[upstream]
+status = "Archived"
+as_of  = "2026-08-22"
+note   = "2025-06 社区版 Web 管理功能移入商业版；2025-12-03 宣布开源版进入维护模式（不再加功能、不再处理 issue/PR、停发官方包与镜像）；仓库已归档。"
+source = "https://github.com/minio/minio/issues/21714"

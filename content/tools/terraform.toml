@@ -1,0 +1,30 @@
+slug       = "terraform"
+name       = "Terraform"
+summary    = "声明式管云与本地资源的事实标准，provider 生态最大。1.6 起许可证为 BUSL。"
+license    = "BUSL-1.1"
+language   = "Go"
+domain     = "iac"
+categories = ["declarative-infra"]
+replaces   = ["terraform-cloud"]
+self_host  = ["SingleBinary"]
+hosted     = true
+
+detail = """
+HCL 声明期望状态，plan 阶段把「期望」与 state 文件里记录的「已知现状」比对，apply 只做差异那部分。\
+provider 是它真正的护城河 —— Cloudflare、Proxmox、Oracle Cloud、Tailscale、Vault 这些在 homelab 里要动的东西都有官方或社区 provider。\
+state 可以放本地文件，也可以放 S3 兼容后端（如 R2）拿到并发锁与远端备份。"""
+
+requires = [
+  "各 provider 的凭据；团队/多机协作需要一个带锁的远端 state 后端",
+]
+
+watch = [
+  "**许可证不是开源**：1.6 起为 BUSL-1.1，禁止用它做与 HashiCorp 竞争的商业产品。个人 homelab 无碍，但这是 OpenTofu 存在的原因",
+  "state 文件是真相源，且**含明文敏感值** —— 它必须按密钥级别保护与备份，丢了比丢代码严重",
+  "`terraform destroy` 与被 `plan` 判为「需要替换」的资源是同一类风险：读 plan 时要盯 `must be replaced` 那几行，不是只看 add/change 计数",
+]
+
+[links]
+site = "https://developer.hashicorp.com/terraform"
+repo = "https://github.com/hashicorp/terraform"
+docs = "https://developer.hashicorp.com/terraform/docs"

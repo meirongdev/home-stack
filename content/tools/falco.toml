@@ -1,0 +1,30 @@
+slug       = "falco"
+name       = "Falco"
+summary    = "运行时威胁检测：按规则匹配内核事件（syscall），发现异常行为就出告警。"
+license    = "Apache-2.0"
+language   = "C++"
+domain     = "security"
+categories = ["runtime-security"]
+replaces   = ["sysdig-secure"]
+self_host  = ["HelmChart", "DebRpm", "Docker"]
+hosted     = false
+
+detail = """
+从内核拿 syscall 事件流（现代内核走 eBPF 驱动，也有内核模块方案），用一套规则语言匹配可疑行为：\
+容器里起了 shell、写入 /etc、读取 ServiceAccount token、非预期的出站连接。\
+命中即产生结构化告警，经 falcosidekick 转发到告警通道或 SIEM。它是**检测**工具，默认不做拦截。CNCF 毕业项目。"""
+
+requires = [
+  "支持 eBPF 的内核（或安装内核模块）；DaemonSet 需要特权",
+]
+
+watch = [
+  "**默认规则在真实集群里噪音很大**：不投入时间做例外与调优，最终结果是所有人都不再看它的告警",
+  "它只检测不拦截 —— 想阻断要另接响应动作（Falco Talon 之类），那是另一套东西的复杂度",
+  "特权 DaemonSet + 内核事件流本身就是一个高权限组件，它的告警通道与凭据要按高敏感对待",
+]
+
+[links]
+site = "https://falco.org/"
+repo = "https://github.com/falcosecurity/falco"
+docs = "https://falco.org/docs/"

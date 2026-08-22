@@ -3,6 +3,7 @@ name       = "Grafana Alloy"
 summary    = "OTel Collector 的分发版，Grafana 生态一体化采集与路由。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["metrics", "logs", "traces"]
 replaces   = ["datadog", "splunk", "new-relic"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

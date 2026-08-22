@@ -1,0 +1,30 @@
+slug       = "openbao"
+name       = "OpenBao"
+summary    = "Vault 改 BUSL 之后的 MPL 分支，托管在 Linux Foundation 下，API 大体兼容。"
+license    = "MPL-2.0"
+language   = "Go"
+domain     = "secrets"
+categories = ["secret-store"]
+replaces   = ["aws-secrets-manager", "doppler"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+从 Vault 最后一个 MPL 版本 fork 出来，由 Linux Foundation 托管治理。\
+概念、CLI 与 HTTP API 与 Vault 大体一致（密钥引擎、策略、认证方法、Raft 存储、租约与吊销都在），\
+迁移成本主要在名字与部分生态集成，而不是在心智模型。选它的理由通常只有一条：**许可证**。"""
+
+requires = [
+  "存储后端（内置 Raft 或外部）；同样需要 unseal 流程",
+]
+
+watch = [
+  "生态集成仍以 Vault 为默认对象：第三方 Helm chart、operator 与文档里写的是 Vault，用 OpenBao 时要自己确认适配",
+  "两边的版本已开始分叉，别假设新版 Vault 的功能一定会出现在 OpenBao（反之亦然）",
+  "unseal 与 root token 的运维负担和 Vault 完全一样，换许可证不换这部分成本",
+]
+
+[links]
+site = "https://openbao.org/"
+repo = "https://github.com/openbao/openbao"
+docs = "https://openbao.org/docs/"

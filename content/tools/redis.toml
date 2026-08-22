@@ -1,0 +1,31 @@
+slug       = "redis"
+name       = "Redis"
+summary    = "内存数据结构服务器的原版。8.0 起三重许可，AGPLv3 是其中的开源选项。"
+license    = "AGPL-3.0"
+language   = "C"
+domain     = "data"
+categories = ["cache"]
+replaces   = ["aws-elasticache"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = true
+
+detail = """
+不只是键值缓存：list / set / sorted set / stream / hash 这些数据结构加上过期、发布订阅、Lua 脚本与事务，\
+是无数自托管应用（Miniflux、authentik、Harbor、Grafana OnCall…）默认依赖的那一个组件。\
+许可证走过一段曲折：2024 年从 BSD 改为 RSALv2 / SSPL（引发 Valkey 分支），\
+2025 年 8.0 又把 AGPLv3 加了回来 —— 今天它是三重许可，可以按 AGPLv3 使用。"""
+
+requires = [
+  "持久化（RDB/AOF）要留磁盘；哨兵或 Cluster 模式才有高可用",
+]
+
+watch = [
+  "**许可证要选一个**：8.0 起为 AGPLv3 / RSALv2 / SSPLv1 三选一。自用无碍，对外提供服务时 AGPL 的义务要看清",
+  "默认配置几乎没有防护：绑定地址、requirepass 与危险命令（`FLUSHALL`、`CONFIG`）必须显式收紧，公网暴露的 Redis 是经典入侵入口",
+  "内存打满时的行为由 maxmemory-policy 决定 —— 不设的话它会开始拒绝写入而不是淘汰，这个默认值咬过很多人",
+]
+
+[links]
+site = "https://redis.io/"
+repo = "https://github.com/redis/redis"
+docs = "https://redis.io/docs/latest/"

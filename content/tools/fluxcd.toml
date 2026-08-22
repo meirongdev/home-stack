@@ -1,0 +1,29 @@
+slug       = "fluxcd"
+name       = "Flux CD"
+summary    = "一组 GitOps 控制器，全部经 CR 配置、没有内置 UI，镜像自动更新是自带能力。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["cd"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+按职责拆成几个控制器：source-controller 拉 Git / Helm repo / OCI artifact，kustomize-controller 与 helm-controller 负责应用，\
+notification-controller 出事件，image-reflector / image-automation 负责发现新镜像并把新 tag 写回 Git。\
+没有官方 Web UI —— 一切靠 CR 与 `flux` CLI，这让它天生更适合「集群里不留人肉入口」的做法。CNCF 毕业项目。"""
+
+requires = [
+  "一个 Git 仓库；镜像自动更新需要给它对该仓库的写权限",
+]
+
+watch = [
+  "没有官方 UI：diff 与同步状态靠 `flux get` / `kubectl describe` 看，团队里有人想「点一下看看」时没有那个页面",
+  "多控制器意味着多份 CRD 与 RBAC，排障时要先判断卡在 source 还是 apply 阶段",
+  "把镜像更新写回 Git 是它的默认路线，所以它拿的是仓库写权限 —— 这条权限边界要单独审",
+]
+
+[links]
+site = "https://fluxcd.io/"
+repo = "https://github.com/fluxcd/flux2"
+docs = "https://fluxcd.io/flux/get-started/"

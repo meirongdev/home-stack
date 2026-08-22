@@ -1,0 +1,29 @@
+slug       = "restic"
+name       = "restic"
+summary    = "去重加密的快照式备份，单二进制，后端从本地盘到 S3/B2/SFTP 全都认。"
+license    = "BSD-2-Clause"
+language   = "Go"
+domain     = "storage"
+categories = ["backup"]
+self_host  = ["SingleBinary", "DebRpm", "Docker"]
+hosted     = false
+
+detail = """
+内容寻址：文件切块、按内容哈希去重，只有新块才上传，因此第二次以后的备份又快又省。\
+仓库整体端到端加密，服务端只看到密文 —— 后端可以是不那么可信的对象存储。\
+保留策略是两步：`forget` 按规则标记要丢的快照，`prune` 才真正回收空间。"""
+
+requires = [
+  "一个仓库后端（本地目录 / S3 兼容 / B2 / SFTP / rclone 远端）与一份仓库密码",
+]
+
+watch = [
+  "**仓库密码丢了数据就没了** —— 没有后门也没有找回流程，密码本身必须进另一套备份路径",
+  "`prune` 是重活：要重写 pack 文件，大仓库耗时与临时空间都可观，别和备份窗口挤在一起",
+  "「备份成功」不等于「能恢复」：定期 `restic restore` 到临时目录验证，才是这条链唯一的判据",
+]
+
+[links]
+site = "https://restic.net/"
+repo = "https://github.com/restic/restic"
+docs = "https://restic.readthedocs.io/en/stable/"

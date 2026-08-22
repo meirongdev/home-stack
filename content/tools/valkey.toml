@@ -1,0 +1,31 @@
+slug       = "valkey"
+name       = "Valkey"
+summary    = "Redis 改许可后的 BSD 分支，Linux Foundation 托管，协议与命令兼容。"
+license    = "BSD-3-Clause"
+language   = "C"
+domain     = "data"
+categories = ["cache"]
+replaces   = ["aws-elasticache"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+2024 年 Redis 改用源可用许可（RSALv2 / SSPL）之后，从最后一个 BSD 版本 fork 出来的延续版本，\
+由 Linux Foundation 托管，Amazon、Google、Oracle 等在投入。\
+协议与命令集与 Redis 兼容，多数客户端与运维工具直接可用；此后它自己也在加东西（多线程 IO 等）。\
+选它的第一理由通常还是许可证：BSD，没有 copyleft 也没有「不能提供竞品服务」的条款。"""
+
+requires = [
+  "持久化（RDB/AOF）要留磁盘；纯缓存用途可以完全不持久化",
+]
+
+watch = [
+  "很多第三方项目的文档、chart 与默认镜像仍写 Redis —— 换成它多数时候只是改镜像名，但要逐个确认没有用到 Redis 商业模块",
+  "Redis 的模块生态（RedisJSON、RediSearch 这些）不在它这里，依赖模块的用法迁不过来",
+  "上游已开始分叉：两边的新特性不再对齐，别按 Redis 的最新文档配 Valkey",
+]
+
+[links]
+site = "https://valkey.io/"
+repo = "https://github.com/valkey-io/valkey"
+docs = "https://valkey.io/topics/"

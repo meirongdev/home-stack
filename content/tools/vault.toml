@@ -1,0 +1,31 @@
+slug       = "vault"
+name       = "HashiCorp Vault"
+summary    = "密钥后端的事实标准：动态凭据、租约与审计。2023 年起许可证改为 BUSL。"
+license    = "BUSL-1.1"
+language   = "Go"
+domain     = "secrets"
+categories = ["secret-store"]
+replaces   = ["aws-secrets-manager", "doppler"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = true
+
+detail = """
+不只是「加密的键值库」：它的核心概念是**租约**——数据库账号、云凭据、PKI 证书都能按需动态签发、到期自动吊销，\
+配上策略（policy）、多种认证方式（Kubernetes ServiceAccount、OIDC、AppRole）与审计日志。\
+静态密钥（KV v2）只是它最简单的一种引擎。存储后端可用内置 Raft（integrated storage），不必再外挂 Consul。"""
+
+requires = [
+  "存储后端（内置 Raft 或外部）；生产形态要 3 节点才有 Raft quorum",
+  "**解封（unseal）流程**：每次重启后必须用密钥分片解封，或接 auto-unseal（云 KMS / Transit）",
+]
+
+watch = [
+  "**许可证不是开源**：1.15 起为 BUSL-1.1（Licensor 现为 IBM）。自用没问题，但「提供与它竞争的服务」被禁；要 MPL 就看 OpenBao",
+  "手动 unseal 是 homelab 里最容易被忽略的运维负担 —— 节点重启后集群里所有依赖它的应用都拿不到密钥，直到有人来解封",
+  "unseal key 与 root token 的保管位置必须在集群之外，否则「密钥都在 Vault 里，Vault 的密钥在集群里」构成死循环",
+]
+
+[links]
+site = "https://developer.hashicorp.com/vault"
+repo = "https://github.com/hashicorp/vault"
+docs = "https://developer.hashicorp.com/vault/docs"

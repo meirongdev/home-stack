@@ -1,0 +1,32 @@
+slug       = "authelia"
+name       = "Authelia"
+summary    = "轻量认证门户：给反向代理提供 forward-auth，也能当 OIDC provider。配置即文件。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "identity"
+categories = ["forward-auth", "idp"]
+replaces   = ["cloudflare-access"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+主场是 forward-auth：反向代理（Traefik、nginx、Caddy、Envoy）把每个请求先转给它问一句「这人能进吗」，\
+它按访问控制规则（域名 + 路径 + 用户/组 + 需不需要二次因素）回 200 或重定向到登录页。\
+用户可以来自本地 YAML 文件或 LDAP；也支持作为 OIDC provider 给真正支持 SSO 的应用发 token。\
+配置是一份 YAML —— 对 GitOps 友好，也意味着改用户就要改文件。"""
+
+requires = [
+  "一个支持 forward-auth 的反向代理",
+  "会话存储：单实例可用内存，多实例需要 Redis；用户后端为文件或 LDAP",
+]
+
+watch = [
+  "forward-auth 只解决「谁能访问这个 URL」，**应用内部并不知道你是谁** —— 需要应用侧显示用户身份时仍要走 OIDC",
+  "它挡在所有受保护服务前面：它挂了等于全部 403/超时，比单个应用的可用性更关键",
+  "文件后端下的用户与密码哈希在一个 YAML 里，那个文件就是密钥，必须走密钥路径管理",
+]
+
+[links]
+site = "https://www.authelia.com/"
+repo = "https://github.com/authelia/authelia"
+docs = "https://www.authelia.com/configuration/prologue/introduction/"

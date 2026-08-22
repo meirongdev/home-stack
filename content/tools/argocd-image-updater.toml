@@ -1,0 +1,30 @@
+slug       = "argocd-image-updater"
+name       = "Argo CD Image Updater"
+summary    = "给 Argo CD 补上镜像自动更新：轮询仓库，发现新 tag 就改 Application 或写回 Git。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["dependency-updates"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+Argo CD 本身只对账 Git，不主动发现新镜像；这个组件填的就是那个缺口。\
+它按注解里的策略（semver、latest、digest、正则）轮询镜像仓库，命中后有两种写法：\
+直接改 Application 的参数覆盖（状态留在集群里），或把新 tag 写回 Git（真相源仍在 Git，但它需要写权限）。"""
+
+requires = [
+  "已部署的 Argo CD",
+  "写回 Git 模式需要仓库写权限的凭据",
+]
+
+watch = [
+  "它在 argoproj-labs 下，不是 Argo CD 核心 —— 版本兼容性与维护节奏都要单独跟",
+  "更新策略写松了就会一路升到破坏性版本：semver 约束（如只跟 patch）要显式写，不要依赖默认",
+  "两种写法的语义完全不同：参数覆盖模式下 Git 里的 tag 与集群里跑的不一致，看 Git 会得出错误结论",
+]
+
+[links]
+site = "https://argocd-image-updater.readthedocs.io/"
+repo = "https://github.com/argoproj-labs/argocd-image-updater"
+docs = "https://argocd-image-updater.readthedocs.io/en/stable/install/installation/"

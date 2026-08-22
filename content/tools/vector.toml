@@ -3,6 +3,7 @@ name       = "Vector"
 summary    = "高性能可观测性数据管道。采集 / 转换 / 路由 logs 与 metrics，Rust 编写。"
 license    = "MPL-2.0"
 language   = "Rust"
+domain     = "observability"
 categories = ["logs", "metrics"]
 replaces   = ["datadog-logs", "splunk", "papertrail"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

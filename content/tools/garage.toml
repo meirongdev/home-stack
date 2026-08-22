@@ -1,0 +1,30 @@
+slug       = "garage"
+name       = "Garage"
+summary    = "轻量 S3 兼容对象存储，Rust 写的，无共识协议、面向异地小节点设计。"
+license    = "AGPL-3.0"
+language   = "Rust"
+domain     = "storage"
+categories = ["object-storage"]
+replaces   = ["aws-s3", "cloudflare-r2", "backblaze-b2"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+面向「几台便宜机器、网络还不一定好」的场景设计：不用 Raft 这类强共识，元数据走 CRDT 最终一致，\
+因此对节点间延迟与短暂离线的容忍度高。数据按副本数分布在节点上，布局（layout）由管理员显式声明并 apply。\
+提供 S3 API 与静态网站托管，单二进制、内存占用小。MinIO 开源版停摆后，它是被提到最多的替代路径。"""
+
+requires = [
+  "各节点一块数据盘 + 一份元数据目录（元数据建议放 SSD）",
+]
+
+watch = [
+  "**不是 MinIO 的功能等价物**：S3 API 覆盖的是常用子集，IAM 模型、生命周期与站点复制这些要逐条核对自己是否真的用到",
+  "上游主仓库在 Deuxfleurs 自建的 Forgejo 上（git.deuxfleurs.fr），GitHub 那份是镜像 —— 提 issue 要去前者",
+  "集群布局改动（加盘、换节点）要显式 apply 一个新 layout 版本，数据再平衡期间容量与带宽都要留余量",
+]
+
+[links]
+site = "https://garagehq.deuxfleurs.fr/"
+repo = "https://github.com/deuxfleurs-org/garage"
+docs = "https://garagehq.deuxfleurs.fr/documentation/quick-start/"

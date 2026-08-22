@@ -1,0 +1,30 @@
+slug       = "authentik"
+name       = "authentik"
+summary    = "以「流程（flow）」为核心的 IdP：登录步骤可视化编排，代理式认证内置。"
+license    = "MIT"
+language   = "Python"
+domain     = "identity"
+categories = ["idp", "forward-auth"]
+replaces   = ["auth0", "okta", "cloudflare-access"]
+self_host  = ["Compose", "HelmChart"]
+hosted     = true
+
+detail = """
+特色是把认证过程本身做成可编排的对象：flow 由一串 stage（输入身份、校验密码、MFA、同意授权、写入用户）组成，\
+可按条件分支。除标准 OIDC / SAML 之外，它自带 Proxy Provider ——\
+对那些压根不支持 SSO 的老应用，用它在入口前面挡一层就能加上登录，不用另配 oauth2-proxy。"""
+
+requires = [
+  "PostgreSQL 与 Redis；server 与 worker 两个进程",
+]
+
+watch = [
+  "许可证是分区的：`authentik/enterprise/` 目录下按另一份商业许可，自托管时要确认所需功能是否在开源面内",
+  "flow 的表达力很强，也因此很容易配出一个只有自己当时看得懂的登录链 —— 改动前先把现有 flow 导出留档",
+  "Python + Redis + Postgres 的组合在小内存节点上不算轻，worker 是常被忽略的那一半",
+]
+
+[links]
+site = "https://goauthentik.io/"
+repo = "https://github.com/goauthentik/authentik"
+docs = "https://docs.goauthentik.io/"

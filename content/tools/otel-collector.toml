@@ -3,6 +3,7 @@ name       = "OpenTelemetry Collector"
 summary    = "遥测数据的采集、处理与转发中枢。单一 Agent 接 metrics / logs / traces。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["all-in-one", "metrics", "logs", "traces"]
 replaces   = ["datadog", "new-relic", "splunk"]
 self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]

@@ -1,0 +1,31 @@
+slug       = "headscale"
+name       = "Headscale"
+summary    = "Tailscale 控制面的第三方开源实现：官方客户端照用，协调服务器换成自己的。"
+license    = "BSD-3-Clause"
+language   = "Go"
+domain     = "networking"
+categories = ["mesh-vpn"]
+replaces   = ["tailscale"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+实现 Tailscale 客户端所需的那部分控制面协议：设备注册、密钥分发、节点列表下发、ACL 与 DERP 配置。\
+官方客户端用 `--login-server` 指向它即可，数据面仍是原来的 WireGuard。\
+状态存在 SQLite 或 PostgreSQL 里，单进程部署。"""
+
+requires = [
+  "一个有公网可达地址与证书的入口（客户端要能连上控制面）",
+  "SQLite 或 PostgreSQL",
+]
+
+watch = [
+  "上游明确说明这是非官方实现、不承诺跟上所有客户端版本 —— 客户端自动更新后失联是这个组合最典型的故障",
+  "功能不对等：管理 UI、审计日志、部分企业特性没有，运维靠 CLI 与配置文件",
+  "控制面成了你的单点：它挂掉时已建立的直连还在，但新节点加入、密钥轮换与 ACL 变更都会停",
+]
+
+[links]
+site = "https://headscale.net/"
+repo = "https://github.com/juanfont/headscale"
+docs = "https://headscale.net/stable/"

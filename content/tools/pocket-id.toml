@@ -1,0 +1,30 @@
+slug       = "pocket-id"
+name       = "Pocket ID"
+summary    = "极简 OIDC provider，只用 passkey 登录，SQLite 单文件。够小到一眼读完。"
+license    = "BSD-2-Clause"
+language   = "Go"
+domain     = "identity"
+categories = ["idp"]
+replaces   = ["auth0"]
+self_host  = ["Docker", "SingleBinary"]
+hosted     = false
+
+detail = """
+刻意只做一件事：给自己的几个服务当 OIDC provider，登录方式只有 passkey（WebAuthn），没有密码。\
+用户、客户端与组都在一个 SQLite 文件里，没有 Redis、没有 Postgres、没有 worker。\
+适合「我只想给三五个自建服务加统一登录，用户就我和家人」——那种场景下 Keycloak 与 authentik 都是过度设计。"""
+
+requires = [
+  "HTTPS（WebAuthn 强制要求安全上下文）与一个稳定域名",
+]
+
+watch = [
+  "**只有 passkey**：设备丢失时的恢复路径要提前想清楚（多注册一把、留好管理员入口），否则会把自己锁在外面",
+  "功能面刻意小：没有 SAML、没有 LDAP 联邦、没有复杂授权模型 —— 需要这些就不该选它",
+  "项目年轻、单一维护面，把它放在关键登录路径上要接受这个风险",
+]
+
+[links]
+site = "https://pocket-id.org/"
+repo = "https://github.com/pocket-id/pocket-id"
+docs = "https://pocket-id.org/docs/"

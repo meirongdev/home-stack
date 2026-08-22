@@ -1,0 +1,30 @@
+slug       = "sops"
+name       = "SOPS"
+summary    = "只加密 YAML/JSON 的值、保留结构与注释，密钥交给 age 或 KMS。CNCF 项目。"
+license    = "MPL-2.0"
+language   = "Go"
+domain     = "secrets"
+categories = ["secret-delivery"]
+replaces   = ["doppler"]
+self_host  = ["SingleBinary", "DebRpm"]
+hosted     = false
+
+detail = """
+和整文件加密不同：SOPS 只加密**值**，键名、结构与注释保持明文 —— 所以加密后的文件在 Git 里仍然能看出 diff 是改了哪一项。\
+数据密钥本身用 age、PGP 或云 KMS 包一层，可以配多个接收方（人 + CI 各一把）。\
+Flux 内置解密 SOPS 文件；Argo CD 侧要靠插件或 KSOPS。原本由 Mozilla 维护，现已进 CNCF。"""
+
+requires = [
+  "一把主密钥：age 密钥对（最简）、PGP，或云 KMS",
+]
+
+watch = [
+  "解密的一端仍需要拿到私钥 —— 在 K8s 里那把私钥又是一个 Secret，链条到这里并没有凭空消失",
+  "轮换接收方要对所有文件重新 `updatekeys`，漏掉的文件会在某次部署时才暴露",
+  ".sops.yaml 的 creation_rules 决定哪些路径用哪把密钥，写错的后果是「以为加密了其实是明文提交」—— 加一条 CI 检查比靠自觉可靠",
+]
+
+[links]
+site = "https://getsops.io/"
+repo = "https://github.com/getsops/sops"
+docs = "https://getsops.io/docs/"

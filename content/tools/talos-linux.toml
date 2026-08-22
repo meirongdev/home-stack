@@ -1,0 +1,29 @@
+slug       = "talos-linux"
+name       = "Talos Linux"
+summary    = "不可变、无 SSH 无 shell 的 Kubernetes 专用操作系统，全部经 API 声明式管理。"
+license    = "MPL-2.0"
+language   = "Go"
+domain     = "compute"
+categories = ["k8s-distro"]
+self_host  = ["OsImage"]
+hosted     = false
+
+detail = """
+整个操作系统只为跑 Kubernetes 存在：根文件系统只读、没有包管理器、没有 shell、没有 sshd，\
+唯一的管理入口是一个双向 TLS 的 gRPC API（talosctl）加一份声明式 machine config。\
+升级 = 换一个系统镜像并重启，节点因此天生一致，不存在「这台机器上手动改过什么」这个问题。"""
+
+requires = [
+  "能从 ISO / PXE / 云镜像引导的机器，以及一台放 talosctl 与 machine config 的运维机",
+]
+
+watch = [
+  "没有 SSH，也没有 shell —— 排障手段只有 talosctl 与 Kubernetes API。习惯登上机器 tail 日志、改配置文件的运维方式要整体改掉",
+  "machine config 是唯一真相源，`talosctl` 之外的任何带内修改都不存在（这既是它的卖点，也是学习成本的全部来源）",
+  "Ansible 这类靠 SSH 的主机配置工具在它上面完全失效，别把它和已有的 playbook 体系混着算",
+]
+
+[links]
+site = "https://www.talos.dev/"
+repo = "https://github.com/siderolabs/talos"
+docs = "https://www.talos.dev/latest/introduction/getting-started/"

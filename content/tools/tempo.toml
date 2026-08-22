@@ -3,6 +3,7 @@ name       = "Grafana Tempo"
 summary    = "分布式链路后端。对象存储 + TraceQL，与 OTel 协议原生集成。"
 license    = "AGPL-3.0"
 language   = "Go"
+domain     = "observability"
 categories = ["traces"]
 replaces   = ["datadog-apm", "new-relic", "honeycomb"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

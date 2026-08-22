@@ -1,0 +1,30 @@
+slug       = "rook-ceph"
+name       = "Rook (Ceph)"
+summary    = "用 operator 把 Ceph 装进 K8s：块、文件、S3 对象三种接口一套底座。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "storage"
+categories = ["k8s-volumes", "object-storage"]
+self_host  = ["HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+Rook 是 operator，真正干活的是 Ceph：MON 管集群状态、OSD 管磁盘、MGR 出指标，\
+上面同时长出块设备（RBD，给 PVC）、共享文件系统（CephFS，给多 Pod 读写）与 S3 兼容对象网关（RGW）。\
+一套存储覆盖三种接口是它最大的价值，代价是你实际上在运维一个 Ceph 集群。CNCF 毕业项目。"""
+
+requires = [
+  "3 个以上节点，每节点有独立裸盘（不是分区、不是已挂载的文件系统）",
+  "内存以 GB 计：MON / OSD / MGR 各自都有底线，小内存节点跑不动",
+]
+
+watch = [
+  "**排障需要懂 Ceph**：operator 只负责编排，PG 不健康、OSD flapping、pool 满这些问题得按 Ceph 的方式处理",
+  "homelab 单节点或双节点上不要上它 —— 达不到副本与 quorum 前提，只剩资源开销",
+  "裸盘一旦被 OSD 接管就不再是普通磁盘，退出前要走正规的 OSD 移除流程，直接删 CR 会留下脏盘",
+]
+
+[links]
+site = "https://rook.io/"
+repo = "https://github.com/rook/rook"
+docs = "https://rook.io/docs/rook/latest-release/Getting-Started/intro/"

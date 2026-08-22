@@ -1,0 +1,28 @@
+slug       = "podman"
+name       = "Podman"
+summary    = "无守护进程的容器引擎，兼容 Docker CLI，rootless 与 systemd 集成是它的主场。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "compute"
+categories = ["single-host"]
+self_host  = ["SingleBinary", "DebRpm"]
+hosted     = false
+
+detail = """
+没有常驻守护进程：每个容器直接由调用者 fork/exec 出来，进程树挂在用户会话或 systemd 下。\
+命令行与 Docker 基本兼容（多数人直接 `alias docker=podman`），并且能通过 Quadlet 把容器声明成 systemd unit ——\
+开机自启、依赖顺序、重启策略交给 systemd，而不是另一个守护进程。rootless 是一等公民。"""
+
+requires = [
+  "较新的内核（user namespace）；rootless 网络还需要 pasta 或 slirp4netns",
+]
+
+watch = [
+  "rootless 下绑定 <1024 端口要额外授权，网络性能也不同于 root 模式 —— 这是最常见的第一个坑",
+  "compose 兼容靠 podman 的 docker 兼容 socket，覆盖不是 100%，复杂 compose 文件仍会有差异",
+]
+
+[links]
+site = "https://podman.io/"
+repo = "https://github.com/containers/podman"
+docs = "https://docs.podman.io/en/latest/"

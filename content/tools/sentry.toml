@@ -3,6 +3,7 @@ name       = "Sentry"
 summary    = "错误追踪与 APM。异常分组、release 追踪、性能面板，覆盖前后端。"
 license    = "FSL-1.1-ALv2"
 language   = "Python"
+domain     = "observability"
 categories = ["errors", "apm"]
 replaces   = ["sentry"]
 self_host  = ["Docker", "Compose", "HelmChart"]

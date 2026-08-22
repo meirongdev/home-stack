@@ -1,0 +1,30 @@
+slug       = "postgres-operator-zalando"
+name       = "Postgres Operator (Zalando)"
+summary    = "基于 Patroni 的老牌 PostgreSQL operator，自带连接池与用户/库声明。"
+license    = "MIT"
+language   = "Go"
+domain     = "data"
+categories = ["relational"]
+replaces   = ["aws-rds"]
+self_host  = ["HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+Zalando 生产环境里长出来的 operator：高可用由 Patroni 负责（用 Kubernetes API 或 etcd 做 DCS），\
+CR 里可以直接声明要建哪些数据库与角色，并可一并拉起 PgBouncer 做连接池。\
+另有一个 Web UI 用来看集群与做基本操作。备份走 WAL-G 到对象存储。"""
+
+requires = [
+  "StorageClass；备份需要 S3 兼容对象存储",
+]
+
+watch = [
+  "多了一层 Patroni：排障时要同时懂 operator 与 Patroni 两套状态机（`patronictl` 是绕不开的工具）",
+  "CR 里声明用户与数据库很方便，但那些密码由它生成成 Secret，和外部密钥管理（ESO/Vault）的边界要提前划清",
+  "和 CloudNativePG 二选一时，主要差别是「Patroni + 连接池 + 用户声明」对上「更少活动部件」——homelab 规模下后者的排障面更小",
+]
+
+[links]
+site = "https://github.com/zalando/postgres-operator"
+repo = "https://github.com/zalando/postgres-operator"
+docs = "https://postgres-operator.readthedocs.io/en/latest/"

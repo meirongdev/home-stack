@@ -3,6 +3,7 @@ name       = "cAdvisor"
 summary    = "容器资源使用指标采集器。kubelet 内建，配合 Prometheus 抓取。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["metrics"]
 replaces   = ["datadog", "new-relic"]
 self_host  = ["Docker", "HelmChart"]

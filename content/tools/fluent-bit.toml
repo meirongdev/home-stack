@@ -3,6 +3,7 @@ name       = "Fluent Bit"
 summary    = "轻量级日志采集器。内存占用极小，适合边车与嵌入式场景。"
 license    = "Apache-2.0"
 language   = "C"
+domain     = "observability"
 categories = ["logs"]
 replaces   = ["datadog-logs", "splunk", "papertrail"]
 self_host  = ["SingleBinary", "Docker", "DebRpm"]

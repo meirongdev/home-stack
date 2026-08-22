@@ -3,6 +3,7 @@ name       = "Netdata"
 summary    = "实时指标监控，毫秒级粒度。零配置自动采集，附带告警与看板。"
 license    = "GPL-3.0"
 language   = "C"
+domain     = "observability"
 categories = ["metrics", "uptime"]
 replaces   = ["datadog", "new-relic"]
 self_host  = ["Docker", "HelmChart", "DebRpm"]

@@ -1,0 +1,29 @@
+slug       = "kopia"
+name       = "Kopia"
+summary    = "同样是去重加密快照备份，自带 GUI 与调度，压缩与纠错可选。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "storage"
+categories = ["backup"]
+self_host  = ["SingleBinary", "Docker"]
+hosted     = false
+
+detail = """
+和 restic 属同一类（内容寻址、去重、端到端加密），差异在周边：内置调度与保留策略、桌面 GUI、\
+可选压缩算法与纠错编码、仓库服务端模式（多客户端经它写同一个仓库）。\
+Velero 的文件级备份上传器用的就是 Kopia 的库，所以在 K8s 语境里它常以「间接依赖」的形式出现。"""
+
+requires = [
+  "一个仓库后端（S3 兼容 / B2 / 本地 / SFTP 等）与仓库密码",
+]
+
+watch = [
+  "仓库格式与 restic 不互通 —— 换工具等于重做一份全量",
+  "社区脚本、K8s 集成与运维文章的存量明显少于 restic，遇到冷门问题可参考的经验更少",
+  "功能面比 restic 宽（GUI、服务端模式），意味着配置项也更多，最小可用配置要自己收敛",
+]
+
+[links]
+site = "https://kopia.io/"
+repo = "https://github.com/kopia/kopia"
+docs = "https://kopia.io/docs/"

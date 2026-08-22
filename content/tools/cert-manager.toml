@@ -1,0 +1,29 @@
+slug       = "cert-manager"
+name       = "cert-manager"
+summary    = "K8s 里的证书控制器：CRD 声明域名，它负责向 ACME 或私有 CA 申请与续期。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["certs"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+用 Issuer / ClusterIssuer 声明「证书从哪来」（Let's Encrypt、ZeroSSL、私有 CA、Vault），\
+用 Certificate 声明「要哪些域名」，控制器把签好的证书写成 Secret 并在到期前自动续。\
+校验支持 HTTP-01 与 DNS-01；通配符证书和不对公网开放的内网域名只能走 DNS-01。CNCF 毕业项目。"""
+
+requires = [
+  "DNS-01 校验需要一份 DNS provider 的 API 凭据（权限应收窄到单个 zone 的 TXT 记录）",
+]
+
+watch = [
+  "Let's Encrypt 有速率限制，反复删建 Certificate 很容易撞上并被锁一周 —— 调试期一律先用 staging issuer",
+  "它拿到的是能改 DNS 的凭据，等于把域名控制权的一部分放进了集群，权限范围要当密钥对待",
+  "证书存在 Secret 里，备份策略要覆盖它 —— 否则重建集群时所有证书都要重签（又撞速率限制）",
+]
+
+[links]
+site = "https://cert-manager.io/"
+repo = "https://github.com/cert-manager/cert-manager"
+docs = "https://cert-manager.io/docs/"

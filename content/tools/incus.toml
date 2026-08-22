@@ -1,0 +1,28 @@
+slug       = "incus"
+name       = "Incus"
+summary    = "系统容器 + 虚机管理器，LXD 的社区 fork。比 Proxmox 轻，比 Docker 更像一台机器。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "compute"
+categories = ["hypervisor"]
+self_host  = ["DebRpm", "SingleBinary", "SourceBuild"]
+hosted     = false
+
+detail = """
+LXD 在 2023 年被 Canonical 收回自有治理并改为 AGPL 之后，原维护者在 Linux Containers 社区下 fork 出的延续版本。\
+管的是**系统容器**（一个跑着 systemd 的完整发行版，共享内核）与 KVM 虚机，两者同一套 CLI 与 REST API。\
+集群模式用 dqlite（Raft）同步状态，不需要额外数据库；存储驱动支持 ZFS、Btrfs、LVM 与目录。"""
+
+requires = [
+  "较新的内核（cgroup v2、user namespace）；发行版仓库里往往没有，要加上游 apt/rpm 源",
+]
+
+watch = [
+  "系统容器不是应用容器：它没有 OCI 镜像生态，别拿它当 Docker 用",
+  "从 LXD 迁过来有官方转换路径，但两边的客户端命令（lxc / incus）会在同一台机器上打架，先卸掉一边",
+]
+
+[links]
+site = "https://linuxcontainers.org/incus/"
+repo = "https://github.com/lxc/incus"
+docs = "https://linuxcontainers.org/incus/docs/main/"

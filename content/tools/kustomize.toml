@@ -1,0 +1,26 @@
+slug       = "kustomize"
+name       = "Kustomize"
+summary    = "不做模板，只做「基础清单 + overlay 补丁」。已内置在 kubectl 里。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["packaging"]
+self_host  = ["SingleBinary"]
+hosted     = false
+
+detail = """
+输入是真实的 YAML 清单，不是模板：base 放通用部分，每个环境一个 overlay 用 patch（strategic merge 或 JSON patch）改差异，\
+再加上 namePrefix、commonLabels、configMapGenerator 这些声明式变换。\
+好处是任何一层都是能直接 apply 的合法清单，`kubectl apply -k` 开箱可用；\
+坏处是它刻意不提供条件与循环。"""
+
+watch = [
+  "没有条件与循环：环境差异一多，overlay 数量与 patch 复杂度会爆炸 —— 那个信号说明该换 chart 了",
+  "kubectl 内置的版本落后于独立 CLI，同一份配置在两边行为可能不同，CI 里要固定用哪一个",
+  "patch 靠路径匹配，上游 base 改了字段结构，patch 会静默不生效（不是报错）",
+]
+
+[links]
+site = "https://kustomize.io/"
+repo = "https://github.com/kubernetes-sigs/kustomize"
+docs = "https://kubectl.docs.kubernetes.io/references/kustomize/"

@@ -1,0 +1,30 @@
+slug       = "cloud-init"
+name       = "cloud-init"
+summary    = "虚机首启时按元数据自建：用户、SSH 密钥、网络、磁盘扩容。Proxmox 模板的那一半。"
+license    = "GPL-3.0"
+language   = "Python"
+domain     = "iac"
+categories = ["machine-config"]
+self_host  = ["DebRpm", "OsImage"]
+hosted     = false
+
+detail = """
+几乎所有云镜像里都预装的首启配置系统：从数据源（云元数据服务、Proxmox 的 cloud-init 盘、NoCloud ISO）\
+读一份 user-data，在第一次启动时完成建用户、写 SSH 公钥、设主机名、配网络、扩根分区、跑首启脚本。\
+在 Proxmox 上克隆模板起虚机时，它就是「新机器一开机就能 ssh 进去」的那个环节 ——\
+Terraform 的 provider 只负责把这份 user-data 塞进虚机配置。"""
+
+requires = [
+  "镜像里预装 cloud-init，以及一个它认识的数据源",
+]
+
+watch = [
+  "**默认只在首次启动跑**：改了 user-data 不会重新生效，得清 `/var/lib/cloud` 再重启（或直接重建虚机）",
+  "user-data 里常放 SSH 公钥甚至初始密码 —— 它在 hypervisor 侧是可读的，别把长期凭据写进去",
+  "网络配置由它接管后，直接改 /etc/netplan 或 ifcfg 文件可能在重启后被覆盖，症状是「改好了、重启就丢」",
+]
+
+[links]
+site = "https://cloud-init.io/"
+repo = "https://github.com/canonical/cloud-init"
+docs = "https://cloudinit.readthedocs.io/en/latest/"

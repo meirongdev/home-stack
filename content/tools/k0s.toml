@@ -1,0 +1,28 @@
+slug       = "k0s"
+name       = "k0s"
+summary    = "另一个单二进制 Kubernetes 发行版，默认不塞入口与存储插件，比 K3s 更素。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "compute"
+categories = ["k8s-distro"]
+self_host  = ["SingleBinary"]
+hosted     = false
+
+detail = """
+同样是单二进制 + 内嵌 etcd（或外部数据库），但默认组件比 K3s 少：不预装入口控制器，也不预装存储 provisioner，\
+CNI 默认 kube-router（可换 Calico）。多节点安装由独立的 k0sctl 用一份 YAML 清单经 SSH 推下去。\
+控制面进程默认不跑工作负载（controller 与 worker 角色分开），这一点比 K3s 的默认更贴近生产形态。"""
+
+requires = [
+  "一台 Linux；多节点用 k0sctl 需要各节点的 SSH 可达",
+]
+
+watch = [
+  "生态与中文资料量明显小于 K3s —— 出问题时能搜到的答案更少，这在单人运维下是实际成本",
+  "默认不带入口与存储：起步就要自己选 CNI、入口和 provisioner，这是优点也是额外的三个决定",
+]
+
+[links]
+site = "https://k0sproject.io/"
+repo = "https://github.com/k0sproject/k0s"
+docs = "https://docs.k0sproject.io/stable/"

@@ -3,6 +3,7 @@ name       = "Healthchecks"
 summary    = "cron 任务心跳监控。没收到 ping 就告警，判定「该跑没跑」。"
 license    = "BSD-3-Clause"
 language   = "Python"
+domain     = "observability"
 categories = ["uptime"]
 replaces   = ["uptimerobot"]
 self_host  = ["Docker", "Compose"]

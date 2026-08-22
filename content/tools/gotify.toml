@@ -3,6 +3,7 @@ name       = "Gotify"
 summary    = "自托管消息推送服务器。REST API + WebSocket，Android 客户端。"
 license    = "MIT"
 language   = "Go"
+domain     = "observability"
 categories = ["alerts"]
 replaces   = ["pagerduty"]
 self_host  = ["Docker", "HelmChart"]

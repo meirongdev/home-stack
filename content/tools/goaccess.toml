@@ -3,6 +3,7 @@ name       = "GoAccess"
 summary    = "实时 Web 日志分析器。终端或 HTML 报告，零依赖轻量。"
 license    = "MIT"
 language   = "C"
+domain     = "observability"
 categories = ["logs"]
 replaces   = ["splunk", "papertrail"]
 self_host  = ["SingleBinary", "Docker"]

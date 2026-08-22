@@ -3,6 +3,7 @@ name       = "GlitchTip"
 summary    = "轻量错误追踪，Sentry 协议兼容。小团队的低运维替代。"
 license    = "MIT"
 language   = "Python"
+domain     = "observability"
 categories = ["errors"]
 replaces   = ["sentry"]
 self_host  = ["Docker", "Compose"]

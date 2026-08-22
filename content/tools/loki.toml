@@ -3,6 +3,7 @@ name       = "Grafana Loki"
 summary    = "日志聚合。只索引标签不索引正文，S3 兼容后端，成本远低于 ELK。"
 license    = "AGPL-3.0"
 language   = "Go"
+domain     = "observability"
 categories = ["logs"]
 replaces   = ["datadog-logs", "splunk", "papertrail", "elastic-cloud", "logz-io"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

@@ -1,0 +1,30 @@
+slug       = "infisical"
+name       = "Infisical"
+summary    = "带 Web UI 的密钥平台：项目/环境模型、审计、K8s operator。核心 MIT，ee/ 目录另授权。"
+license    = "MIT"
+language   = "TypeScript"
+domain     = "secrets"
+categories = ["secret-store"]
+replaces   = ["doppler", "aws-secrets-manager"]
+self_host  = ["Docker", "Compose", "HelmChart"]
+hosted     = true
+
+detail = """
+定位在 Vault 与「一个加密文件」之间：有 Web UI、项目/环境（dev/staging/prod）分层、成员与审计日志、\
+密钥版本与回滚，接入方式有 CLI、SDK、Kubernetes operator 与 ESO provider。\
+心智模型比 Vault 轻得多 —— 它主要管静态密钥的分发与协作，不做动态凭据签发那一套。"""
+
+requires = [
+  "PostgreSQL 与 Redis",
+]
+
+watch = [
+  "许可证是分区的：`ee/` 目录下的内容按另一份商业许可，自托管时哪些功能属于付费面要逐项核对",
+  "运维面是「一整个 Web 应用 + 数据库 + 缓存」，比 SOPS/Sealed Secrets 重一个量级，收益是有人能点开界面改密钥",
+  "它自己的数据库里存着全部密钥，备份与恢复演练的重要性等同于 Vault 的 unseal key",
+]
+
+[links]
+site = "https://infisical.com/"
+repo = "https://github.com/Infisical/infisical"
+docs = "https://infisical.com/docs/documentation/getting-started/introduction"

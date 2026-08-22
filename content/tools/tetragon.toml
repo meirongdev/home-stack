@@ -1,0 +1,30 @@
+slug       = "tetragon"
+name       = "Tetragon"
+summary    = "eBPF 运行时可观测与强制：进程、文件、网络事件带 K8s 身份，可在内核里阻断。"
+license    = "Apache-2.0"
+language   = "C"
+domain     = "security"
+categories = ["runtime-security"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+Cilium 团队的运行时安全组件：用 eBPF 观测进程执行、文件访问、网络连接与权限变更，\
+事件天生带上 Kubernetes 身份（哪个 Pod、哪个 namespace、哪个镜像），而不是一串裸 PID。\
+和纯检测工具的关键差别是它支持**内核内强制**（TracingPolicy 里声明 Sigkill 动作），命中即杀，不经过用户态往返。\
+可以独立部署，不要求集群已经在用 Cilium。"""
+
+requires = [
+  "较新的内核（BTF / eBPF 特性）；DaemonSet 需要特权",
+]
+
+watch = [
+  "强制动作（直接 kill 进程）配错的后果很直接：正常业务进程被杀。先只开观测跑一段时间再谈 enforce",
+  "全量进程与网络事件的量非常大，日志与指标后端要按这个量级规划，否则它会成为最大的日志生产者",
+  "策略写法（TracingPolicy）是它自己的模型，和 Falco 规则不互通，两者之间没有迁移路径",
+]
+
+[links]
+site = "https://tetragon.io/"
+repo = "https://github.com/cilium/tetragon"
+docs = "https://tetragon.io/docs/"

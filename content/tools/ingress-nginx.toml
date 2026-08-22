@@ -1,0 +1,32 @@
+slug       = "ingress-nginx"
+name       = "Ingress NGINX"
+summary    = "曾经的事实标准入口控制器。2026-03 已退役，不再有版本与安全补丁。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["ingress"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+Kubernetes SIG Network 维护过的入口控制器：控制器把 Ingress 资源渲染成 nginx.conf 并让 nginx 重载，\
+大量能力通过 annotation 暴露（重写、限速、认证、canary），Lua 用于动态更新 upstream 以减少 reload。\
+它曾经装在约一半的 Kubernetes 集群上，也因此是绝大多数第三方文档默认假设的那个入口 —— 这些文档现在都成了迁移债。"""
+
+watch = [
+  "**已退役**：不再发版、不修 bug、不出安全补丁。继续跑的集群等于在跑一个不会再打补丁的入口层",
+  "曾经宣布的接替项目 InGate 也一并终止，官方给的路是迁到 Gateway API 或别的控制器 —— 没有「原地升级」这个选项",
+  "annotation 是它的私有配置面，逐条翻译才是迁移的真实工作量；ingress2gateway 只能做机械部分（rewrite、限速、外部认证这些要人来重判）",
+  "别和 F5/NGINX Inc 的 nginxinc/kubernetes-ingress 搞混 —— 那是另一个项目，仍在维护，配置语法也不一样",
+]
+
+[links]
+site = "https://kubernetes.github.io/ingress-nginx/"
+repo = "https://github.com/kubernetes/ingress-nginx"
+docs = "https://kubernetes.github.io/ingress-nginx/"
+
+[upstream]
+status = "Archived"
+as_of  = "2026-08-22"
+note   = "2025-11-12 官方宣布退役，2026-03 到期：无新版本、无 bug 修复、无安全补丁；接替项目 InGate 同样终止。Ingress API 本身仍受支持，退役的是这个控制器。"
+source = "https://www.kubernetes.dev/blog/2025/11/12/ingress-nginx-retirement/"

@@ -3,6 +3,7 @@ name       = "Alertmanager"
 summary    = "Prometheus 告警的路由、去重与发送中枢。grouping / inhibition / silences。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["alerts"]
 replaces   = ["pagerduty", "opsgenie"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

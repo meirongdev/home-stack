@@ -1,0 +1,29 @@
+slug       = "calico"
+name       = "Calico"
+summary    = "老牌 CNI：可选 iptables 或 eBPF 数据面，原生 BGP，策略能力比 K8s NetworkPolicy 更细。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["cni"]
+self_host  = ["Manifests", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+两套数据面可选：标准 Linux（iptables/nftables，兼容性最好）或 eBPF（性能与 kube-proxy 替换）。\
+它的特色是把 Pod 网段用 BGP 宣告出去 —— 家里路由器学到路由后，Pod IP 在局域网内直接可达，不需要 overlay 封装。\
+除标准 NetworkPolicy 外还有自己的 CRD（GlobalNetworkPolicy、Tier 等），表达力更强。"""
+
+requires = [
+  "用 BGP 模式需要一台会说 BGP 的路由器；否则退回 IPIP / VXLAN overlay",
+]
+
+watch = [
+  "私有 CRD 写的策略不可移植 —— 换 CNI 时标准 NetworkPolicy 能带走，Calico 自有的那部分要重写",
+  "Operator（Tigera）与裸清单是两条安装路径，文档混排；混用会得到两个都想管同一份配置的控制器",
+  "开源版与商业版 Calico Enterprise 文档同源，读到的功能不一定在开源版里",
+]
+
+[links]
+site = "https://www.tigera.io/project-calico/"
+repo = "https://github.com/projectcalico/calico"
+docs = "https://docs.tigera.io/calico/latest/about/"

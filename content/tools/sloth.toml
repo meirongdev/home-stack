@@ -3,6 +3,7 @@ name       = "Sloth"
 summary    = "SLO 即代码。从 Prometheus 指标生成 SLO / 错误预算告警规则。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["alerts", "metrics"]
 replaces   = ["datadog"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

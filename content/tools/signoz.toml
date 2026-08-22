@@ -3,6 +3,7 @@ name       = "SigNoz"
 summary    = "开源可观测性平台。APM + 链路 + 指标 + 日志，OTel 原生。"
 license    = "MIT"
 language   = "Go"
+domain     = "observability"
 categories = ["all-in-one", "apm", "traces", "metrics", "logs"]
 replaces   = ["datadog", "new-relic", "honeycomb"]
 self_host  = ["Docker", "Compose", "HelmChart"]

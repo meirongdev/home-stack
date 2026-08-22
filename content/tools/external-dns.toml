@@ -1,0 +1,29 @@
+slug       = "external-dns"
+name       = "ExternalDNS"
+summary    = "读 Service / Ingress / HTTPRoute 上的主机名，自动往 DNS provider 写记录。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["dns"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+控制器循环：从集群资源里收集「域名 → 地址」的意图，和 provider（Cloudflare、Route53、RFC2136、PowerDNS 等）里的现状比对，缺什么补什么。\
+归属用一条 TXT registry 记录标记 —— 这条 TXT 就是它判断「这条记录是不是我建的」的唯一依据。\
+写完 HTTPRoute 即建好 DNS，是它最实用的效果：新增服务不再需要手点一次 DNS。"""
+
+requires = [
+  "DNS provider 的 API 凭据（建议限权到目标 zone）",
+]
+
+watch = [
+  "默认 policy 是 upsert-only（只增不删）—— 看起来安全，代价是删掉服务后留下一堆指向不存在地址的僵尸记录",
+  "改成 sync 才会删，但那意味着一次误配置能删掉手工维护的真记录：同一个 zone 里混有手工记录时要用 `--managed-record-types` 与注解收窄范围",
+  "多集群共用一个 zone 必须各设不同的 `--txt-owner-id`，否则两个实例会互相删对方的记录",
+]
+
+[links]
+site = "https://kubernetes-sigs.github.io/external-dns/"
+repo = "https://github.com/kubernetes-sigs/external-dns"
+docs = "https://kubernetes-sigs.github.io/external-dns/latest/"

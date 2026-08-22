@@ -1,0 +1,30 @@
+slug       = "adguard-home"
+name       = "AdGuard Home"
+summary    = "自托管 DNS：过滤与重写、按客户端规则、查询日志，支持 DoH/DoT 上下游。"
+license    = "GPL-3.0"
+language   = "Go"
+domain     = "networking"
+categories = ["dns"]
+replaces   = ["nextdns"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+一个带 Web UI 的 DNS 转发器：黑名单过滤、自定义重写（把内网域名指到内网地址）、按客户端分组的不同规则，\
+上游可走 DoH / DoT / DoQ，自身也能对外提供加密 DNS。查询日志与统计是内置的，不需要另接日志系统。\
+同类里另一个常见选择是 Pi-hole（更老、生态大，但配置面偏 PHP 与脚本）。"""
+
+requires = [
+  "一个固定地址（家里的路由器要把它设成 DNS 服务器）；53 端口不能被 systemd-resolved 占着",
+]
+
+watch = [
+  "它是家里所有解析的单点 —— 跑进 K8s 会造出「集群坏了就上不了网」的循环依赖，装在集群外的小机器上更稳",
+  "查询日志是整个 homelab 里最敏感的一份数据（谁在什么时候访问了什么），留存期与访问控制要单独想",
+  "拦截规则会误伤：APP 内嵌的遥测域名和功能域名经常同源，出问题时第一步是关掉过滤复测",
+]
+
+[links]
+site = "https://adguard.com/en/adguard-home/overview.html"
+repo = "https://github.com/AdguardTeam/AdGuardHome"
+docs = "https://github.com/AdguardTeam/AdGuardHome/wiki"

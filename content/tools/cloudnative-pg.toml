@@ -1,0 +1,33 @@
+slug       = "cloudnative-pg"
+name       = "CloudNativePG"
+summary    = "PostgreSQL operator：主从、故障切换、PITR 备份全交给 CRD。CNCF 项目。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "data"
+categories = ["relational"]
+replaces   = ["aws-rds"]
+self_host  = ["HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+一个 Cluster CR 描述「几个实例、多大存储、哪个大版本、备份去哪」，operator 负责其余：\
+初始化、流复制、只读副本的 Service、主节点故障时的自动切换、滚动小版本升级，\
+以及连续归档 + 基础备份构成的 PITR（可恢复到任意时间点）。\
+它刻意不依赖 Patroni 或外部 DCS —— 选举用 Kubernetes API 本身完成。"""
+
+requires = [
+  "支持所需容量的 StorageClass（本地盘即可，副本由 Postgres 流复制提供而非存储层）",
+  "PITR 备份需要一个对象存储（S3 兼容）",
+]
+
+watch = [
+  "**副本数与存储副本是两件事**：它靠 Postgres 流复制做高可用，所以底下用 local-path 也成立 —— 别再叠一层分布式存储做重复冗余",
+  "单实例集群（instances: 1）没有故障切换能力，这在 homelab 里很常见，但要清楚这时它给的是「自动化运维」而不是「高可用」",
+  "大版本升级不是滚动的：要走 declarative 的导入/切换流程，提前读文档并留窗口",
+  "备份没做恢复演练等于没有备份 —— operator 让备份变简单，没让恢复自动变正确",
+]
+
+[links]
+site = "https://cloudnative-pg.io/"
+repo = "https://github.com/cloudnative-pg/cloudnative-pg"
+docs = "https://cloudnative-pg.io/documentation/current/"

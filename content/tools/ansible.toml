@@ -1,0 +1,30 @@
+slug       = "ansible"
+name       = "Ansible"
+summary    = "经 SSH 推配置的无 agent 编排工具：装包、改文件、起服务，playbook 即步骤。"
+license    = "GPL-3.0"
+language   = "Python"
+domain     = "iac"
+categories = ["machine-config"]
+self_host  = ["SingleBinary", "DebRpm", "SourceBuild"]
+hosted     = false
+
+detail = """
+无 agent：控制机经 SSH 连上目标，把模块（Python 代码）推过去执行完就走。\
+playbook 是有序的任务列表，模块大多做成幂等的（「确保装了」而不是「装」）。\
+在 homelab 里它的主战场是 Terraform 之后的那一段 —— 虚机已经存在，接下来要装内核参数、装 K8s、\
+铺 systemd unit、配置那台不跑 K8s 的机器。"""
+
+requires = [
+  "目标主机的 SSH 可达与 Python 解释器",
+]
+
+watch = [
+  "幂等是**模块的承诺，不是框架的保证** —— 一旦用了 `shell` / `command`，重复执行的后果要自己兜住",
+  "playbook 描述的是「怎么做」而不是「最终应该是什么」：漂移检测靠 `--check`，而且只覆盖你写到的那些项",
+  "对不可变 OS（Talos 这类无 SSH 无 shell 的系统）完全失效，混编队列要把这类机器排除在外",
+]
+
+[links]
+site = "https://www.ansible.com/"
+repo = "https://github.com/ansible/ansible"
+docs = "https://docs.ansible.com/ansible/latest/"

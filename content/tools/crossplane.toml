@@ -1,0 +1,29 @@
+slug       = "crossplane"
+name       = "Crossplane"
+summary    = "把云资源变成 K8s CRD：用 kubectl 管数据库和存储桶，控制器持续对账。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "iac"
+categories = ["declarative-infra"]
+self_host  = ["HelmChart"]
+hosted     = false
+
+detail = """
+思路和 Terraform 相反：不是「跑一次 apply」，而是把外部资源做成 Kubernetes 自定义资源，由常驻控制器持续对账 ——\
+有人在云控制台手改了，它会改回来。Provider 以包（package）形式装进集群，\
+再用 Composition 把若干底层资源打包成一个面向用户的抽象 CRD（「给我一个数据库」）。CNCF 毕业项目。"""
+
+requires = [
+  "一个 Kubernetes 集群（它自己就住在集群里）与各 provider 的凭据",
+]
+
+watch = [
+  "**鸡生蛋**：管理集群自身或它的底层机器时，控制器和被管资源在同一个故障域里 —— 集群没了就没有对账者了",
+  "Composition/XRD 的抽象层要自己设计与维护，这部分工作量常被低估；小规模下往往不如一份 Terraform 直白",
+  "homelab 的核心资源（Proxmox 虚机、家里的路由器）provider 覆盖远不如云厂商，实际能纳管的比例要先盘一遍",
+]
+
+[links]
+site = "https://www.crossplane.io/"
+repo = "https://github.com/crossplane/crossplane"
+docs = "https://docs.crossplane.io/"

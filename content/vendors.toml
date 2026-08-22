@@ -66,3 +66,104 @@ name = "Atlassian Opsgenie"
 [[vendor]]
 id = "elastic-cloud"
 name = "Elastic Cloud"
+
+# ── 计算底座 ──────────────────────────────────────────────────────────
+[[vendor]]
+id = "vmware-vsphere"
+name = "VMware vSphere"
+
+# ── 网络与接入 ────────────────────────────────────────────────────────
+[[vendor]]
+id = "ngrok"
+name = "ngrok"
+
+[[vendor]]
+id = "tailscale"
+name = "Tailscale（协调服务）"
+
+[[vendor]]
+id = "nextdns"
+name = "NextDNS"
+
+# ── 存储与备份 ────────────────────────────────────────────────────────
+[[vendor]]
+id = "aws-s3"
+name = "Amazon S3"
+
+[[vendor]]
+id = "cloudflare-r2"
+name = "Cloudflare R2"
+
+[[vendor]]
+id = "backblaze-b2"
+name = "Backblaze B2"
+
+# ── 交付与 GitOps ─────────────────────────────────────────────────────
+[[vendor]]
+id = "github"
+name = "GitHub"
+
+[[vendor]]
+id = "github-actions"
+name = "GitHub Actions"
+
+[[vendor]]
+id = "circleci"
+name = "CircleCI"
+
+[[vendor]]
+id = "dependabot"
+name = "Dependabot"
+
+[[vendor]]
+id = "docker-hub"
+name = "Docker Hub"
+
+# ── 密钥与配置 ────────────────────────────────────────────────────────
+[[vendor]]
+id = "doppler"
+name = "Doppler"
+
+[[vendor]]
+id = "aws-secrets-manager"
+name = "AWS Secrets Manager"
+
+# ── 身份与访问 ────────────────────────────────────────────────────────
+[[vendor]]
+id = "auth0"
+name = "Auth0"
+
+[[vendor]]
+id = "okta"
+name = "Okta"
+
+[[vendor]]
+id = "aws-cognito"
+name = "Amazon Cognito"
+
+[[vendor]]
+id = "cloudflare-access"
+name = "Cloudflare Access"
+
+# ── 安全加固 ──────────────────────────────────────────────────────────
+[[vendor]]
+id = "snyk"
+name = "Snyk"
+
+[[vendor]]
+id = "sysdig-secure"
+name = "Sysdig Secure"
+
+# ── 基础设施即代码 ────────────────────────────────────────────────────
+[[vendor]]
+id = "terraform-cloud"
+name = "HCP Terraform"
+
+# ── 数据服务 ──────────────────────────────────────────────────────────
+[[vendor]]
+id = "aws-rds"
+name = "Amazon RDS"
+
+[[vendor]]
+id = "aws-elasticache"
+name = "Amazon ElastiCache"

@@ -1,0 +1,29 @@
+slug       = "pulumi"
+name       = "Pulumi"
+summary    = "用真正的编程语言写基础设施：TypeScript / Python / Go，复用同一批 provider。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "iac"
+categories = ["declarative-infra"]
+self_host  = ["SingleBinary"]
+hosted     = true
+
+detail = """
+把「声明期望状态」这件事放进通用编程语言里：循环、条件、函数、类型检查与单元测试都是语言自带的，\
+不需要 HCL 那些替代品（count / for_each / dynamic block）。底层大量复用 Terraform provider（通过桥接），\
+所以能管的东西差不多。state 默认放 Pulumi Cloud，但可以指向 S3 兼容后端或本地文件自托管。"""
+
+requires = [
+  "对应语言的运行时与依赖管理；一个 state 后端（自托管可用 S3 兼容存储或本地）",
+]
+
+watch = [
+  "「有完整语言」是双刃剑：抽象层能越写越深，最后没人能一眼看出某个资源到底会被创建成什么样",
+  "默认引导你用 Pulumi Cloud 存 state —— 要真正自托管必须显式配 backend，别默认以为是本地的",
+  "homelab 常用的 provider（Proxmox、Cloudflare）文档与示例仍以 Terraform 为主，遇到问题要在两个生态之间来回翻译",
+]
+
+[links]
+site = "https://www.pulumi.com/"
+repo = "https://github.com/pulumi/pulumi"
+docs = "https://www.pulumi.com/docs/"

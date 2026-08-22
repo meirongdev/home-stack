@@ -3,6 +3,7 @@ name       = "Uptime Kuma"
 summary    = "自托管监控面板。HTTP / TCP / ping 探针 + 通知，状态页开箱即用。"
 license    = "MIT"
 language   = "JavaScript"
+domain     = "observability"
 categories = ["uptime"]
 replaces   = ["uptimerobot", "statuspage"]
 self_host  = ["Docker", "Compose"]

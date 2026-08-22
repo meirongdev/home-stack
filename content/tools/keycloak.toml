@@ -1,0 +1,30 @@
+slug       = "keycloak"
+name       = "Keycloak"
+summary    = "企业级 IdP 的开源基准：协议与联邦最全，运维面也最重。CNCF 项目。"
+license    = "Apache-2.0"
+language   = "Java"
+domain     = "identity"
+categories = ["idp"]
+replaces   = ["auth0", "okta", "aws-cognito"]
+self_host  = ["Docker", "HelmChart", "Operator"]
+hosted     = false
+
+detail = """
+协议覆盖面最广的一个：OIDC、OAuth 2.x、SAML 2.0、LDAP/AD 联邦、身份代理、细粒度授权服务（UMA），\
+realm 做多租户隔离，SPI 机制允许用 Java 写扩展。由 Red Hat 开源并捐入 CNCF，\
+在企业环境里通常是那个「什么都能接」的默认答案 —— 代价是它是一个 JVM 应用，冷启动与内存都不轻。"""
+
+requires = [
+  "PostgreSQL 之类的关系库；生产模式必须配主机名与 TLS（dev 模式不能上线）",
+]
+
+watch = [
+  "JVM 内存底线在 homelab 里很明显：给它 512Mi 会反复 OOM，实际要按 GB 计",
+  "大版本迁移（尤其从 WildFly 时代到 Quarkus 发行版）改了配置面与运维命令，老教程照抄不通",
+  "功能面大 → 配置面也大：realm 导出的 JSON 是唯一可版本化的真相源，靠 UI 点出来的配置无法复现",
+]
+
+[links]
+site = "https://www.keycloak.org/"
+repo = "https://github.com/keycloak/keycloak"
+docs = "https://www.keycloak.org/documentation"

@@ -1,0 +1,30 @@
+slug       = "envoy-gateway"
+name       = "Envoy Gateway"
+summary    = "Envoy 官方的 Gateway API 实现：把 Gateway / HTTPRoute 翻译成 Envoy 配置。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["ingress"]
+self_host  = ["HelmChart"]
+hosted     = false
+
+detail = """
+控制器监听 Gateway API 资源，生成 xDS 配置推给它自己拉起的 Envoy 数据面。\
+选它通常是因为想要 Envoy 的能力（细粒度重试、断路、mTLS、丰富的 filter 链）但不想手写 xDS，\
+或者是从 Ingress 往 Gateway API 迁移时想要一个「就是 Gateway API」的参考实现。\
+Envoy 自身的可观测输出（统计、访问日志、tap）是它相对轻量控制器的主要优势。"""
+
+requires = [
+  "集群里先装 Gateway API 的 CRD",
+]
+
+watch = [
+  "只认 Gateway API，不处理 Ingress 资源 —— 迁移必须一次性做完路由的翻译",
+  "每个 Gateway 会拉起一组 Envoy，资源占用明显高于单进程的 Traefik，小内存节点上要算清楚",
+  "Gateway API 的部分能力仍在演进（如流量镜像、部分 Policy 附着规则），跨实现的可移植性不如它看上去那么高",
+]
+
+[links]
+site = "https://gateway.envoyproxy.io/"
+repo = "https://github.com/envoyproxy/gateway"
+docs = "https://gateway.envoyproxy.io/docs/"

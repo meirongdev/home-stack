@@ -1,0 +1,31 @@
+slug       = "longhorn"
+name       = "Longhorn"
+summary    = "K8s 原生分布式块存储：卷跨节点多副本、快照、备份到 S3/NFS，自带 UI。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "storage"
+categories = ["k8s-volumes"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+每个卷由一个 engine 进程和若干 replica 组成，replica 分布在不同节点上做同步复制；\
+卷可以做快照、按计划备份到 S3 兼容存储或 NFS，也支持跨集群的 DR 卷。CSI 驱动 + 一个能看清副本健康度的 Web UI。\
+定位是「三节点小集群也能有的块存储」，不是 Ceph 那个量级的系统。CNCF 项目。"""
+
+requires = [
+  "各节点装 open-iscsi（以及 NFS 客户端，若备份走 NFS）",
+  "至少 3 个节点才谈得上副本；节点间网络与磁盘延迟直接决定写入性能",
+]
+
+watch = [
+  "**同步复制**：写延迟取决于最慢的那个副本。1GbE + 机械盘的家用环境里，数据库类负载会明显掉速",
+  "3 副本就是 3 倍空间占用，容量规划要按副本数乘",
+  "单节点集群上装它只有 overhead 没有收益 —— 那种情况用 local-path 更诚实",
+  "节点重启期间副本要重建（rebuild），这段时间 IO 竞争明显，滚动升级节点时要一台一台来",
+]
+
+[links]
+site = "https://longhorn.io/"
+repo = "https://github.com/longhorn/longhorn"
+docs = "https://longhorn.io/docs/"

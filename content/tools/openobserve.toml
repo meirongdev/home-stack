@@ -3,6 +3,7 @@ name       = "OpenObserve"
 summary    = "全栈可观测性，S3 存储。日志 + 指标 + 链路，声称成本低一个量级。"
 license    = "AGPL-3.0"
 language   = "Rust"
+domain     = "observability"
 categories = ["all-in-one", "logs", "metrics", "traces"]
 replaces   = ["datadog", "splunk", "elastic-cloud"]
 self_host  = ["Docker", "Compose", "HelmChart"]

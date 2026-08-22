@@ -3,6 +3,7 @@ name       = "Thanos"
 summary    = "Prometheus 的横向扩展与长期存储层。全局查询、对象存储、跨集群高可用。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["metrics"]
 replaces   = ["grafana-cloud", "datadog"]
 self_host  = ["Docker", "HelmChart", "Operator"]

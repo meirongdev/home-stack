@@ -1,0 +1,30 @@
+slug       = "velero"
+name       = "Velero"
+summary    = "K8s 层面的备份与迁移：备 API 对象 + PV 数据，可按 namespace 恢复到另一个集群。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "storage"
+categories = ["backup"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+两件事一起做：把选中的 Kubernetes API 对象导出成一份清单存到对象存储，同时用 CSI 快照或文件级上传器\
+（内部走 Kopia）把 PV 数据也备走。因此它既是备份工具，也是**集群迁移**工具 ——\
+按 namespace / label 选一批资源，恢复到另一个集群里去。"""
+
+requires = [
+  "一个 S3 兼容对象存储做备份仓库",
+  "PV 数据走快照则需要支持快照的 CSI 驱动；否则用文件级备份",
+]
+
+watch = [
+  "备份的是 API 对象，恢复顺序与 CRD/webhook 依赖要自己验证 —— 恢复一个装了 operator 的 namespace 常常不是一遍就成",
+  "GitOps 已经管住的东西不必让它再备一遍：清单的真相源在 Git，Velero 的价值主要在 **PV 数据**与集群级对象",
+  "没做过恢复演练的备份不算备份 —— 至少演练一次「换个 namespace 恢复」并检查数据完整性",
+]
+
+[links]
+site = "https://velero.io/"
+repo = "https://github.com/vmware-tanzu/velero"
+docs = "https://velero.io/docs/latest/"

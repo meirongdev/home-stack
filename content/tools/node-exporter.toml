@@ -3,6 +3,7 @@ name       = "node_exporter"
 summary    = "主机指标采集器。CPU / 内存 / 磁盘 / 网络，Prometheus 生态标配。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["metrics"]
 replaces   = ["datadog"]
 self_host  = ["SingleBinary", "Docker", "DebRpm"]

@@ -3,6 +3,7 @@ name       = "kube-prometheus-stack"
 summary    = "K8s 可观测性全家桶。Prometheus + Alertmanager + Grafana + 开箱告警规则。"
 license    = "Apache-2.0"
 language   = "Helm"
+domain     = "observability"
 categories = ["all-in-one", "metrics", "alerts"]
 replaces   = ["datadog", "new-relic"]
 self_host  = ["HelmChart", "Operator"]

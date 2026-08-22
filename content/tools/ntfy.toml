@@ -3,6 +3,7 @@ name       = "ntfy"
 summary    = "自托管推送服务。HTTP POST 即推送到手机，支持订阅与访问控制。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["alerts"]
 replaces   = ["pagerduty"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

@@ -1,0 +1,25 @@
+slug       = "zot"
+name       = "zot"
+summary    = "纯 OCI 镜像仓库：单二进制、无数据库，功能面刻意小。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["registry"]
+replaces   = ["docker-hub"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+只做 OCI distribution 规范里的事：推、拉、按 digest 寻址、可选签名与 referrers。\
+没有外部数据库，元数据在本地（或对象存储）里；扩展（搜索、UI、同步、扫描）是编译期可选项，不装就不存在。\
+适合「我只需要一个存自建镜像的地方」——那正是 Harbor 显得过重的场景。CNCF 项目。"""
+
+watch = [
+  "没有 Harbor 那套项目/配额/成员模型：多用户与细粒度权限要靠反向代理与配置文件自己拼",
+  "扩展功能按构建变体提供，选错镜像 tag 会发现「文档里的功能不在这个二进制里」",
+]
+
+[links]
+site = "https://zotregistry.dev/"
+repo = "https://github.com/project-zot/zot"
+docs = "https://zotregistry.dev/latest/"

@@ -1,0 +1,55 @@
+# 主题域声明。id 必须与工具条目里的 domain 引用一致。
+#
+# 顺序即首页顺序，且是一条内容判断：**先有底座，才有跑在上面的东西**。
+# 不要按条目数重排 —— 那会把这条判断洗掉。
+# 每个域的 tagline 写成读者会问出口的那句话，不写「XX 管理」这类同义反复。
+
+[[domain]]
+id      = "compute"
+name    = "计算底座"
+tagline = "集群跑在什么上面：hypervisor、K8s 发行版、容器运行时"
+
+[[domain]]
+id      = "networking"
+name    = "网络与接入"
+tagline = "包怎么进集群、怎么跨机器、名字怎么解析、证书谁签"
+
+[[domain]]
+id      = "storage"
+name    = "存储与备份"
+tagline = "Pod 的数据落在哪，删掉之后还能不能找回来"
+
+[[domain]]
+id      = "gitops"
+name    = "交付与 GitOps"
+tagline = "从改一行 YAML 到它真的在集群里生效，中间由谁负责"
+
+[[domain]]
+id      = "secrets"
+name    = "密钥与配置"
+tagline = "密码不能进 Git，那它从哪来、怎么进到 Pod 里"
+
+[[domain]]
+id      = "identity"
+name    = "身份与访问"
+tagline = "谁能打开这个域名，打开之后应用知道他是谁吗"
+
+[[domain]]
+id      = "observability"
+name    = "可观测"
+tagline = "出事的时候能不能看见，以及看不见哪里"
+
+[[domain]]
+id      = "security"
+name    = "安全加固"
+tagline = "镜像有没有洞、运行时在干什么、谁来拦不该发生的事"
+
+[[domain]]
+id      = "iac"
+name    = "基础设施即代码"
+tagline = "机器、云资源与主机配置怎么声明出来，而不是手点出来"
+
+[[domain]]
+id      = "data"
+name    = "数据服务"
+tagline = "应用要的 Postgres 和缓存从哪来，谁负责备份与故障切换"

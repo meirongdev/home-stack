@@ -1,0 +1,32 @@
+slug       = "renovate"
+name       = "Renovate"
+summary    = "扫仓库里的各类依赖清单并开升级 PR：Docker tag、Helm chart、Terraform provider 都认。"
+license    = "AGPL-3.0"
+language   = "TypeScript"
+domain     = "gitops"
+categories = ["dependency-updates"]
+replaces   = ["dependabot"]
+self_host  = ["Docker", "SourceBuild"]
+hosted     = true
+
+detail = """
+比语言包管理器覆盖面更宽：除了 npm/pip/go.mod 这类，还认 Dockerfile 与 compose 里的镜像 tag、\
+Helm chart 版本、Kustomize 的 images、Terraform provider/module、GitHub Actions 的 uses ——\
+homelab 仓库里正好是这几类占多数。自托管形态是跑一个容器（CI job 或 CronJob），\
+配置写在仓库里的 renovate.json，并额外维护一个「依赖看板」issue 汇总待办。"""
+
+requires = [
+  "对目标仓库有写权限的 token（它要建分支与 PR）",
+  "能访问所有相关 registry 的网络出口",
+]
+
+watch = [
+  "**默认配置会淹掉你**：先设 grouping（按生态合并）、schedule（只在某个时间窗开 PR）与 automerge 范围，再放开跑",
+  "它只负责「有新版本了」，不判断「能不能升」—— 破坏性升级同样以一个绿色 PR 的样子出现",
+  "自托管跑的是 Node 进程，抓取面广、耗时长，放在夜间 CronJob 比放在每次 push 更合适",
+]
+
+[links]
+site = "https://docs.renovatebot.com/"
+repo = "https://github.com/renovatebot/renovate"
+docs = "https://docs.renovatebot.com/self-hosted-configuration/"

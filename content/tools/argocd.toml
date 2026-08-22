@@ -1,0 +1,32 @@
+slug       = "argocd"
+name       = "Argo CD"
+summary    = "GitOps 控制器：Application 声明「Git 的哪个目录 → 集群的哪个 ns」，持续对账。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["cd"]
+self_host  = ["HelmChart", "Manifests", "Operator"]
+hosted     = false
+
+detail = """
+一个 Application CR 把「仓库 + 路径 + revision」映射到「目标集群 + namespace」，控制器循环比对期望与实际状态，\
+可配自动 sync、self-heal（有人手改就改回去）与 prune（Git 里删了就从集群删）。\
+渲染层认 plain manifests、Kustomize、Helm 与 jsonnet；ApplicationSet 用生成器批量产出 Application。\
+Web UI 里能直接看 diff、同步历史与每个资源的健康判定 —— 这是它相对 Flux 最直观的差别。CNCF 毕业项目。"""
+
+requires = [
+  "一个 Git 仓库（读权限即可；写回 Git 是别的组件的事）",
+  "纳管其他集群需要各集群的凭据（kubeconfig 或 ServiceAccount token）",
+]
+
+watch = [
+  "**谁来管 Argo CD 自己**：它的安装清单不进 Git 就成了整条链上唯一手工维护的部分（app-of-apps / 自管 Application 是常见解法）",
+  "self-heal + prune 会主动撤销手工 kubectl 改动 —— 这是特性，但排障时临时改动会被「修复」掉，要先关 auto-sync",
+  "控制面放哪个集群决定故障域：它挂掉不影响已部署的工作负载，但那段时间**发布能力为零**",
+  "Helm chart 由它渲染时，`helm list` 在集群里看不到 release —— 状态在 Application 里，不在 Helm 的 Secret 里",
+]
+
+[links]
+site = "https://argo-cd.readthedocs.io/"
+repo = "https://github.com/argoproj/argo-cd"
+docs = "https://argo-cd.readthedocs.io/en/stable/getting_started/"

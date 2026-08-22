@@ -1,0 +1,31 @@
+slug       = "dragonfly"
+name       = "Dragonfly"
+summary    = "兼容 Redis 协议的多线程重写，单实例吃满多核。许可证是 BUSL。"
+license    = "BUSL-1.1"
+language   = "C++"
+domain     = "data"
+categories = ["cache"]
+replaces   = ["aws-elasticache"]
+self_host  = ["SingleBinary", "Docker", "HelmChart", "Operator"]
+hosted     = true
+
+detail = """
+从零重写的实现，兼容 Redis 的线协议与大部分命令，但架构不同：shared-nothing 的多线程模型，\
+一个实例就能利用整台机器的核心，不必像 Redis 那样靠多进程/Cluster 来横向扩。\
+定位是「同样的内存与机器，撑更高吞吐」——homelab 规模下这个优势通常用不上，\
+它在这里的意义更多是「知道有这个选项」。"""
+
+requires = [
+  "多核机器才谈得上它的优势；内存与持久化规划同 Redis",
+]
+
+watch = [
+  "**许可证不是开源**：BUSL-1.1（按其条款在指定 Change Date 后转为 Apache-2.0）。要纯开源就看 Valkey",
+  "命令兼容是「大部分」而不是全部：用到冷门命令、模块或特定 Lua 行为时必须实测",
+  "homelab 的缓存负载几乎都不是 CPU 瓶颈 —— 为性能换掉 Redis/Valkey 之前先确认瓶颈真的在那里",
+]
+
+[links]
+site = "https://www.dragonflydb.io/"
+repo = "https://github.com/dragonflydb/dragonfly"
+docs = "https://www.dragonflydb.io/docs"

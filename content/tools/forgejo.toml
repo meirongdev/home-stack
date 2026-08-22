@@ -1,0 +1,32 @@
+slug       = "forgejo"
+name       = "Forgejo"
+summary    = "Gitea 的社区 fork：自托管 Git 托管 + 兼容 GitHub Actions 的 CI，GPL 授权。"
+license    = "GPL-3.0-or-later"
+language   = "Go"
+domain     = "gitops"
+categories = ["git-hosting", "ci"]
+replaces   = ["github"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+2022 年因治理与商业化分歧从 Gitea fork 出来，由 Codeberg e.V. 下的社区维护。\
+功能面与 Gitea 高度重叠：仓库托管、issue/PR、包仓库、以及 Forgejo Actions ——\
+一个与 GitHub Actions 工作流语法兼容的 runner，能把 `.github/workflows` 级别的东西搬到自家机器上跑。\
+数据库可用 SQLite 起步，单二进制部署。"""
+
+requires = [
+  "SQLite / PostgreSQL / MySQL 之一，以及一份持久卷（仓库数据）",
+  "Actions 需要额外部署 runner",
+]
+
+watch = [
+  "**授权变了**：v9.0 起是 GPL-3.0-or-later，之前的版本是 MIT —— 如果你打算基于它改造并对外提供服务，这条要先看",
+  "上游主仓库在 Codeberg，不在 GitHub —— issue、发布与代码都在那边，`xtask fetch` 抓不到它的活跃度数字",
+  "和 Gitea 的选择今天主要是治理偏好：功能差异在收窄，但两边的 Actions runner 与部分设置项并不完全通用",
+]
+
+[links]
+site = "https://forgejo.org/"
+repo = "https://codeberg.org/forgejo/forgejo"
+docs = "https://forgejo.org/docs/latest/"

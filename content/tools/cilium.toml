@@ -1,0 +1,32 @@
+slug       = "cilium"
+name       = "Cilium"
+summary    = "eBPF 数据面的 CNI：网络策略、kube-proxy 替换、Gateway API 与跨集群互联都在一套里。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["cni", "ingress"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+用 eBPF 程序挂在内核网络路径上做转发与策略，因此能整体替掉 kube-proxy 的 iptables 规则表（`kubeProxyReplacement`）。\
+除 CNI 本职外还带三块常被单独选型的能力：L3-L7 网络策略（L7 走内嵌 Envoy）、Gateway API 入口实现、\
+以及 ClusterMesh —— 让两个集群的 Service 与 Pod 互相可达。Hubble 是它的流量可观测面，能看到「哪个 Pod 到哪个 Pod 被谁拒了」。\
+CNCF 毕业项目。"""
+
+requires = [
+  "较新的内核（基础功能 4.19+，kube-proxy 替换与 host routing 等要 5.x 以上，逐特性不同）",
+  "挂载 bpffs；K3s 上要在安装时关掉 flannel 与内置 ServiceLB",
+]
+
+watch = [
+  "能力越界带来的耦合：入口、策略、跨集群、流量可观测全压在同一个 DaemonSet 上 —— 它出问题不是「网络慢了」，是这四件事一起没了",
+  "ClusterMesh 要求各集群的 Pod/Service CIDR 不重叠、cluster name 与 id 全局唯一，这个约束在建第二个集群之前就得定下来",
+  "Hubble 全量流日志是额外的内存与 CPU 开销，小内存节点上要按需开、别默认全开",
+  "它用 fwmark 做策略路由 —— 和同机的 Tailscale、WireGuard 等同样用 fwmark 的组件可能撞车，症状是部分流量间歇性走错路径",
+]
+
+[links]
+site = "https://cilium.io/"
+repo = "https://github.com/cilium/cilium"
+docs = "https://docs.cilium.io/en/stable/"

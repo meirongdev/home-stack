@@ -1,0 +1,32 @@
+slug       = "proxmox-ve"
+name       = "Proxmox VE"
+summary    = "Debian 上的 KVM + LXC 虚拟化平台，带 Web UI。homelab 里最常见的那台宿主机。"
+license    = "AGPL-3.0"
+language   = "Perl"
+domain     = "compute"
+categories = ["hypervisor"]
+replaces   = ["vmware-vsphere"]
+self_host  = ["OsImage", "DebRpm"]
+hosted     = false
+
+detail = """
+一套装在 Debian 上的管理面：KVM 全虚拟机与 LXC 系统容器共用同一个 Web UI 和同一套 API。\
+存储层可插 ZFS、LVM-thin、目录、NFS/CIFS 与 Ceph；备份由自带的 vzdump 做整机快照，增量与去重要另装 Proxmox Backup Server。\
+多节点集群靠 Corosync 选举，配置目录 /etc/pve 是一个跨节点同步的 fuse 文件系统（pmxcfs）——\
+失去 quorum 时它会变成只读，虚机照常跑但改不了任何配置。"""
+
+requires = [
+  "支持硬件虚拟化的物理机（VT-x / AMD-V），直通设备还要 IOMMU",
+  "多节点集群要 3 个投票成员才有 quorum；两节点必须再加一个 QDevice",
+]
+
+watch = [
+  "无订阅也能全功能使用，但默认配的是 enterprise apt 仓库（需订阅），装完第一件事是换成 no-subscription 源",
+  "ZFS 的 ARC 默认会吃掉大量内存，和虚机内存分配直接抢 —— 小内存宿主机要显式设 zfs_arc_max",
+  "上游代码不在 GitHub，issue 走 bugzilla + 邮件列表，`xtask fetch` 抓不到它的活跃度数字",
+]
+
+[links]
+site = "https://www.proxmox.com/en/proxmox-virtual-environment/overview"
+repo = "https://git.proxmox.com/?p=pve-manager.git;a=summary"
+docs = "https://pve.proxmox.com/pve-docs/"

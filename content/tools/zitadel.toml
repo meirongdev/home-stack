@@ -1,0 +1,33 @@
+slug       = "zitadel"
+name       = "ZITADEL"
+summary    = "事件溯源的 IdP：OIDC / SAML / OAuth2、多组织、Actions 钩子，Postgres 单依赖。"
+license    = "AGPL-3.0"
+language   = "Go"
+domain     = "identity"
+categories = ["idp"]
+replaces   = ["auth0", "okta", "aws-cognito"]
+self_host  = ["Docker", "HelmChart", "Operator"]
+hosted     = true
+
+detail = """
+标准协议齐（OIDC、OAuth 2.x、SAML 2.0、SCIM），加上多组织（organization）与项目/应用的层级模型 ——\
+一套实例可以干净地给多个「租户」发身份。存储是事件溯源：所有变更写成事件流再投影出读模型，\
+因此审计天然完整，但也意味着数据库里的表不是你以为的那种 CRUD 结构。外部依赖只有 PostgreSQL。\
+支持 GitHub / Google 等外部 IdP 联邦，以及用 Actions 在登录流程里插自定义逻辑。"""
+
+requires = [
+  "PostgreSQL（生产形态建议用 CNPG 之类的 operator 管）",
+  "一个域名与证书；OIDC 的 issuer URL 一经使用就不该再改",
+]
+
+watch = [
+  "**issuer URL 是准入合约**：改域名意味着所有已接入应用的配置同时失效，上线前就要定死",
+  "事件溯源的代价是数据库只增不减，长期要关注 event 表增长与投影重建耗时",
+  "AGPL：自用与内部服务无碍，但把它作为对外服务的一部分提供时要看清条款",
+  "别把身份面和应用库放同一个 Postgres 实例 —— 身份挂了会连带全部登录，故障域要单独隔",
+]
+
+[links]
+site = "https://zitadel.com/"
+repo = "https://github.com/zitadel/zitadel"
+docs = "https://zitadel.com/docs"

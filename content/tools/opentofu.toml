@@ -1,0 +1,30 @@
+slug       = "opentofu"
+name       = "OpenTofu"
+summary    = "Terraform 改 BUSL 后的 MPL 分支，托管在 Linux Foundation 下，配置与 provider 通用。"
+license    = "MPL-2.0"
+language   = "Go"
+domain     = "iac"
+categories = ["declarative-infra"]
+replaces   = ["terraform-cloud"]
+self_host  = ["SingleBinary"]
+hosted     = false
+
+detail = """
+从 Terraform 最后一个 MPL 版本 fork，由 Linux Foundation 托管。HCL 配置与既有 provider 基本直接可用，\
+迁移通常就是换二进制（`tofu` 代替 `terraform`）。它也自己加了一些 Terraform 当时没有的东西 ——\
+例如 state 的客户端加密与更灵活的 provider 源解析。"""
+
+requires = [
+  "同 Terraform：provider 凭据与（推荐的）远端 state 后端",
+]
+
+watch = [
+  "两边的语言特性已开始分叉：用了任一侧的新特性之后，配置就不再双向兼容了",
+  "provider 从 OpenTofu Registry 解析，冷门 provider 的可用性要先确认（多数主流的都在）",
+  "第三方文档、教程与 CI action 仍以 `terraform` 命名为默认，自动化脚本里要留意命令名与环境变量前缀",
+]
+
+[links]
+site = "https://opentofu.org/"
+repo = "https://github.com/opentofu/opentofu"
+docs = "https://opentofu.org/docs/"

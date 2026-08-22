@@ -1,0 +1,29 @@
+slug       = "csi-driver-nfs"
+name       = "CSI Driver NFS"
+summary    = "把已有 NFS 导出接成 StorageClass：多 Pod 共享读写，动态建子目录。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "storage"
+categories = ["k8s-volumes"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+Kubernetes SIG Storage 维护的 CSI 驱动：把一台 NFS server 的导出目录变成 StorageClass，\
+PVC 到来时在共享下建一个子目录做成 PV。天生支持 ReadWriteMany —— 多个 Pod（甚至跨节点）同时读写同一份数据，\
+这是本地盘方案给不了的。家里已经有 NAS 时，它是把那块容量接进集群最短的路。"""
+
+requires = [
+  "一台 NFS server 与已导出的路径；各节点装 nfs-common / nfs-utils",
+]
+
+watch = [
+  "**别把数据库放上去**：NFS 的锁与 fsync 语义和本地盘不同，SQLite / PostgreSQL 放 NFS 是经典的数据损坏事故",
+  "NFS server 是单点，而且失败方式很难看 —— 它不可达时 Pod 卡在不可中断的 IO 等待，`kubectl delete pod` 也不动",
+  "uid/gid 与 root_squash 是第一个坑：容器里的用户与导出权限对不上时表现为「目录存在但写不进去」",
+]
+
+[links]
+site = "https://github.com/kubernetes-csi/csi-driver-nfs"
+repo = "https://github.com/kubernetes-csi/csi-driver-nfs"
+docs = "https://github.com/kubernetes-csi/csi-driver-nfs/blob/master/docs/install-csi-driver-nfs.md"

@@ -3,6 +3,7 @@ name       = "Jaeger"
 summary    = "CNCF 毕业的分布式链路追踪后端。OTel 采集，支持多种存储后端。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["traces"]
 replaces   = ["datadog-apm", "new-relic", "honeycomb", "aws-xray"]
 self_host  = ["Docker", "Compose", "HelmChart"]

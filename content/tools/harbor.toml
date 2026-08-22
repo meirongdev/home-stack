@@ -1,0 +1,31 @@
+slug       = "harbor"
+name       = "Harbor"
+summary    = "带项目、配额、漏洞扫描、签名与代理缓存的镜像仓库。功能全，组件也多。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["registry"]
+replaces   = ["docker-hub"]
+self_host  = ["HelmChart", "Compose", "Operator"]
+hosted     = false
+
+detail = """
+在 OCI registry 之上加了一层企业形态的控制面：项目与成员、存储配额、镜像保留策略、\
+漏洞扫描（内置 Trivy adapter）、签名校验与准入策略、以及仓库之间的复制。\
+对 homelab 最实用的其实是**代理缓存（pull-through cache）**：把上游镜像缓存在本地，\
+既省带宽，也不再被 Docker Hub 的匿名拉取限流卡住。CNCF 毕业项目。"""
+
+requires = [
+  "PostgreSQL、Redis、对象存储或 PVC；一个域名与证书（registry 走 TLS)",
+]
+
+watch = [
+  "组件多（core / registry / jobservice / portal / trivy / redis / postgres），是 homelab 里最重的一件「配套设施」，只为存自建镜像的话性价比很低",
+  "升级必须按官方支持矩阵逐版走，跳版本升级数据库迁移会失败",
+  "扫描结果与准入策略是两件事：扫出高危不等于拦住部署，要显式配 policy 才有拦截行为",
+]
+
+[links]
+site = "https://goharbor.io/"
+repo = "https://github.com/goharbor/harbor"
+docs = "https://goharbor.io/docs/"

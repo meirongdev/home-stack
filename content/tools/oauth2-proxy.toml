@@ -1,0 +1,32 @@
+slug       = "oauth2-proxy"
+name       = "oauth2-proxy"
+summary    = "给没有 SSO 的应用套一层 OIDC 登录：单进程反向代理或 forward-auth 端点。"
+license    = "MIT"
+language   = "Go"
+domain     = "identity"
+categories = ["forward-auth"]
+replaces   = ["cloudflare-access"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+它自己不是 IdP：把认证委托给上游 OIDC provider（ZITADEL、Keycloak、Google、GitHub），\
+校验通过后放行并可把用户信息注入到请求头里给后端应用用。两种部署形态：\
+作为反向代理串在流量路径上，或作为入口控制器的 forward-auth 端点被询问。\
+每个应用一个实例是常见做法 —— 因为 cookie 域、允许的邮箱域与注入的头都是按应用配的。"""
+
+requires = [
+  "一个 OIDC provider 与为它注册的 client id/secret",
+  "cookie 加密密钥；多副本要共享会话存储（Redis）",
+]
+
+watch = [
+  "按应用部署会带来实例数膨胀（十个应用十份配置）—— 这时候值得重新考虑带内置 proxy 的 IdP（authentik）或统一门户（Authelia）",
+  "注入的身份头必须让后端**只信任来自它的那一跳** —— 后端直接暴露时，伪造头就等于绕过认证",
+  "cookie 域配错的典型症状是登录成功后无限重定向，先查 `--cookie-domain` 与 `--whitelist-domain`",
+]
+
+[links]
+site = "https://oauth2-proxy.github.io/oauth2-proxy/"
+repo = "https://github.com/oauth2-proxy/oauth2-proxy"
+docs = "https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview"

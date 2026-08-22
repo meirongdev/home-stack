@@ -1,0 +1,28 @@
+slug       = "flannel"
+name       = "Flannel"
+summary    = "最简的 overlay CNI，只做 Pod 网络互通。K3s 的默认 CNI。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "networking"
+categories = ["cni"]
+self_host  = ["Manifests", "HelmChart"]
+hosted     = false
+
+detail = """
+给每个节点分一段子网，节点之间用 VXLAN 封装（也可选 host-gw 走三层直连、或 WireGuard 加密后端）把 Pod 流量送过去。\
+职责刻意窄：只保证 Pod 能互通，不做网络策略、不做服务负载均衡、也没有 L7 概念。\
+正因为窄，它是最容易读懂、最少出意外的一个 CNI —— K3s 默认装的就是它。"""
+
+requires = [
+  "节点之间 UDP 8472（VXLAN）可达",
+]
+
+watch = [
+  "**不支持 NetworkPolicy** —— 声明了策略不会报错，只是不生效。要策略就得换 CNI 或再叠一层",
+  "Service 转发仍然由 kube-proxy 的 iptables 做，规模上去后规则表的开销跑不掉",
+]
+
+[links]
+site = "https://github.com/flannel-io/flannel"
+repo = "https://github.com/flannel-io/flannel"
+docs = "https://github.com/flannel-io/flannel/blob/master/Documentation/kubernetes.md"

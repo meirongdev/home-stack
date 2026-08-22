@@ -1,0 +1,31 @@
+slug       = "woodpecker-ci"
+name       = "Woodpecker CI"
+summary    = "Drone 的社区 fork：每步一个容器，挂在 Gitea / Forgejo / GitHub 上做 CI。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "gitops"
+categories = ["ci"]
+replaces   = ["github-actions", "circleci"]
+self_host  = ["Docker", "Compose", "HelmChart"]
+hosted     = false
+
+detail = """
+架构是 server + agent：server 接 forge 的 webhook 并派活，agent 拉任务、按 pipeline 每一步起一个容器执行。\
+backend 可选 docker、Kubernetes 或本地进程。它**不是**独立的 Git 托管 ——\
+必须挂在一个 forge（Gitea、Forgejo、GitHub、GitLab）上，由那边的仓库事件驱动。"""
+
+requires = [
+  "一个 forge 与它的 OAuth 应用凭据",
+  "docker backend 需要 agent 能访问容器运行时；k8s backend 需要相应 RBAC 与 PVC",
+]
+
+watch = [
+  "Kubernetes backend 的成熟度与文档密度低于 docker backend，homelab 里用后者踩坑更少",
+  "agent 能起任意容器 —— 谁能改仓库里的 pipeline，谁就能在 agent 上执行代码，权限边界必须按这个理解",
+  "secret 模型简单（仓库/组织级键值），复杂的密钥轮换要外接（如从 Vault 取）",
+]
+
+[links]
+site = "https://woodpecker-ci.org/"
+repo = "https://github.com/woodpecker-ci/woodpecker"
+docs = "https://woodpecker-ci.org/docs/intro"

@@ -1,0 +1,31 @@
+slug       = "gitea"
+name       = "Gitea"
+summary    = "轻量自托管 Git 托管：单二进制 + SQLite 就能起，自带 Gitea Actions。"
+license    = "MIT"
+language   = "Go"
+domain     = "gitops"
+categories = ["git-hosting", "ci"]
+replaces   = ["github"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = true
+
+detail = """
+自托管 Git 服务里资源占用最低的一档：一个二进制 + SQLite 就能跑起完整的仓库、issue、PR、\
+包仓库与 Gitea Actions（GitHub Actions 兼容的 runner）。也提供托管版（Gitea Cloud）。\
+2022 年成立商业公司 Gitea Ltd 接管商标与治理，这一步直接导致了 Forgejo 的 fork ——\
+今天在两者之间选，主要是在选治理模式。"""
+
+requires = [
+  "SQLite / PostgreSQL / MySQL 之一，以及一份持久卷（仓库数据）",
+]
+
+watch = [
+  "作为「Git 的最终归宿」它就是单点：仓库数据的备份与恢复演练必须真做过一次",
+  "Actions runner 要单独部署与授权，注册 token 泄露等于把执行权交出去",
+  "和 Forgejo 的迁移路径大体互通，但反向（Forgejo → Gitea）随版本推进会越来越不对称",
+]
+
+[links]
+site = "https://about.gitea.com/"
+repo = "https://github.com/go-gitea/gitea"
+docs = "https://docs.gitea.com/"

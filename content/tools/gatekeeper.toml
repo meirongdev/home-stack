@@ -1,0 +1,29 @@
+slug       = "gatekeeper"
+name       = "OPA Gatekeeper"
+summary    = "用 Rego 写 K8s 准入策略：表达力最强，学习曲线也最陡。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "security"
+categories = ["policy"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+把 Open Policy Agent 接进 Kubernetes 准入链：ConstraintTemplate 用 Rego 定义「怎么判」，\
+Constraint 用普通 YAML 声明「判哪些资源、参数是什么」。这个两层结构让写模板的人和用模板的人可以分开。\
+配合 audit 循环，它还能报告**已经存在**的违规对象，而不只是拦新建的。CNCF 项目。"""
+
+requires = [
+  "集群 webhook 可达；策略要引用其他对象时需开启数据同步（replicate）",
+]
+
+watch = [
+  "Rego 是一门真正要学的语言 —— 只是想禁掉 latest tag、要求 resources 的话，Kyverno 的成本低得多",
+  "同样在 API 请求路径上：failurePolicy 与超时决定了它故障时集群是「拒绝一切」还是「放行一切」",
+  "策略要跨对象判断（如「同 namespace 不能有重复 Ingress host」）必须先把相关资源同步进它的缓存，这一步常被漏掉",
+]
+
+[links]
+site = "https://open-policy-agent.github.io/gatekeeper/"
+repo = "https://github.com/open-policy-agent/gatekeeper"
+docs = "https://open-policy-agent.github.io/gatekeeper/website/docs/"

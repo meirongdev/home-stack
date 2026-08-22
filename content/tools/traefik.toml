@@ -1,0 +1,29 @@
+slug       = "traefik"
+name       = "Traefik"
+summary    = "配置来自 provider 的反向代理：K8s Ingress / CRD / Gateway API 都认，内置 ACME 签证书。"
+license    = "MIT"
+language   = "Go"
+domain     = "networking"
+categories = ["ingress", "certs"]
+self_host  = ["SingleBinary", "Docker", "HelmChart"]
+hosted     = false
+
+detail = """
+路由规则不写在配置文件里，而是从 provider 动态发现：Kubernetes Ingress、它自己的 IngressRoute CRD、\
+Gateway API、Docker 标签、Consul、静态文件。内置 ACME 客户端可以自己申请与续期证书，小规模下省掉 cert-manager。\
+K3s 默认装的入口控制器就是它。"""
+
+requires = [
+  "证书自动签发要能完成 ACME 校验（HTTP-01 需 80 端口可达，通配符需 DNS-01 的 provider 凭据）",
+]
+
+watch = [
+  "IngressRoute 是私有 CRD —— 用它写的路由迁到别的控制器要整体重写。要保留退路就只写 Ingress 或 Gateway API",
+  "K3s 里的 Traefik 由内置 HelmChart 管，直接 kubectl edit deployment 会被覆盖，得写 HelmChartConfig",
+  "内置 ACME 把证书存在本地 acme.json（单副本），多副本要么换 cert-manager，要么上它的分布式存储方案",
+]
+
+[links]
+site = "https://traefik.io/traefik/"
+repo = "https://github.com/traefik/traefik"
+docs = "https://doc.traefik.io/traefik/"

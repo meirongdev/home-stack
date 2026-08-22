@@ -1,0 +1,29 @@
+slug       = "kyverno"
+name       = "Kyverno"
+summary    = "用 YAML 写 K8s 策略：校验、变更（mutate）、生成资源，不用学新语言。"
+license    = "Apache-2.0"
+language   = "Go"
+domain     = "security"
+categories = ["policy"]
+self_host  = ["HelmChart", "Manifests"]
+hosted     = false
+
+detail = """
+准入控制器 + 一组 Policy CRD。三类能力：validate（不合规就拒绝，或只报告）、\
+mutate（自动补上缺失的字段，如默认的 securityContext 或 label）、generate（新建 namespace 时自动铺好配套资源）。\
+策略用 YAML 声明，不需要学 Rego —— 这是它相对 OPA/Gatekeeper 最常被提到的优势。CNCF 项目。"""
+
+requires = [
+  "集群 webhook 可达（它是 admission webhook，网络策略要放行 API server → 它）",
+]
+
+watch = [
+  "**它在 API 请求路径上**：webhook 挂掉或超时会影响所有资源创建，failurePolicy 的取值是可用性与安全的直接权衡",
+  "先用 Audit 模式跑一段时间再切 Enforce —— 直接 enforce 会拦下你自己都没料到的既有工作负载",
+  "mutate 策略让「Git 里的清单」与「集群里的实际对象」不再逐字相同，GitOps 的 diff 会常态性地不干净，要提前想好如何忽略",
+]
+
+[links]
+site = "https://kyverno.io/"
+repo = "https://github.com/kyverno/kyverno"
+docs = "https://kyverno.io/docs/"

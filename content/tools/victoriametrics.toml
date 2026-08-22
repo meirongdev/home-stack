@@ -3,6 +3,7 @@ name       = "VictoriaMetrics"
 summary    = "高压缩比、低资源的指标库。PromQL 兼容，单机即可扛很大规模。"
 license    = "Apache-2.0"
 language   = "Go"
+domain     = "observability"
 categories = ["metrics"]
 replaces   = ["datadog", "grafana-cloud", "new-relic"]
 self_host  = ["SingleBinary", "Docker", "HelmChart"]

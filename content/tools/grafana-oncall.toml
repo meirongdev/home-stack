@@ -3,6 +3,7 @@ name       = "Grafana OnCall"
 summary    = "值班与告警编排。轮值表、升级策略、与 Alertmanager 集成。"
 license    = "AGPL-3.0"
 language   = "Python"
+domain     = "observability"
 categories = ["alerts"]
 replaces   = ["pagerduty", "opsgenie"]
 self_host  = ["Docker", "Compose", "HelmChart"]

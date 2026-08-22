@@ -89,3 +89,16 @@ cargo run -p xtask -- validate   # 内容五类校验（写错 vendor 或跨域�
 以及 `xtask validate` 与 `xtask render-diff`。
 CI（[.github/workflows/ci.yml](.github/workflows/ci.yml)）跑的是同一套 —— 钩子只是
 「别等 CI 才红」，不是唯一防线。详见 [.githooks/README.md](.githooks/README.md)。
+
+## 授权
+
+代码与内容**分开授权**，分界看目录：
+
+| 范围 | 许可证 |
+|------|--------|
+| `crates/` `cloudflare/` `.github/` `.githooks/` | MIT **或** Apache-2.0，二选一 |
+| `content/` `docs/` 与本文 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)（署名） |
+| `content/generated/` | 从上游公开 API 抓来的事实性数据，不主张权利 |
+
+条目文本与（段 3 之后的）FieldNote 是这个站的实质产出，所以要求署名而不是
+放任整体搬走。完整说明见 [LICENSE](LICENSE)。

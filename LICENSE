@@ -1,0 +1,46 @@
+Home Stack —— 授权说明
+======================
+
+本仓库里的**代码**与**内容**分开授权。分界不看文件类型，看目录。
+
+代码：MIT OR Apache-2.0（二选一，随你）
+-----------------------------------------
+
+适用范围：
+
+  crates/**              Rust 源码（site / dev / edge / xtask）
+  cloudflare/**          Terraform 模块与 justfile
+  .github/**             CI workflow
+  .githooks/**           提交门禁与检查脚本
+
+许可证正文见 LICENSE-MIT 与 LICENSE-APACHE。
+与 Cargo.toml 里的 `license = "MIT OR Apache-2.0"` 一致。
+
+除另有明确声明外，任何有意提交给本仓库代码部分的贡献，
+都按 Apache-2.0 第 5 节以同样的双授权接受，不附加额外条款。
+
+内容：CC BY 4.0（署名）
+-----------------------
+
+适用范围：
+
+  content/**             目录条目、分类法声明，以及将来的 FieldNote
+  docs/**                ADR、规格、reference、runbook
+  README.md              及其他仓库根的说明文档
+
+许可证正文见 LICENSE-CONTENT，摘要：
+https://creativecommons.org/licenses/by/4.0/
+
+为什么内容不用 MIT：条目文本与（段 3 之后的）FieldNote 是这个站的实质产出 ——
+实测足迹、踩过的坑、「评估过但没上」的理由。CC BY 允许任何人复用与改编，
+但要求**署名**。整体搬走而不提出处不在允许范围内。
+
+不属于本仓库授权的部分
+----------------------
+
+  content/generated/**   由 `xtask fetch` 从上游公开 API 抓取的事实性数据
+                         （star 数、最后推送时间、release、许可证名）。
+                         这些是各上游项目的事实，不是本仓库的创作。
+
+  条目里链出的一切        各上游项目的名称、商标与文档归其各自所有者。
+                         本仓库对它们只做引用与转述。

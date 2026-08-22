@@ -6,6 +6,8 @@ publish = false
 
 [dependencies]
 site = { path = "../site" }
+axum.workspace = true
+tower-service = "0.3"
 toml.workspace = true
 serde.workspace = true
 serde_json.workspace = true

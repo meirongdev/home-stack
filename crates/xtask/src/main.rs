@@ -1,7 +1,8 @@
 //! `crates/xtask` —— 构建期工具（native）。
 //!
-//! 已实现 `validate`（内容引用完整性，硬失败）与 `fetch`（上游活跃度，fail-soft）。
-//! `render-diff`（段 2）按 ROADMAP 补齐；
+//! 已实现 `validate`（内容引用完整性，硬失败）、`fetch`（上游活跃度，fail-soft）、
+//! `dump-html`（全站静态导出）、`render-diff`（两条内容路径逐字节比对）、
+//! `build-site`（dump-html + Pagefind 索引）。
 //! `--help` 里没有的子命令，pre-push 钩子会自动跳过。
 
 use std::path::Path;
@@ -9,12 +10,18 @@ use std::path::Path;
 const SUBCOMMANDS: &[(&str, &str)] = &[
     (
         "validate",
-        "内容引用完整性校验（四类硬失败：引用未声明 / 孤儿分类 / slug 重复 / summary 超长）",
+        "内容引用完整性校验（五类硬失败：引用未声明 / 跨域分类 / 孤儿分类与域 / slug 重复 / summary 超长）",
     ),
     (
         "fetch",
         "抓上游活跃度 → content/generated/repo.json（fail-soft，需 GITHUB_TOKEN）",
     ),
+    ("dump-html", "全站渲染成静态文件 → dist/（纯静态逃生舱 + Pagefind 的输入）"),
+    (
+        "render-diff",
+        "两条内容路径（磁盘 / 构建期内嵌）渲染结果逐字节比对，不一致即硬失败",
+    ),
+    ("build-site", "dump-html 之后再建 Pagefind 索引（需要 npx）"),
 ];
 
 fn main() {
@@ -24,6 +31,9 @@ fn main() {
     match cmd {
         Some("validate") => validate(),
         Some("fetch") => fetch(),
+        Some("dump-html") => dump_html(),
+        Some("render-diff") => render_diff(),
+        Some("build-site") => build_site(),
         Some("--help") | Some("-h") | None => {
             print_help();
             std::process::exit(0);
@@ -70,12 +80,21 @@ fn validate() {
     match site::load::load(&refs) {
         Ok(catalog) => {
             println!(
-                "✓ validate 通过：{} 个工具、{} 个分类、{} 个 vendor、{} 个集群",
+                "✓ validate 通过：{} 个工具、{} 个域、{} 个分类、{} 个 vendor、{} 个集群",
                 catalog.tools.len(),
+                catalog.domains.len(),
                 catalog.categories.len(),
                 catalog.vendors.len(),
                 catalog.clusters.len(),
             );
+            // 按域列一遍条目数 —— 覆盖不均是常态，但必须看得见是哪个域薄。
+            for d in &catalog.domains {
+                println!(
+                    "  {:<14} {} 条",
+                    d.id.as_str(),
+                    catalog.tools_in_domain(&d.id).count()
+                );
+            }
         }
         Err(issues) => {
             for i in &issues {
@@ -593,4 +612,233 @@ fn days_from_civil(y: i64, m: u32, d: u32) -> i64 {
     let doy = (153 * mp + 2) / 5 + d as u64 - 1;
     let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
     era * 146_097 + doe as i64 - 719_468
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// dump-html / render-diff / build-site —— 段 2
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn leak_catalog(c: site::model::Catalog) -> &'static site::model::Catalog {
+    Box::leak(Box::new(c))
+}
+
+/// 从磁盘读 content/ 构建 Catalog（`validate` 用的那条路径）。
+fn catalog_from_disk() -> site::model::Catalog {
+    let content = content_dir();
+    let sources = read_sources(&content);
+    let refs: Vec<(&str, &str)> = sources
+        .iter()
+        .map(|(p, r)| (p.as_str(), r.as_str()))
+        .collect();
+    match site::load::load(&refs) {
+        Ok(c) => c,
+        Err(issues) => {
+            for i in &issues {
+                print_issue(i);
+            }
+            eprintln!("磁盘内容未通过校验：{} 处问题", issues.len());
+            std::process::exit(1);
+        }
+    }
+}
+
+/// 构建期内嵌的那条路径（线上唯一的数据来源）。
+fn catalog_embedded() -> site::model::Catalog {
+    match site::content::catalog() {
+        Ok(c) => c,
+        Err(issues) => {
+            for i in &issues {
+                print_issue(i);
+            }
+            eprintln!("内嵌内容未通过校验：{} 处问题", issues.len());
+            std::process::exit(1);
+        }
+    }
+}
+
+/// 纯静态导出目录 —— 「退回纯静态站」那个逃生舱的产物，也是 Pagefind 的**输入**。
+fn dist_dir() -> std::path::PathBuf {
+    match std::env::var("XTASK_DIST_DIR") {
+        Ok(p) => std::path::PathBuf::from(p),
+        Err(_) => Path::new(env!("CARGO_MANIFEST_DIR")).join("../../dist"),
+    }
+}
+
+/// 资源层目录 —— wrangler 上传的那一份。
+///
+/// ⚠️ **它不能包含渲染好的 HTML**：Workers 是资源优先，把整个 `dist/` 塞进去的话
+/// 每个页面都会被静态资源命中、Router 永远不会被唤起 —— SSR 那半个架构就白搭了。
+/// 这里只放构建期生成的客户端资源（当前只有 Pagefind 索引）。
+/// 路由分工见 docs/ARCHITECTURE.md。
+fn public_dir() -> std::path::PathBuf {
+    match std::env::var("XTASK_PUBLIC_DIR") {
+        Ok(p) => std::path::PathBuf::from(p),
+        Err(_) => Path::new(env!("CARGO_MANIFEST_DIR")).join("../../public"),
+    }
+}
+
+/// URL 路径 → 落盘位置。`/` → `index.html`，`/tools/loki` → `tools/loki/index.html`。
+///
+/// 目录式布局让纯静态托管也能用干净 URL（不带 .html 后缀），
+/// 这是「退回纯静态站」这个逃生舱能真正无缝的前提。
+fn out_path_for(dist: &Path, url: &str) -> std::path::PathBuf {
+    if url == "/" {
+        return dist.join("index.html");
+    }
+    dist.join(url.trim_start_matches('/')).join("index.html")
+}
+
+fn dump_html() {
+    let catalog = leak_catalog(catalog_embedded());
+    let dist = dist_dir();
+    let paths = site::router::all_paths(catalog);
+
+    // 先清掉旧产物：删了一条条目却留着它的 index.html，纯静态形态下那一页
+    // 会永远挂在线上 —— 这正是「站点上有一页对不上任何条目」的来源。
+    if dist.exists() {
+        std::fs::remove_dir_all(&dist)
+            .unwrap_or_else(|e| panic!("清理 {} 失败: {e}", dist.display()));
+    }
+
+    let mut bytes_total = 0usize;
+    for p in &paths {
+        let (_, html) = site::router::render_path(catalog, p);
+        let out = out_path_for(&dist, p);
+        std::fs::create_dir_all(out.parent().expect("有父目录")).expect("建目录失败");
+        std::fs::write(&out, html.as_bytes())
+            .unwrap_or_else(|e| panic!("写 {} 失败: {e}", out.display()));
+        bytes_total += html.len();
+    }
+
+    // 404：走 fallback，纯静态托管把它当 not-found 页面用。
+    let (_, nf) = site::router::render_path(catalog, "/__not_found__");
+    std::fs::write(dist.join("404.html"), nf.as_bytes()).expect("写 404.html 失败");
+
+    println!(
+        "✓ dump-html：{} 页 + 404.html → {}（{} KiB）",
+        paths.len(),
+        dist.display(),
+        bytes_total / 1024
+    );
+}
+
+fn render_diff() {
+    let disk = leak_catalog(catalog_from_disk());
+    let embedded = leak_catalog(catalog_embedded());
+
+    // 先比清单本身：一边多一条条目，逐页比对会漏掉那一条。
+    let a = site::router::all_paths(disk);
+    let b = site::router::all_paths(embedded);
+    if a != b {
+        eprintln!("render-diff 失败：两条内容路径的页面清单不同");
+        let only_a: Vec<_> = a.iter().filter(|p| !b.contains(p)).collect();
+        let only_b: Vec<_> = b.iter().filter(|p| !a.contains(p)).collect();
+        if !only_a.is_empty() {
+            eprintln!("  只在磁盘侧: {only_a:?}");
+        }
+        if !only_b.is_empty() {
+            eprintln!("  只在内嵌侧: {only_b:?}");
+        }
+        eprintln!("  help: 内嵌表由 crates/site/build.rs 生成 —— 跑 cargo clean -p site 后重编");
+        std::process::exit(1);
+    }
+
+    let mut diffs = 0usize;
+    for p in &a {
+        let (_, x) = site::router::render_path(disk, p);
+        let (_, y) = site::router::render_path(embedded, p);
+        if x != y {
+            diffs += 1;
+            eprintln!("render-diff 失败：{p} 两侧渲染不一致");
+            if let Some(i) = x
+                .char_indices()
+                .zip(y.chars())
+                .find(|((_, cx), cy)| cx != cy)
+                .map(|((i, _), _)| i)
+            {
+                let lo = i.saturating_sub(60);
+                eprintln!("  磁盘侧 …{}…", &x[lo..(i + 60).min(x.len())]);
+                eprintln!("  内嵌侧 …{}…", &y[lo..(i + 60).min(y.len())]);
+            }
+        }
+    }
+    if diffs > 0 {
+        eprintln!("\nrender-diff 未通过：{diffs} 页不一致");
+        std::process::exit(1);
+    }
+    println!(
+        "✓ render-diff：{} 页在「磁盘」与「构建期内嵌」两条内容路径上逐字节一致",
+        a.len()
+    );
+    println!(
+        "  note: 这条门禁覆盖的是**内容路径**（build.rs 的内嵌表是否忠实于 content/）。\n\
+         \x20       它**不**证明 wasm32 运行时渲染相同 —— 那需要在 CI 里跑起 Worker 再比，\n\
+         \x20       见 docs/ROADMAP.md 开放项 13。"
+    );
+}
+
+fn build_site() {
+    dump_html();
+    let dist = dist_dir();
+    let out = public_dir().join("pagefind");
+
+    // Pagefind 走 npx：不往仓库里塞 node 依赖，也不要求本机预装。
+    // 索引是**构建产物**，不进 git（.gitignore 里有 dist/ 与 public/）。
+    // 输入是 dist/（全站 HTML），输出落到 public/ —— 索引要被资源层伺服，HTML 不能。
+    println!("→ 建 Pagefind 索引：{} → {}", dist.display(), out.display());
+    let status = std::process::Command::new("npx")
+        .args([
+            "--yes",
+            "pagefind",
+            "--site",
+            dist.to_str().expect("dist 路径应是 UTF-8"),
+            "--output-path",
+            out.to_str().expect("public 路径应是 UTF-8"),
+        ])
+        .status();
+    match status {
+        Ok(s) if s.success() => {
+            let n = std::fs::read_dir(&out).map(|d| d.count()).unwrap_or(0);
+            // 索引也复制进 dist/ —— 纯静态逃生舱同样需要搜索（97 条条目没搜索不能用），
+            // 而 Pagefind 是纯客户端的，静态托管照样跑。
+            let mirror = dist.join("pagefind");
+            copy_dir_all(&out, &mirror).unwrap_or_else(|e| {
+                panic!("复制索引到 {} 失败: {e}", mirror.display());
+            });
+            println!("✓ build-site：Pagefind 索引就位（{n} 项）");
+            println!("  资源层 → {}（wrangler 上传这个）", out.display());
+            println!(
+                "  逃生舱 → {}（纯静态托管用，含同一份索引）",
+                mirror.display()
+            );
+        }
+        Ok(s) => {
+            eprintln!(
+                "✗ pagefind 退出码 {:?} —— 索引没建成，站内搜索不可用",
+                s.code()
+            );
+            std::process::exit(1);
+        }
+        Err(e) => {
+            eprintln!("✗ 起不动 npx：{e}");
+            eprintln!("  help: 装 Node（含 npx），或手动跑 pagefind --site dist --output-path public/pagefind");
+            std::process::exit(1);
+        }
+    }
+}
+
+/// 递归复制目录。只服务于「索引同时进 public/ 与 dist/」这一件事，
+/// 不值得为它引一个依赖。
+fn copy_dir_all(from: &Path, to: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let dst = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir_all(&entry.path(), &dst)?;
+        } else {
+            std::fs::copy(entry.path(), &dst)?;
+        }
+    }
+    Ok(())
 }

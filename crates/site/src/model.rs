@@ -8,7 +8,15 @@ use serde::Deserialize;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
 pub struct Slug(String);
 
-/// 分类法 id（必须存在于 categories.toml）。
+/// 主题域 id（必须存在于 domains.toml）。
+///
+/// 域是目录的第一根轴：`observability` / `networking` / `gitops` …
+/// 分类（`CategoryId`）挂在域下面 —— 「指标」只在可观测域里有意义，
+/// 「CNI」只在网络域里有意义，把两者摊平成一层就得到一个 40 项的平铺清单。
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
+pub struct DomainId(String);
+
+/// 分类法 id（必须存在于 categories.toml，且归属某个域）。
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
 pub struct CategoryId(String);
 
@@ -57,6 +65,7 @@ macro_rules! str_newtype {
 }
 
 str_newtype!(Slug);
+str_newtype!(DomainId);
 str_newtype!(CategoryId);
 str_newtype!(VendorId);
 str_newtype!(ClusterId);
@@ -73,7 +82,12 @@ pub enum DeployKind {
     Compose,
     HelmChart,
     Operator,
+    /// 裸 K8s 清单（`kubectl apply -f`），上游不发 chart。
+    Manifests,
     DebRpm,
+    /// 整机镜像 / ISO —— hypervisor 与不可变 K8s 发行版装的是操作系统，
+    /// 不是「一个包」。硬塞进 DebRpm 会让读者以为能 apt install。
+    OsImage,
     SourceBuild,
 }
 
@@ -168,6 +182,11 @@ pub struct Tool {
     pub summary: Summary,
     pub license: Spdx,
     pub language: String,
+    /// 主题域，**单值且必填** —— 决定导航归属与面包屑。
+    /// 跨域的工具（Cilium 同时是 CNI、网络策略与流量可观测）只登记主域，
+    /// 另一面写进 `detail`：一个工具两个域会让「域内条目数」失去意义。
+    pub domain: DomainId,
+    /// 域内分类。校验保证每一项都属于本条目的 `domain`。
     #[serde(default)]
     pub categories: Vec<CategoryId>,
     #[serde(default)]
@@ -200,11 +219,22 @@ pub struct Vendor {
     pub name: String,
 }
 
-/// 信号分类声明。
+/// 域内分类声明。
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Category {
     pub id: CategoryId,
     pub name: String,
+    /// 所属域。分类不能无主 —— 无主分类会在首页上变成一个不知该挂在哪的入口。
+    pub domain: DomainId,
+}
+
+/// 主题域声明。
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct Domain {
+    pub id: DomainId,
+    pub name: String,
+    /// 一句话说明这个域回答什么问题（渲染在域卡片与域页面上）。
+    pub tagline: String,
 }
 
 /// FieldNote 集群标识声明。
@@ -251,6 +281,7 @@ pub struct RepoIndex {
 #[derive(Debug, Clone)]
 pub struct Catalog {
     pub vendors: Vec<Vendor>,
+    pub domains: Vec<Domain>,
     pub categories: Vec<Category>,
     pub clusters: Vec<Cluster>,
     pub tools: Vec<Tool>,
@@ -267,13 +298,39 @@ impl Catalog {
         self.categories.iter().find(|c| &c.id == id)
     }
 
+    pub fn domain(&self, id: &DomainId) -> Option<&Domain> {
+        self.domains.iter().find(|d| &d.id == id)
+    }
+
     pub fn vendor(&self, id: &VendorId) -> Option<&Vendor> {
         self.vendors.iter().find(|v| &v.id == id)
+    }
+
+    /// 目录里是否已经有 FieldNote。
+    ///
+    /// 用来决定「暂无 FieldNote」那句话该不该渲染：**它的信息量来自覆盖率不均**
+    /// —— 这一条没有、别的条有。全目录零覆盖时它出现在每一页上，就退化成装饰。
+    /// 段 3 落库后自动恢复，不需要回来改模板。
+    pub fn has_field_notes(&self) -> bool {
+        self.tools.iter().any(|t| t.field_note.is_some())
     }
 
     /// 某工具的上游活跃度快照（没跑过 fetch 时为 `None`）。
     pub fn repo_stats(&self, slug: &Slug) -> Option<&RepoStats> {
         self.repos.as_ref()?.repos.get(slug.as_str())
+    }
+
+    /// 该域下的工具（保持声明顺序）。
+    pub fn tools_in_domain<'a>(&'a self, id: &'a DomainId) -> impl Iterator<Item = &'a Tool> + 'a {
+        self.tools.iter().filter(move |t| &t.domain == id)
+    }
+
+    /// 该域下的分类（保持声明顺序）。
+    pub fn categories_in_domain<'a>(
+        &'a self,
+        id: &'a DomainId,
+    ) -> impl Iterator<Item = &'a Category> + 'a {
+        self.categories.iter().filter(move |c| &c.domain == id)
     }
 
     /// 该分类下的工具（保持声明顺序）。

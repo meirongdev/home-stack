@@ -7,7 +7,9 @@
 //!    浏览器会按 adoption agency 把内层拆出去，让 tag 行变成独立的网格单元
 //!    （回归测试见本文件 `cards_have_no_nested_anchor`）。
 
-use crate::model::{Catalog, Category, RepoStats, Status, Tool, Upstream, UpstreamStatus, Vendor};
+use crate::model::{
+    Catalog, Category, Domain, RepoStats, Status, Tool, Upstream, UpstreamStatus, Vendor,
+};
 use maud::{html, Markup};
 
 /// 页面外壳：head + 顶部导航 + 主区 + 页脚。
@@ -18,22 +20,40 @@ fn layout(title: &str, body: Markup) -> Markup {
             head {
                 meta charset="utf-8";
                 meta name="viewport" content="width=device-width, initial-scale=1";
-                title { (title) " — Probe Directory" }
+                title { (title) " — Home Stack" }
                 style {
                     (include_str!("templates.css"))
                 }
             }
             body {
-                header.nav {
+                // data-pagefind-ignore：导航与页脚在每一页上都一样，
+                // 让它们进索引 = 每个查询都命中全部 185 页。
+                header.nav data-pagefind-ignore {
                     .nav-inner {
-                        a.brand href="/" { "Probe Directory" }
+                        a.brand href="/" { "Home Stack" }
+                        // 空容器 —— PagefindUI 自己造输入框。
+                        // 索引没建时脚本 404，这里保持空白，**不会留下一个点不动的搜索框**。
+                        #search {}
                     }
                 }
                 main { (body) }
-                footer {
+                footer data-pagefind-ignore {
                     .footer-inner {
                         "每条条目都链回上游仓库与文档 —— 字段可以核对，取舍自己判断。"
                     }
+                }
+                // 搜索是纯客户端的：构建期生成索引，运行时不消耗 Worker CPU。
+                // 线上这两个文件由 Cloudflare 资源层应答；本地由 crates/dev 从 dist/ 伺服。
+                link rel="stylesheet" href="/pagefind/pagefind-ui.css";
+                script src="/pagefind/pagefind-ui.js" {}
+                script {
+                    (maud::PreEscaped(
+                        "window.addEventListener('DOMContentLoaded',function(){\
+                         if(typeof PagefindUI==='undefined')return;\
+                         new PagefindUI({element:'#search',showImages:false,\
+                         showSubResults:true,pageSize:8,\
+                         translations:{placeholder:'搜条目',zero_results:'没有匹配的条目'}});});"
+                    ))
                 }
             }
         }
@@ -95,11 +115,12 @@ fn chip_count(href: &str, label: &str, n: usize) -> Markup {
 /// vendor 页上每张卡都挂着当前 vendor，两者都是自指控件。
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum CardContext {
-    /// 首页全量列表：显示「替代哪些 SaaS」。
-    All,
+    /// 域已知（首页的域分组、域页面）：显示域内分类。
+    /// 基建域的条目多半不替代任何 SaaS，那一行只会空着。
+    Domain,
     /// 分类页：分类已知，显示「替代哪些 SaaS」。
     Category,
-    /// vendor 页：vendor 已知，显示信号分类。
+    /// vendor 页：vendor 已知，显示域内分类。
     Vendor,
 }
 
@@ -119,7 +140,7 @@ pub fn tool_card(tool: &Tool, catalog: &Catalog, ctx: CardContext) -> Markup {
         _ => None,
     };
     let meta = match ctx {
-        CardContext::All | CardContext::Category => (!tool.replaces.is_empty()).then(|| {
+        CardContext::Category => (!tool.replaces.is_empty()).then(|| {
             let names: Vec<String> = tool
                 .replaces
                 .iter()
@@ -127,7 +148,7 @@ pub fn tool_card(tool: &Tool, catalog: &Catalog, ctx: CardContext) -> Markup {
                 .collect();
             format!("替代 {}", names.join("、"))
         }),
-        CardContext::Vendor => (!tool.categories.is_empty()).then(|| {
+        CardContext::Domain | CardContext::Vendor => (!tool.categories.is_empty()).then(|| {
             let names: Vec<String> = tool
                 .categories
                 .iter()
@@ -169,6 +190,14 @@ fn category_label(catalog: &Catalog, id: &crate::model::CategoryId) -> String {
     catalog
         .category(id)
         .map(|c| c.name.clone())
+        .unwrap_or_else(|| id.to_string())
+}
+
+/// 域展示名 —— 页面上一律用 `domains.toml` 里的名字，不露裸 id。
+fn domain_label(catalog: &Catalog, id: &crate::model::DomainId) -> String {
+    catalog
+        .domain(id)
+        .map(|d| d.name.clone())
         .unwrap_or_else(|| id.to_string())
 }
 
@@ -298,10 +327,11 @@ fn status_str(s: Status) -> &'static str {
     }
 }
 
-/// 首页：hero + SaaS 替换索引 + 分类导航 + 全部工具。
+/// 首页：hero + 域导航 + SaaS 替换索引 + 按域分组的全部条目。
 ///
-/// SaaS 索引排在分类之前 —— hero 承诺「按你要替换掉哪个 SaaS 索引」，
-/// 那这个索引就得是首屏第一个能点的东西。
+/// **域排在 SaaS 索引之前** —— 目录从「换掉哪个 SaaS」扩到「homelab 该选哪一套」之后，
+/// 大半基建条目（CNI、hypervisor、GitOps 控制面）压根没有对应的 SaaS 可替换，
+/// 把 SaaS 索引摆在首屏第一位就等于让首屏漏掉一半内容。
 pub fn home(catalog: &Catalog) -> Markup {
     let mut vendors: Vec<(&Vendor, usize)> = catalog
         .vendors
@@ -312,16 +342,30 @@ pub fn home(catalog: &Catalog) -> Markup {
         .collect();
     vendors.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.name.cmp(&b.0.name)));
 
-    let all: Vec<&Tool> = catalog.tools.iter().collect();
+    // 域保持 domains.toml 的声明顺序 —— 那个顺序本身是一条内容判断
+    // （先有底座，才有跑在上面的东西），按条目数排会把它洗掉。
+    let domains: Vec<(&Domain, Vec<&Tool>)> = catalog
+        .domains
+        .iter()
+        .map(|d| (d, catalog.tools_in_domain(&d.id).collect()))
+        .collect();
 
     layout(
         "首页",
         html! {
             section.hero {
-                h1 { "自托管可观测性工具目录" }
+                h1 { "homelab 自托管技术选型目录" }
                 p {
-                    "按「你要替换掉哪个 SaaS」索引。每条给出许可证、实现语言、部署形态、\
-                     运行依赖与上手前要知道的坑，以及回到上游仓库与文档的链接。"
+                    "从计算底座到可观测，按主题域给出候选清单。每条给出许可证、实现语言、\
+                     部署形态、运行依赖与上手前要知道的坑，以及回到上游仓库与文档的链接。"
+                }
+            }
+            section id="domains" {
+                h2 { "按主题域" }
+                .category-grid {
+                    @for (d, tools) in &domains {
+                        (domain_card(d, tools.len()))
+                    }
                 }
             }
             section id="replaces" {
@@ -332,17 +376,17 @@ pub fn home(catalog: &Catalog) -> Markup {
                     }
                 }
             }
-            section id="categories" {
-                h2 { "按信号分类" }
-                .category-grid {
-                    @for c in &catalog.categories {
-                        (category_card(c, catalog.tools_in_category(&c.id).count()))
+            section id="tools" {
+                h2 { "全部条目" (span_count(catalog.tools.len())) }
+                @for (d, tools) in &domains {
+                    .group {
+                        h3.group-head {
+                            a href=(format!("/domains/{}", d.id)) { (d.name) }
+                            span.cat-count { (tools.len()) " 条" }
+                        }
+                        (tool_grid(tools, catalog, CardContext::Domain))
                     }
                 }
-            }
-            section id="tools" {
-                h2 { "全部工具" (span_count(all.len())) }
-                (tool_grid(&all, catalog, CardContext::All))
             }
         },
     )
@@ -352,6 +396,68 @@ fn span_count(n: usize) -> Markup {
     html! {
         span.h2-count { (n) " 条" }
     }
+}
+
+/// 域卡片。tagline 是这张卡唯一的信息量 —— 域名本身（「交付」「身份」）
+/// 说不清里面到底收了什么。
+fn domain_card(d: &Domain, count: usize) -> Markup {
+    html! {
+        a.cat-card href=(format!("/domains/{}", d.id)) {
+            h3 { (d.name) }
+            p.cat-tagline { (d.tagline) }
+            span.cat-count { (count) " 条" }
+        }
+    }
+}
+
+/// 域页面：域内分类导航 + 域内全部条目 + 换个域。
+pub fn domain_page(catalog: &Catalog, id: &crate::model::DomainId) -> Option<Markup> {
+    let dom = catalog.domain(id)?;
+    let tools: Vec<&Tool> = catalog.tools_in_domain(id).collect();
+    let cats: Vec<(&Category, usize)> = catalog
+        .categories_in_domain(id)
+        .map(|c| (c, catalog.tools_in_category(&c.id).count()))
+        .collect();
+    let others: Vec<(&Domain, usize)> = catalog
+        .domains
+        .iter()
+        .filter(|d| &d.id != id)
+        .map(|d| (d, catalog.tools_in_domain(&d.id).count()))
+        .collect();
+    Some(layout(
+        &format!("{} — 主题域", dom.name),
+        html! {
+            (crumb(&[]))
+            section.headline {
+                h1 { (dom.name) (span_count(tools.len())) }
+                p.lead { (dom.tagline) }
+            }
+            @if !cats.is_empty() {
+                section {
+                    h2 { "域内分类" }
+                    .category-grid {
+                        @for (c, n) in &cats {
+                            (category_card(c, *n))
+                        }
+                    }
+                }
+            }
+            section {
+                h2 { "全部条目" (span_count(tools.len())) }
+                (tool_grid(&tools, catalog, CardContext::Domain))
+            }
+            @if !others.is_empty() {
+                section.switcher {
+                    h2 { "换个域" }
+                    .chip-row {
+                        @for (d, n) in &others {
+                            (chip_count(&format!("/domains/{}", d.id), &d.name, *n))
+                        }
+                    }
+                }
+            }
+        },
+    ))
 }
 
 fn category_card(c: &Category, count: usize) -> Markup {
@@ -367,16 +473,19 @@ fn category_card(c: &Category, count: usize) -> Markup {
 pub fn category_page(catalog: &Catalog, id: &crate::model::CategoryId) -> Option<Markup> {
     let cat = catalog.category(id)?;
     let tools: Vec<&Tool> = catalog.tools_in_category(id).collect();
+    // 「换个分类」只列同域的分类 —— 从「CNI」跳到「日志」不是换分类，是换话题。
     let others: Vec<(&Category, usize)> = catalog
-        .categories
-        .iter()
+        .categories_in_domain(&cat.domain)
         .filter(|c| &c.id != id)
         .map(|c| (c, catalog.tools_in_category(&c.id).count()))
         .collect();
     Some(layout(
         &format!("{} — 分类", cat.name),
         html! {
-            (crumb(&[]))
+            (crumb(&[(
+                format!("/domains/{}", cat.domain),
+                domain_label(catalog, &cat.domain),
+            )]))
             section.headline {
                 h1 { (cat.name) (span_count(tools.len())) }
             }
@@ -416,12 +525,15 @@ pub fn tool_page(catalog: &Catalog, slug: &crate::model::Slug) -> Option<Markup>
     let tool = catalog.tool(slug)?;
     let field_note = tool.field_note.as_ref();
 
-    // 面包屑走第一个分类 —— 读者多半就是从那儿点进来的。
-    let parents: Vec<(String, String)> = tool
-        .categories
-        .first()
-        .map(|c| vec![(format!("/categories/{}", c), category_label(catalog, c))])
-        .unwrap_or_default();
+    // 面包屑：域 → 首个分类。域那一段一定有（`domain` 必填），
+    // 分类可能为空 —— 那种条目在域内还没细分到任何分类。
+    let mut parents: Vec<(String, String)> = vec![(
+        format!("/domains/{}", tool.domain),
+        domain_label(catalog, &tool.domain),
+    )];
+    if let Some(c) = tool.categories.first() {
+        parents.push((format!("/categories/{c}"), category_label(catalog, c)));
+    }
 
     // 同类工具：把详情页从死胡同改回目录的一个节点。
     // 不截断 —— 最大的分类 17 条，全列出来也就一两行 chip，
@@ -543,7 +655,9 @@ pub fn tool_page(catalog: &Catalog, slug: &crate::model::Slug) -> Option<Markup>
         &format!("{} — 工具", tool.name),
         html! {
             (crumb(&parents))
-            article.tool-page {
+            // 只有工具页进索引：首页/域页/分类页只是同一批卡片的重排，
+            // 让它们也进索引会把「搜 Cilium」变成命中五页列表页 + 一页条目。
+            article.tool-page data-pagefind-body data-pagefind-filter=(format!("域:{}", domain_label(catalog, &tool.domain))) {
                 h1 { (tool.name) }
                 p.lead { (tool.summary) }
                 @if let Some(u) = &tool.upstream {
@@ -621,13 +735,16 @@ pub fn tool_page(catalog: &Catalog, slug: &crate::model::Slug) -> Option<Markup>
                 }
                 @match &field_note_section {
                     Some(s) => (s),
-                    // 覆盖率不均是诚实的 —— 明说「这条只是元数据」，
-                    // 而不是让读者对着一个空白处猜证据在哪。
+                    // 覆盖率**不均**是诚实的 —— 这一条没有、别的条有，那才值得明说，
+                    // 免得读者对着一个空白处猜证据在哪。
+                    // 但全目录零覆盖时这句话出现在每一页上，信息量正好是零 ——
+                    // 那种情况下它是装饰，不是诚实（诚实的位置在 README 的 0/97）。
                     // 只说得到的事实：这条还没有 FieldNote。**不要**替作者断言
                     // 「没跑过」—— 段 3 才落库，没落库不等于没跑过。
-                    None => p.no-field-note {
+                    None if catalog.has_field_notes() => p.no-field-note {
                         "暂无 FieldNote —— 这条目前是元数据条目。"
                     },
+                    None => {},
                 }
                 @if !siblings.is_empty() {
                     section.siblings {
@@ -652,7 +769,9 @@ fn deploy_kind_str(d: &crate::model::DeployKind) -> &'static str {
         Compose => "Docker Compose",
         HelmChart => "Helm Chart",
         Operator => "K8s Operator",
+        Manifests => "K8s 清单",
         DebRpm => "deb / rpm",
+        OsImage => "整机镜像",
         SourceBuild => "源码构建",
     }
 }
@@ -675,8 +794,8 @@ pub fn not_found() -> Markup {
 mod tests {
     use super::*;
     use crate::model::{
-        Catalog, Category, Cluster, DeployKind, FieldNote, Footprint, Gotcha, Links, Slug, Spdx,
-        Status, Summary, Tool, Upstream, UpstreamStatus, Url, Vendor,
+        Catalog, Category, Cluster, DeployKind, Domain, DomainId, FieldNote, Footprint, Gotcha,
+        Links, Slug, Spdx, Status, Summary, Tool, Upstream, UpstreamStatus, Url, Vendor,
     };
 
     /// 只取 `</style>` 之后的部分。CSS 是内联进每个页面的，选择器与注释里
@@ -692,6 +811,7 @@ mod tests {
             summary: Summary::new("CNCF 毕业的指标事实标准。"),
             license: Spdx::new("Apache-2.0"),
             language: "Go".into(),
+            domain: DomainId::new("observability"),
             categories: vec![crate::model::CategoryId::new("metrics")],
             replaces: vec![crate::model::VendorId::new("datadog")],
             self_host: vec![DeployKind::SingleBinary, DeployKind::HelmChart],
@@ -744,10 +864,30 @@ mod tests {
                     name: "Logz.io".into(),
                 },
             ],
-            categories: vec![Category {
-                id: crate::model::CategoryId::new("metrics"),
-                name: "指标".into(),
-            }],
+            domains: vec![
+                Domain {
+                    id: DomainId::new("observability"),
+                    name: "可观测".into(),
+                    tagline: "出事的时候能不能看见".into(),
+                },
+                Domain {
+                    id: DomainId::new("networking"),
+                    name: "网络与接入".into(),
+                    tagline: "包怎么进来、怎么跨集群".into(),
+                },
+            ],
+            categories: vec![
+                Category {
+                    id: crate::model::CategoryId::new("metrics"),
+                    name: "指标".into(),
+                    domain: DomainId::new("observability"),
+                },
+                Category {
+                    id: crate::model::CategoryId::new("cni"),
+                    name: "CNI".into(),
+                    domain: DomainId::new("networking"),
+                },
+            ],
             clusters: vec![Cluster {
                 id: crate::model::ClusterId::new("homelab"),
                 name: "homelab (k3s)".into(),
@@ -794,6 +934,9 @@ mod tests {
         let catalog = catalog_with_fieldnote();
         for html in [
             home(&catalog).into_string(),
+            domain_page(&catalog, &DomainId::new("observability"))
+                .unwrap()
+                .into_string(),
             category_page(&catalog, &crate::model::CategoryId::new("metrics"))
                 .unwrap()
                 .into_string(),
@@ -971,18 +1114,97 @@ mod tests {
         assert!(body.contains("Loki"));
     }
 
+    /// 目录里**已经有** FieldNote 时，缺一条是有信息量的差异 —— 明说，别留白。
     #[test]
-    fn tool_page_without_field_note_says_so() {
+    fn tool_page_without_field_note_says_so_when_others_have_one() {
         let mut catalog = catalog_with_fieldnote();
-        catalog.tools = vec![tool("loki", "Loki", None)];
+        catalog.tools.push(tool("loki", "Grafana Loki", None));
         let html = tool_page(&catalog, &Slug::new("loki"))
             .expect("工具应存在")
             .into_string();
         assert!(
             html.contains("元数据条目"),
-            "没有 FieldNote 时应明说，而不是留白"
+            "别的条目有 FieldNote 时，缺一条应明说"
         );
         assert!(!html.contains("FieldNote</h2>"));
+    }
+
+    /// 全目录零覆盖时那句话会出现在**每一页**上 —— 那不是诚实，是装饰。
+    /// 段 3 落库后上一个测试自动接管，不需要回来改模板。
+    #[test]
+    fn zero_coverage_catalog_does_not_repeat_the_note_on_every_page() {
+        let mut catalog = catalog_with_fieldnote();
+        catalog.tools = vec![
+            tool("loki", "Grafana Loki", None),
+            tool("tempo", "Grafana Tempo", None),
+        ];
+        assert!(!catalog.has_field_notes());
+        for t in &catalog.tools {
+            let html = tool_page(&catalog, &t.slug)
+                .expect("工具应存在")
+                .into_string();
+            let body = body_of(&html);
+            assert!(
+                !body.contains("元数据条目"),
+                "{} 页面上出现了每页都一样的那句话",
+                t.slug
+            );
+            assert!(!body.contains("暂无 FieldNote"));
+        }
+    }
+
+    /// 首页第一根轴是域：域卡片必须带 tagline（域名本身说不清收了什么），
+    /// 且每条条目都出现在自己域的分组下。
+    #[test]
+    fn home_indexes_domains_with_tagline() {
+        let catalog = catalog_with_fieldnote();
+        let html = home(&catalog).into_string();
+        let body = body_of(&html);
+        assert!(body.contains("/domains/observability"), "首页要有域入口");
+        assert!(body.contains("出事的时候能不能看见"), "域卡片要带 tagline");
+        assert!(body.contains("Prometheus"));
+    }
+
+    #[test]
+    fn domain_page_lists_only_its_own_tools_and_categories() {
+        let catalog = catalog_with_fieldnote();
+        let obs = domain_page(&catalog, &DomainId::new("observability"))
+            .expect("域应存在")
+            .into_string();
+        let body = body_of(&obs);
+        assert!(body.contains("Prometheus"));
+        assert!(body.contains("/categories/metrics"), "域内分类要列出来");
+        assert!(
+            !body.contains("/categories/cni"),
+            "别的域的分类不该出现在本域页面上"
+        );
+        // 零条目的域照常渲染成一句话，而不是空网格。
+        let net = domain_page(&catalog, &DomainId::new("networking"))
+            .expect("域应存在")
+            .into_string();
+        assert!(body_of(&net).contains("暂无条目"));
+    }
+
+    #[test]
+    fn domain_page_404_for_missing() {
+        let catalog = catalog_with_fieldnote();
+        assert!(domain_page(&catalog, &DomainId::new("nope")).is_none());
+    }
+
+    /// 面包屑必须能从条目走回它的域 —— 域是导航的第一根轴，
+    /// 只挂分类会让读者退不回上一层。
+    #[test]
+    fn tool_page_crumb_starts_at_its_domain() {
+        let catalog = catalog_with_fieldnote();
+        let html = tool_page(&catalog, &Slug::new("prometheus"))
+            .expect("工具应存在")
+            .into_string();
+        let crumb = body_of(&html)
+            .split_once("</nav>")
+            .map(|(a, _)| a)
+            .expect("应有面包屑");
+        assert!(crumb.contains("/domains/observability"));
+        assert!(crumb.contains("/categories/metrics"));
     }
 
     #[test]

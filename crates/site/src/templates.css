@@ -34,6 +34,24 @@ a:hover { text-decoration: underline; }
   max-width: 960px;
   margin: 0 auto;
   padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+/* PagefindUI 的宿主。索引没建时它是空的，占位也一并塌掉。 */
+#search { flex: 0 1 340px; min-width: 0; }
+#search:empty { display: none; }
+.pagefind-ui {
+  --pagefind-ui-primary: var(--text);
+  --pagefind-ui-text: var(--text);
+  --pagefind-ui-background: var(--panel-2);
+  --pagefind-ui-border: var(--border);
+  --pagefind-ui-tag: var(--panel);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: 8px;
+  --pagefind-ui-font: inherit;
+  --pagefind-ui-scale: 0.72;
 }
 .brand { font-weight: 700; color: var(--text); font-size: 18px; }
 
@@ -102,6 +120,20 @@ h2 { font-size: 20px; margin: 36px 0 14px; }
 .cat-card:hover { border-color: var(--accent); text-decoration: none; }
 .cat-card h3 { margin: 0 0 4px; font-size: 16px; }
 .cat-count { color: var(--muted); font-size: 13px; }
+.cat-tagline { margin: 0 0 8px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+/* 首页按域分组：h3 是分组标题，不是卡片 —— 它下面才是网格。 */
+.group { margin-top: 26px; }
+.group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 17px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+.group-head a { color: var(--text); }
 
 .tool-grid {
   display: grid;
@@ -209,6 +241,8 @@ h2 { font-size: 20px; margin: 36px 0 14px; }
 
 .headline { padding: 0 0 18px; }
 .headline h1 { margin: 0; font-size: 26px; }
+/* 域页面的 tagline。`.tool-page .lead` 只作用在工具页里，这里要自己一条。 */
+.headline .lead { margin: 6px 0 0; color: var(--muted); max-width: 640px; }
 
 .empty { color: var(--muted); }
 

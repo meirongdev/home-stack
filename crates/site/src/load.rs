@@ -1,11 +1,12 @@
 //! 从 TOML 字符串构建并校验 `Catalog`。
 //!
 //! 本模块是纯逻辑、零 I/O：输入是 `(path, raw)` 字符串对，文件读取由
-//! `crates/dev` / `crates/xtask` 负责。四类校验全部**硬失败**：
-//! 1. `replaces` / `categories` / `clusters` 引用必须已声明
-//! 2. 孤儿分类：声明了但零条目引用
-//! 3. slug 唯一
-//! 4. `summary` ≤125 字符
+//! `crates/dev` / `crates/xtask` 负责。五类校验全部**硬失败**：
+//! 1. `domain` / `replaces` / `categories` / `clusters` 引用必须已声明
+//! 2. 分类必须与条目同域：`domain = "networking"` 的条目不能引用可观测域的分类
+//! 3. 孤儿分类 / 孤儿域：声明了但零条目引用
+//! 4. slug 唯一
+//! 5. `summary` ≤125 字符
 //!
 //! 报错形态贴近 rustc，带 `help` / `note`，用 `toml::Spanned` 拿精确行列号。
 
@@ -81,6 +82,19 @@ struct SpannedVendor {
 }
 
 #[derive(Deserialize)]
+struct DomainsFile {
+    #[serde(rename = "domain")]
+    domain: Vec<SpannedDomain>,
+}
+
+#[derive(Deserialize)]
+struct SpannedDomain {
+    id: Spanned<DomainId>,
+    name: String,
+    tagline: String,
+}
+
+#[derive(Deserialize)]
 struct CategoriesFile {
     #[serde(rename = "category")]
     category: Vec<SpannedCategory>,
@@ -90,6 +104,7 @@ struct CategoriesFile {
 struct SpannedCategory {
     id: Spanned<CategoryId>,
     name: String,
+    domain: Spanned<DomainId>,
 }
 
 #[derive(Deserialize)]
@@ -111,6 +126,7 @@ struct SpannedTool {
     summary: Spanned<Summary>,
     license: Spanned<Spdx>,
     language: String,
+    domain: Spanned<DomainId>,
     #[serde(default)]
     categories: Vec<Spanned<CategoryId>>,
     #[serde(default)]
@@ -163,6 +179,7 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
     let mut issues = Vec::new();
 
     let mut vendors: Vec<Vendor> = Vec::new();
+    let mut domains: Vec<Domain> = Vec::new();
     let mut categories: Vec<Category> = Vec::new();
     let mut clusters: Vec<Cluster> = Vec::new();
     let mut tools: Vec<(String, String, Tool)> = Vec::new(); // (path, raw, tool)
@@ -184,6 +201,20 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
                 }
                 Err(e) => issues.push(parse_issue(path, raw, e, "vendors.toml 解析失败")),
             },
+            "domains.toml" => match toml::from_str::<DomainsFile>(raw) {
+                Ok(f) => {
+                    domains = f
+                        .domain
+                        .into_iter()
+                        .map(|d| Domain {
+                            id: d.id.into_inner(),
+                            name: d.name,
+                            tagline: d.tagline,
+                        })
+                        .collect()
+                }
+                Err(e) => issues.push(parse_issue(path, raw, e, "domains.toml 解析失败")),
+            },
             "categories.toml" => match toml::from_str::<CategoriesFile>(raw) {
                 Ok(f) => {
                     categories = f
@@ -192,6 +223,7 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
                         .map(|c| Category {
                             id: c.id.into_inner(),
                             name: c.name,
+                            domain: c.domain.into_inner(),
                         })
                         .collect()
                 }
@@ -232,6 +264,7 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
     }
 
     let declared_vendors: Vec<&VendorId> = vendors.iter().map(|v| &v.id).collect();
+    let declared_domains: Vec<&DomainId> = domains.iter().map(|d| &d.id).collect();
     let declared_categories: Vec<&CategoryId> = categories.iter().map(|c| &c.id).collect();
     let declared_clusters: Vec<&ClusterId> = clusters.iter().map(|c| &c.id).collect();
 
@@ -239,7 +272,50 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
     for (path, raw, _tool) in &tools {
         // 用带 span 的字段重新解析以拿行列号
         if let Ok(st) = toml::from_str::<SpannedTool>(raw) {
+            let domain_ok = declared_domains.contains(&&st.domain.get_ref().clone());
+            if !domain_ok {
+                issues.push(Issue::new(
+                    path,
+                    raw,
+                    span_start(&st.domain),
+                    format!("未声明的域引用 `{}`", st.domain.as_ref()),
+                    Some(format!(
+                        "domains.toml 已声明: {}",
+                        join_ids(&declared_domains)
+                    )),
+                    Some("域是首页的第一根轴 —— 拼错一个字母，条目就从所有导航里消失".into()),
+                ));
+            }
             for c in &st.categories {
+                // 跨域分类：`domain = "networking"` 的条目引用了可观测域的分类。
+                // 单看两边都合法，合起来才错 —— 正是纯 String 分类法查不出的那一类。
+                if domain_ok {
+                    if let Some(cat) = categories.iter().find(|d| &d.id == c.get_ref()) {
+                        if &cat.domain != st.domain.get_ref() {
+                            issues.push(Issue::new(
+                                path,
+                                raw,
+                                span_start(c),
+                                format!(
+                                    "跨域分类 `{}`：它属于域 `{}`，本条目在域 `{}`",
+                                    c.as_ref(),
+                                    cat.domain,
+                                    st.domain.as_ref()
+                                ),
+                                Some(
+                                    "改本条目的 domain，或换一个本域内的分类；\
+                                     两个域都成立的工具只登记主域，另一面写进 detail"
+                                        .into(),
+                                ),
+                                Some(
+                                    "两个引用各自都存在，只有组合是错的 —— \
+                                     纯 String 分类法查不出这一类"
+                                        .into(),
+                                ),
+                            ));
+                        }
+                    }
+                }
                 if !declared_categories.contains(&&c.get_ref().clone()) {
                     issues.push(Issue::new(
                         path,
@@ -304,6 +380,31 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
         }
     }
 
+    // ── 校验 1b：分类自身的 domain 引用 ────────────────────────────────
+    if let Some((cpath, craw)) = sources.iter().find(|(p, _)| p.ends_with("categories.toml")) {
+        if let Ok(f) = toml::from_str::<CategoriesFile>(craw) {
+            for c in &f.category {
+                if !declared_domains.contains(&&c.domain.get_ref().clone()) {
+                    issues.push(Issue::new(
+                        cpath,
+                        craw,
+                        span_start(&c.domain),
+                        format!(
+                            "分类 `{}` 指向未声明的域 `{}`",
+                            c.id.as_ref(),
+                            c.domain.as_ref()
+                        ),
+                        Some(format!(
+                            "domains.toml 已声明: {}",
+                            join_ids(&declared_domains)
+                        )),
+                        Some("无主分类会在首页变成一个不知该挂在哪的入口".into()),
+                    ));
+                }
+            }
+        }
+    }
+
     // ── 校验 2：孤儿分类 ───────────────────────────────────────────────
     let categories_raw = sources
         .iter()
@@ -334,6 +435,38 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
                 note: Some("Hugo 会生成一个空列表页".into()),
             });
         }
+    }
+
+    // ── 校验 2b：孤儿域 ───────────────────────────────────────────────
+    // 首页的域卡片是硬编码的入口：零条目的域点进去是一张空页面。
+    let domains_raw = sources
+        .iter()
+        .find(|(p, _)| p.ends_with("domains.toml"))
+        .map(|(_, r)| *r);
+    for dom in &domains {
+        if tools.iter().any(|(_, _, t)| t.domain == dom.id) {
+            continue;
+        }
+        let line_no = domains_raw
+            .and_then(|raw| {
+                raw.lines()
+                    .position(|l| l.trim().starts_with("id =") && l.contains(&dom.id.to_string()))
+            })
+            .unwrap_or(0)
+            + 1;
+        let source_line = domains_raw
+            .and_then(|raw| raw.lines().nth(line_no - 1))
+            .map(str::to_string);
+        issues.push(Issue {
+            path: "content/domains.toml".to_string(),
+            line: line_no,
+            col: 1,
+            end_col: 1,
+            source_line,
+            message: format!("孤儿域 `{}`：声明了但零条目引用", dom.id),
+            help: Some("先写够条目再声明域，或从 domains.toml 删掉它".into()),
+            note: Some("首页会多出一张点进去是空页面的域卡片".into()),
+        });
     }
 
     // ── 校验 3：slug 唯一 ──────────────────────────────────────────────
@@ -398,6 +531,7 @@ pub fn load(sources: &[(&str, &str)]) -> Result<Catalog, Vec<Issue>> {
     if issues.is_empty() {
         Ok(Catalog {
             vendors,
+            domains,
             categories,
             clusters,
             tools: tools.into_iter().map(|(_, _, t)| t).collect(),
@@ -430,6 +564,7 @@ fn spanned_tool_to_tool(st: SpannedTool) -> Tool {
         summary: st.summary.into_inner(),
         license: st.license.into_inner(),
         language: st.language,
+        domain: st.domain.into_inner(),
         categories: st.categories.into_iter().map(|c| c.into_inner()).collect(),
         replaces: st.replaces.into_iter().map(|r| r.into_inner()).collect(),
         self_host: st.self_host,
@@ -472,15 +607,18 @@ mod tests {
     fn vendors_toml() -> &'static str {
         "[[vendor]]\nid = \"datadog\"\nname = \"Datadog\"\n"
     }
+    fn domains_toml() -> &'static str {
+        "[[domain]]\nid = \"observability\"\nname = \"可观测\"\ntagline = \"出事的时候能不能看见\"\n"
+    }
     fn categories_toml() -> &'static str {
-        "[[category]]\nid = \"metrics\"\nname = \"指标\"\n[[category]]\nid = \"logs\"\nname = \"日志\"\n"
+        "[[category]]\nid = \"metrics\"\nname = \"指标\"\ndomain = \"observability\"\n[[category]]\nid = \"logs\"\nname = \"日志\"\ndomain = \"observability\"\n"
     }
     fn clusters_toml() -> &'static str {
         "[[cluster]]\nid = \"homelab\"\nname = \"homelab\"\n"
     }
     fn tool(categories: &str, replaces: &str) -> String {
         format!(
-            "slug = \"prometheus\"\nname = \"Prometheus\"\nsummary = \"CNCF 毕业的指标事实标准。\"\nlicense = \"Apache-2.0\"\nlanguage = \"Go\"\ncategories = {categories}\nreplaces = {replaces}\nself_host = [\"SingleBinary\", \"Docker\"]\nhosted = false\ndetail = \"拉模型 + PromQL + 本地 TSDB。\"\n\n[links]\nrepo = \"https://github.com/prometheus/prometheus\"\n"
+            "slug = \"prometheus\"\nname = \"Prometheus\"\nsummary = \"CNCF 毕业的指标事实标准。\"\nlicense = \"Apache-2.0\"\nlanguage = \"Go\"\ndomain = \"observability\"\ncategories = {categories}\nreplaces = {replaces}\nself_host = [\"SingleBinary\", \"Docker\"]\nhosted = false\ndetail = \"拉模型 + PromQL + 本地 TSDB。\"\n\n[links]\nrepo = \"https://github.com/prometheus/prometheus\"\n"
         )
     }
 
@@ -493,6 +631,7 @@ mod tests {
                 "content/tools/prometheus.toml",
                 tool("[\"metrics\", \"logs\"]", "[\"datadog\"]"),
             ),
+            ("content/domains.toml", domains_toml().to_string()),
         ]
     }
 
@@ -504,6 +643,8 @@ mod tests {
         assert_eq!(cat.tools.len(), 1);
         assert_eq!(cat.vendors.len(), 1);
         assert_eq!(cat.categories.len(), 2);
+        assert_eq!(cat.domains.len(), 1);
+        assert_eq!(cat.tools[0].domain.as_str(), "observability");
     }
 
     #[test]
@@ -551,7 +692,7 @@ mod tests {
     #[test]
     fn orphan_category_fails() {
         let mut s = sources();
-        s[1].1 = "[[category]]\nid = \"metrics\"\nname = \"指标\"\n[[category]]\nid = \"orphan\"\nname = \"孤儿\"\n".to_string();
+        s[1].1 = "[[category]]\nid = \"metrics\"\nname = \"指标\"\ndomain = \"observability\"\n[[category]]\nid = \"orphan\"\nname = \"孤儿\"\ndomain = \"observability\"\n".to_string();
         let refs: Vec<(&str, &str)> = s.iter().map(|(p, r)| (*p, r.as_str())).collect();
         let err = load(&refs).expect_err("孤儿分类应失败");
         assert!(err.iter().any(|i| i.message.contains("孤儿分类")));
@@ -582,12 +723,58 @@ mod tests {
     }
 
     #[test]
+    fn undeclared_domain_fails() {
+        let mut s = sources();
+        s[3].1 = s[3]
+            .1
+            .replace("domain = \"observability\"", "domain = \"netwroking\"");
+        let refs: Vec<(&str, &str)> = s.iter().map(|(p, r)| (*p, r.as_str())).collect();
+        let err = load(&refs).expect_err("未声明的域应失败");
+        assert!(err.iter().any(|i| i.message.contains("未声明的域引用")));
+    }
+
+    /// 两个引用各自都存在，只有「组合」是错的 —— 平铺 String 分类法查不出这一类。
+    #[test]
+    fn cross_domain_category_fails() {
+        let mut s = sources();
+        s[1].1 = format!(
+            "{}[[category]]\nid = \"cni\"\nname = \"CNI\"\ndomain = \"networking\"\n",
+            categories_toml()
+        );
+        s[4].1 = format!(
+            "{}[[domain]]\nid = \"networking\"\nname = \"网络\"\ntagline = \"包怎么进来\"\n",
+            domains_toml()
+        );
+        // 可观测域的条目引用网络域的分类。
+        s[3].1 = tool("[\"metrics\", \"cni\"]", "[\"datadog\"]");
+        let refs: Vec<(&str, &str)> = s.iter().map(|(p, r)| (*p, r.as_str())).collect();
+        let err = load(&refs).expect_err("跨域分类应失败");
+        assert!(
+            err.iter().any(|i| i.message.contains("跨域分类")),
+            "应报跨域分类，实际：{:?}",
+            err.iter().map(|i| &i.message).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn orphan_domain_fails() {
+        let mut s = sources();
+        s[4].1 = format!(
+            "{}[[domain]]\nid = \"networking\"\nname = \"网络\"\ntagline = \"包怎么进来\"\n",
+            domains_toml()
+        );
+        let refs: Vec<(&str, &str)> = s.iter().map(|(p, r)| (*p, r.as_str())).collect();
+        let err = load(&refs).expect_err("孤儿域应失败");
+        assert!(err.iter().any(|i| i.message.contains("孤儿域")));
+    }
+
+    #[test]
     fn undeclared_category_and_cluster_fail() {
         let mut s = sources();
         s[3].1 = tool("[\"nope\"]", "[\"datadog\"]");
         s.push((
             "content/tools/otel.toml",
-            "slug = \"otel\"\nname = \"OTel\"\nsummary = \"采集器\"\nlicense = \"Apache-2.0\"\nlanguage = \"Go\"\ncategories = [\"metrics\"]\nreplaces = [\"datadog\"]\nself_host = [\"Docker\"]\nhosted = false\ndetail = \"采集器\"\n\n[links]\nrepo = \"https://github.com/open-telemetry/opentelemetry-collector\"\n\n[field_note]\nstatus = \"Running\"\nclusters = [\"missing-cluster\"]\ndecision = \"https://example.com/x\"\n".to_string(),
+            "slug = \"otel\"\nname = \"OTel\"\nsummary = \"采集器\"\nlicense = \"Apache-2.0\"\nlanguage = \"Go\"\ndomain = \"observability\"\ncategories = [\"metrics\"]\nreplaces = [\"datadog\"]\nself_host = [\"Docker\"]\nhosted = false\ndetail = \"采集器\"\n\n[links]\nrepo = \"https://github.com/open-telemetry/opentelemetry-collector\"\n\n[field_note]\nstatus = \"Running\"\nclusters = [\"missing-cluster\"]\ndecision = \"https://example.com/x\"\n".to_string(),
         ));
         let refs: Vec<(&str, &str)> = s.iter().map(|(p, r)| (*p, r.as_str())).collect();
         let err = load(&refs).expect_err("未声明引用应失败");

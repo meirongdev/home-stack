@@ -278,9 +278,16 @@ gh run view <run-id> --repo meirongdev/home-stack --log \
 📌 最硬的一条证据要跨两次运行才看得到：第二跑 refresh 到的 `worker_version` id 正是
 **第一跑建的那个** —— 两个互不相干的 runner 接的是同一份 state，这正是迁 R2 买到的东西。
 
-⚠️ **每次 apply 都有 ≈7 秒「Worker 没有任何 deployment」的窗口**：先销毁 deployment（0s）
-→ 建新版本（5s）→ 建新 deployment（2s），`create_before_destroy` 只加在 version 上。
-那正是首次部署撞 `400 / 100124` 的同一状态。⏸ 未决见 [ROADMAP.md](../ROADMAP.md) 开放项 18。
+✅ **apply 的顺序是先建后毁，没有「Worker 没有任何 deployment」的窗口**（2026-08-23 实测）：
+建新版本（4s）→ 建新 deployment（6s）→ 销毁 deposed 的旧 deployment（0s）→ 销毁旧版本（0s）。
+
+📌 这是修出来的：`create_before_destroy` 原先只加在 version 上，于是实测顺序是
+**先销毁 deployment（0s）→ 建新版本（5s）→ 建新 deployment（2s）**，中间约 7 秒 Worker
+处于「没有任何 deployment」的状态 —— 那正是首次部署撞 `400 / 100124` 的同一状态。
+当时挡着不敢改的两个未知，日志自己回答了：销毁那步耗时 **0s** 说明 provider 的 Delete
+不发 API 调用（Cloudflare 没有「删除 deployment」这回事，它是历史记录，新建即接管
+100% 流量），所以先建后毁既不会撞「两个 deployment」，也没留下 destroy 失败的 deposed 对象。
+☠️ 判据是日志里 deployment 的 `Creating` 在 `Destroying` **之前** —— 不是「绿」。
 
 ⚠️ apply 完**立刻** curl 会拿到假阴性 —— 版本传播要十几秒。
 

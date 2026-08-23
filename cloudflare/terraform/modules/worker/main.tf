@@ -99,6 +99,8 @@ resource "cloudflare_workers_deployment" "this" {
   # 📌 销毁那步耗时 0s 说明 provider 的 Delete 根本不发 API 调用 —— Cloudflare 没有
   # 「删除 deployment」这回事：deployment 是一份历史记录，新建即接管 100% 流量。
   # 所以先建后毁不会撞上「同一个 Worker 不能有两个 deployment」。
+  # ✅ 加上之后实测顺序：建新版本（4s）→ 建新 deployment（6s）→ 销毁 deposed 的旧
+  # deployment（0s）→ 销毁旧版本（0s）。窗口没了，也没留下 deposed 对象。
   lifecycle {
     create_before_destroy = true
   }

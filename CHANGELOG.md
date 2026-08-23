@@ -33,6 +33,13 @@
 
 ### Fixed
 
+- **`modules/worker` 的 apply 不再有「Worker 没有任何 deployment」的窗口**：
+  `create_before_destroy` 原先只加在 `cloudflare_worker_version` 上，于是每次 apply
+  中间约 7 秒该 Worker 处于无 deployment 状态 —— 与首次部署撞
+  `400 / 100124 Worker has no deployments` 的是同一个状态。现在 deployment 也先建后毁。
+- **`xtask build-site` 每次重置产物目录**：`public/pagefind` 原先只写不清，而 Pagefind
+  的分片文件名是内容哈希 —— 旧分片会留下并被一起上传到资源层。⚠️ 只在**同一台机器反复
+  构建**时发生（CI 每次是新 runner），所以钉 tag 从干净环境构建的消费方不受此影响。
 - 文档里 `?ref=<tag>` 的占位符换成真实 tag，并写清一脚：消费方有**两处** `ref`
   （`source` 里那个决定用哪份 `.tf`，checkout home-stack 那个决定构建出哪份内容与
   wasm），两处必须是同一个 tag。写岔了不会报错，只会静默部署

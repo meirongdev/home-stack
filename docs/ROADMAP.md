@@ -47,11 +47,9 @@ provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归�
 版本资源并发，撞 `400 / 100124 Worker has no deployments`；已修并写进
 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) 第 5 步。
 ✅ **部署已经交给 CI**（2026-08-23）：state 迁入 R2
-（`terraform-backend/home-stack/cloudflare.tfstate`），`deploy.yml` 在干净 runner 上
-首跑通过（3m37s，2 added / 2 destroyed，站点实测正常）—— 工作站不再是唯一能部署的机器。
-⚠️ 判据不是绿灯，也不是 `No changes`（CI 编出的字节与工作站不同，plan 永远是
-`2 to add / 2 to destroy`），而是 `cloudflare_worker` 与 `workers_custom_domain`
-**只被 refresh、不在变更里**。判据与那段「无 deployment 窗口 ≈ 7 秒」都记在
+（`terraform-backend/home-stack/cloudflare.tfstate`），`deploy.yml` 在干净 runner 上跑通
+两次 —— 工作站不再是唯一能部署的机器。⚠️ 验收判据不是绿灯、也不是 `No changes`；
+它和「无 deployment 窗口 ≈ 7 秒」一起记在
 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) 第 7 步。
 ✅ **可钉版本**：`v0.1.0`（2026-08-23，仓库首个 tag，指向上面这个已验证的状态）。
 外部项目按 `?ref=v0.1.0` 消费 `modules/worker`，不再只能钉 `main` —— 契约与
@@ -86,7 +84,7 @@ provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归�
 | 11 | **FieldNote 目标怎么摊到 10 个域** | 段 3 的「10 条」是对着 29 条可观测条目定的，现在分母是 97。两种表述：「先把可观测那一域做满」（覆盖率集中、看得出深度）或「每个域至少 1 条」（广度好看、每域都浅）。⚠️ 无论选哪个，都不能为没跑过的工具编造 FieldNote —— 见 [decisions/domain-layer-not-flat-categories.md](decisions/domain-layer-not-flat-categories.md) 的 Consequences。段 3 前置 |
 | 12 | **跨域工具只登记主域，读者会找不到** | Cilium 记在网络域，从「安全加固」域里找不到它；Harbor 的漏洞扫描、Tetragon 与 Cilium 的关系同理。当前缓解只有 `detail` 里的一句话，不是机制。可选解法：域页面加一块「相关但登记在别处」的手写交叉引用（又一个要维护的分类法），或等 Pagefind 搜索（段 2）上线后认定「搜得到就够了」。⚠️ 先别急着改模型 —— 多值域已在 ADR 里被否决过 |
 | 13 | **render-diff 只兑现了一半** | [decisions/dual-target-axum.md](decisions/dual-target-axum.md) 承诺「两个目标逐字节比对」。现在比的是**两条内容路径**（磁盘 vs 构建期内嵌），覆盖「改了 TOML 内嵌表没跟上」这类漂移；**没有**比 wasm32 运行时的输出。补法：CI 里 `worker-build` + `wrangler dev` 起一个本地 Worker，用同一份 `all_paths()` 逐条 curl 再和 `dist/` 比对。⚠️ 在补上之前，不要把那条 ADR 的判据当已满足 |
-| 18 | **每次 apply 都有 ≈7 秒「Worker 没有任何 deployment」的窗口** | 2026-08-23 CI 首跑实测的顺序：**先销毁 deployment（0s）→ 建新版本（5s）→ 建新 deployment（2s）**。`create_before_destroy` 只加在 `cloudflare_worker_version` 上，deployment 没有。那正是首次部署撞 `400 / 100124 Worker has no deployments` 的同一状态 —— 也就是说这个窗口里对该 Worker 的别的写操作会失败；⚠️ **窗口内的请求会不会 5xx 没验过**（站点在 CI 首跑后实测正常，但那是窗口之后）。⏸ 待定：要不要给 deployment 也加 `create_before_destroy`。两个前提都没验：① 同一个 Worker 能否短暂存在两个 deployment；② 旧 deployment 能否被 DELETE —— 若 API 不支持，terraform 的 destroy 会留下 deposed 对象要手工清。📌 但它 **fail-safe 的方向是对的**：先建新的，失败了旧的还在。验法：加上 lifecycle 块跑一次 CI 部署，判据不是「绿」而是日志里 deployment 的 `Creating` 出现在 `Destroying` **之前**。见 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) 第 7 步 |
+| 18 | **每次 apply 有 ≈7 秒「Worker 没有任何 deployment」的窗口** | 实测顺序：先销毁 deployment（0s）→ 建新版本（5s）→ 建新 deployment（2s）—— `create_before_destroy` 只加在 `cloudflare_worker_version` 上。那正是首次部署撞 `400 / 100124 Worker has no deployments` 的同一状态，所以窗口内对该 Worker 的写操作会失败；⚠️ **窗口内的请求会不会 5xx 没验过**。⏸ 待定：给 deployment 也加 `create_before_destroy`。方向是 fail-safe 的（先建新的，失败了旧的还在），但两个前提没验：① 同一个 Worker 能否短暂存在两个 deployment；② 旧 deployment 能否被 DELETE —— API 若不支持，destroy 会留下 deposed 对象要手工清。验法：加 lifecycle 块跑一次 CI 部署，判据是日志里 deployment 的 `Creating` 出现在 `Destroying` **之前**，而不是「绿」。实测数据在 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) 第 7 步 |
 
 ## 明确不做
 

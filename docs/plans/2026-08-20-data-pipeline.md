@@ -1,10 +1,12 @@
 # 数据管道规格：构建期抓取，运行时零出站
 
 > 日期: 2026-08-20
-> 状态: 🟡 GitHub 侧**已完成**（2026-08-21）；Prometheus 侧仍**待实施**
+> 状态: 🟡 GitHub 侧**已完成**（2026-08-21；夜间 CI 自 2026-08-22 起在跑）；
+> Prometheus 侧仍**待实施**
 > —— `xtask fetch` 已产出 `content/generated/repo.json`（stars / pushed_at /
-> latest_release / license，29 条），页面显示 `fetched_at`；`xtask validate`
-> 在数据超过 7 天时 warning。footprint.json 与 Tailscale / 夜间 CI 尚未实施。
+> latest_release / license，**95 条** —— 97 个条目里有 2 条上游不在 GitHub/GitLab，
+> fetch 会跳过并告警），页面显示 `fetched_at`；`xtask validate` 在数据超过 7 天时
+> warning。footprint.json 与 Tailscale 那一侧尚未实施。
 > 结论：`xtask fetch` 在构建期从 GitHub GraphQL + homelab Prometheus 抓数，
 > 产出 committed JSON，`include_str!` 编进 WASM。
 > ⚠️ **fetch 必须 fail-soft，validate 必须硬失败** —— 两者性质不同。

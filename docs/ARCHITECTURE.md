@@ -30,8 +30,8 @@ crates/
 └── xtask/    native  —— 构建期工具：validate / fetch / dump-html / render-diff / build-site
 
 cloudflare/terraform/       薄根模块：配 provider + backend，喂本仓库的构建产物路径
-└── modules/worker/         可复用子模块（3 个资源，无 provider / 无 backend）
-.github/workflows/      ci（9 道门禁）/ nightly-fetch（段 4）/ deploy（手动，未验证）
+└── modules/worker/         可复用子模块（3 个核心资源 + 可选 custom_domain 或 route，无 provider / 无 backend）
+.github/workflows/      ci（9 道门禁）/ nightly-fetch（段 4）/ deploy（手动触发，已跑通）
 ```
 
 `crates/edge` 的依赖挂在 `[target.'cfg(target_arch = "wasm32")'.dependencies]` 下 ——
@@ -60,7 +60,7 @@ cloudflare/terraform/       薄根模块：配 provider + backend，喂本仓库
 ```
 
 两个入口都是薄封装：`crates/edge` 约 60 行（panic hook + 取 Catalog + 交给 Router），
-`crates/dev` 约 110 行（tokio 起服务 + 从 `public/` 伺服 Pagefind 索引）。
+`crates/dev` 约 100 行（tokio 起服务 + 从 `public/` 伺服 Pagefind 索引）。
 路由与模板一行都不在入口里。理由见
 [decisions/dual-target-axum.md](decisions/dual-target-axum.md)。
 
@@ -138,6 +138,7 @@ Workers 的默认顺序是**资源优先** —— 命中静态资源直接返回
 
 **部署走 Terraform**，且拆成两层：`cloudflare/terraform/modules/worker/` 是
 **可复用子模块**（`cloudflare_worker` + `worker_version` + `workers_deployment`，
+外加二选一的 `workers_custom_domain` / `workers_route` —— 本仓库配了前者，所以线上是 4 个；
 provider ≥ 5.11 才有 `assets.directory`；不含 provider 与 backend），
 `cloudflare/terraform/` 只是一个薄根模块。
 
@@ -208,7 +209,7 @@ tokio/hyper，wasm32 编不过（完整上下文见
 | Pod / PVC / 那台 12 GB VM 上的内存 | 0 |
 | PrometheusRule / Uptime Kuma monitor / Trivy 扫描目标 | 0 |
 | restic 备份对象 | 0（内容即 git 仓库） |
-| homelab 侧 Terraform 改动 | **0 条**（本仓库自己部署时）。⚠️ 但 homelab 也可以反过来**成为部署方** —— 它 `source` 到 `modules/worker` 自己部署这个站点。那种形态下改动落在 homelab 一侧，本仓库只提供模块与构建产物。DNS 归属的互斥选择见 [ROADMAP.md](ROADMAP.md) 开放项 15 |
+| homelab 侧 Terraform 改动 | **0 条**（本仓库自己部署时）。⚠️ 但 homelab 也可以反过来**成为部署方** —— 它 `source` 到 `modules/worker` 自己部署这个站点。那种形态下改动落在 homelab 一侧，本仓库只提供模块与构建产物。DNS 归属的互斥选择（2026-08-23 定了方案 A）见 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md#自定义域名与-dns-归属冲突) |
 | Homepage 磁贴 | 1 |
 
 ⚠️ 唯一的反向依赖是**构建期**从 homelab Prometheus 抓实测数据 —— 该步骤必须 fail-soft，

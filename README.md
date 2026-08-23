@@ -45,7 +45,7 @@ homelab 自托管技术选型目录，按**主题域**索引，用 Rust 实现�
 | 具体怎么建模 / 怎么抓数据 | [docs/plans/](docs/plans/README.md) — 带日期的规格，写完即冻结 |
 | 还剩什么没做 | [docs/ROADMAP.md](docs/ROADMAP.md) — 开放项 + 四段实施顺序 + 明确不做 |
 | 内容模型现在长什么样 | [docs/reference/content-model.md](docs/reference/content-model.md) — 字段、不变量、五类校验、内容如何进到两个目标里 |
-| 怎么把它部署上去 | [docs/runbooks/deploy-cloudflare.md](docs/runbooks/deploy-cloudflare.md) — 七步 + 回滚 + ⚠️ DNS 归属的互斥选择 |
+| 怎么把它部署上去 | [docs/runbooks/deploy-cloudflare.md](docs/runbooks/deploy-cloudflare.md) — 七步 + 回滚 + DNS 归属的互斥取舍（已定方案 A）|
 | **别的项目**怎么部署它 | [cloudflare/terraform/modules/worker/](cloudflare/terraform/modules/worker/README.md) — 可复用子模块的消费方契约（关键：构建产物由调用方生成） |
 | 钉着某个 tag，该不该动 ref | [CHANGELOG.md](CHANGELOG.md) — 已发布版本之间的差异 + 版本口径 |
 

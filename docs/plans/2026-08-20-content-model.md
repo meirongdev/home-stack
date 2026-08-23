@@ -2,7 +2,7 @@
 
 > 日期: 2026-08-20
 > 状态: ✅ 已完成（段 1）—— 本文冻结，是「当时打算怎么做」；
-> 现行事实待建 `docs/reference/content-model.md`（[../ROADMAP.md](../ROADMAP.md) 开放项 6）
+> 现行事实见 [../reference/content-model.md](../reference/content-model.md)（已建；两者不一致时以那份为准）
 > 结论：条目写 TOML → serde 强类型 `Catalog`；分类法字段用 newtype，
 > 引用完整性在 `xtask validate` 构建期兑现（硬失败）。
 > 选型理由见 [../decisions/typed-content-model-not-hugo.md](../decisions/typed-content-model-not-hugo.md)

@@ -26,7 +26,7 @@ FieldNote（段 3）还没实施，见 [ROADMAP.md](ROADMAP.md#现状)。
 | 具体怎么建模 / 怎么抓数据 | [plans/](plans/README.md) — 带日期的规格，写完即冻结 |
 | 还剩什么没做 | [ROADMAP.md](ROADMAP.md) — 开放项 + 四段实施顺序 + 明确不做 |
 | 内容模型现在长什么样 | [reference/content-model.md](reference/content-model.md) — 字段、不变量、五类校验 |
-| 怎么把站点部署上去 | [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) — 七步 + 回滚 + ⚠️ 一个必须先定的 DNS 归属冲突 |
+| 怎么把站点部署上去 | [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) — 七步 + 回滚 + DNS 归属取舍（2026-08-23 定了方案 A）|
 | 钉着某个 tag 消费本仓库，该不该动 ref | [../CHANGELOG.md](../CHANGELOG.md) — 已发布版本之间的差异，只给外部消费者 |
 
 ## 目录一览

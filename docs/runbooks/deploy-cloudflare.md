@@ -1,10 +1,10 @@
 # 部署到 Cloudflare Workers
 
 > 日期: 2026-08-23
-> 状态: 🟢 步骤 1–5 **已完成**（2026-08-23 首次 apply，站点已公网可访问：Worker + 版本 +
-> deployment 三个资源建成）；自定义域名那一个资源当次失败、修复已合入，**待实施**（见第 5 步）。
-> 第 7 步 ✅ **全部完成**（2026-08-23）：state 已迁入 R2，`deploy.yml` 在干净 runner 上
-> 首跑通过（run 32645852445），站点实测正常
+> 状态: 🟢 七步全部**已完成**并实测（2026-08-23）：4 个资源在线、站点公网可访问、
+> state 在 R2、`deploy.yml` 在干净 runner 上跑通两次。
+> ⏸ 唯一没走过的路径：`custom_domain` 的 `depends_on` 修复只在「资源已存在」的重跑里
+> 验过，**没有从空 state 首次 apply 走一遍**（见第 5 步）
 
 部署走 **Terraform**（`cloudflare/terraform/`），不走 `wrangler deploy`。
 本篇是「home-stack 自己部署自己」；**别的项目要部署这个站点**看
@@ -77,6 +77,11 @@ Terraform 不编 Rust、不建 Pagefind 索引；而且它在 **plan 阶段就�
 - `public/` —— 资源层，Terraform 只上传这个。约 1.0 MB，全是 Pagefind 索引。
 - `dist/` —— 全站 HTML（185 页 + `404.html`），纯静态逃生舱用。
 
+📌 **`build-site` 不清目录。** 同一台机器反复 build，`public/pagefind/fragment` 会累积
+旧分片，而 `apply` 会把它们一起上传（实测两次构建 = 195 个文件 / 1.4 MB）。
+干净一次构建是 **114 个文件 / 1.0 MB / 97 个 fragment** —— 数字对不上就先
+`rm -rf public dist` 再 build。CI 每次都是新 runner，所以线上不受这条影响。
+
 ☠️ **把 `dist/` 当资源目录是这套部署里最严重的一种配错。** Workers 是资源优先：
 全站 HTML 进了资源层，每个页面都被静态命中、Router 永远不被唤起 ——
 站点看起来正常，但 SSR 那半个架构完全失效。变量默认值已经写死成 `../../public`，别改。
@@ -100,22 +105,20 @@ just init
 just plan
 ```
 
-⚠️ **state 在 R2**（2026-08-23 迁入），所以 `just init` 要带上 R2 的 S3 凭据与
-`backend.hcl` —— 见第 7 步。少任何一样都会在「缺 endpoint」或「凭据无效」处响亮失败，
-不会静默退回本地文件。
+⚠️ **state 在 R2**，所以 `just init` 要带 R2 凭据与 `backend.hcl`（见第 7 步）。
+少任何一样都会在「缺 endpoint」或「凭据无效」处响亮失败，不会静默退回本地文件。
 
-✅ 已验证：provider 5.23.0 下 `terraform validate` 与 `terraform plan` 全绿。
-⚠️ **plan 长什么样取决于是不是首次部署**：
-- 首次（空 state）：**`Plan: 3 to add, 0 to change, 0 to destroy`**（Worker、Version、
-  Deployment），配了 `custom_domain` 则是 4 个
-- 站点已在线、改了内容或代码后重新部署：**`2 to add, 2 to destroy`** —— 新版本 +
-  deployment 重建，Worker 与 custom domain 不动、证书不重签（2026-08-23 实测）
-- 什么都没改、也没重 build：**`No changes`**
+✅ 已验证：provider 5.23.0 下 `validate` 与 `plan` 全绿。plan 长什么样取决于场景：
 
-☠️ **CI 上永远不会是 `No changes`**，别拿它当判据。干净 runner 编出的 wasm 与 Pagefind
-索引跟工作站那批不是同一份字节 —— 2026-08-23 实测 `asset_manifest_sha256`
-`3cc06409…` → `7e8cfd64…`，连同两个 module 条目一起 forces replacement。
-CI 上「state 真接上了」的判据是另一条，见第 7 步。
+| 场景 | plan |
+|------|------|
+| 首次部署（空 state） | `3 to add`（Worker / Version / Deployment），配了 `custom_domain` 是 4 个 |
+| 站点已在线，改了内容或代码 | `2 to add, 2 to destroy` —— 新版本 + deployment 重建；Worker 与 custom domain 不动、证书不重签 |
+| 什么都没改、也没重 build | `No changes` |
+
+☠️ **CI 上永远不会是 `No changes`**，别拿它当判据：干净 runner 编出的 wasm 与 Pagefind
+索引跟工作站那批不是同一份字节（实测 `asset_manifest_sha256` 一变就 forces replacement）。
+CI 的判据是另一条，见第 7 步。
 
 读一遍再往下。特别看：`modules` 是不是两个（`index.js` + `index_bg.wasm`）、
 `assets.directory` 指的是不是 `public`。
@@ -132,6 +135,9 @@ CI 上「state 真接上了」的判据是另一条，见第 7 步。
 > Terraform 于是把它和「上传资源层要十几秒」的版本资源并发执行，撞上「Worker 还没有
 > deployment」。已在 `modules/worker/main.tf` 补 `depends_on`（那里有完整注释），
 > 修完重跑即可：已建成的 3 个资源不受影响，plan 只剩 `1 to add`。
+> ✅ **当日重跑成功**，那个资源现在在 state 里（`558892dd…`），CI 每次 plan 都 refresh 到它。
+> ⏸ 但 `depends_on` 这条边只在「资源已存在」的重跑下被验过 —— 从空 state 首次 apply
+> 的那条路径没有再走过一遍。
 >
 > ⚠️ **部分失败时退出码是 1，但 state 已经写了**（3 个资源在里面）。别把它当成
 > 「什么都没发生」而去重建 —— 那会撞上本文开头那条「Worker 已存在」的坑。
@@ -155,14 +161,13 @@ curl -s   $BASE/nope/nope | grep -o '没有这个页面'                # Worker
 curl -s -o /dev/null -w '%{http_code}\n' $BASE/nope/nope        # 应为 404
 ```
 
-⚠️ **上面两条命令都是 2026-08-23 修过/补过的,原因值得记住**：
+⚠️ **这两条验收命令 2026-08-23 各修过一次，教训值得记住**：
 
-- 卡片数那条原先写的是 `grep -c '<a class="card"'` —— 它**永远返回 1**。
-  线上 HTML 是压成一行的，`grep -c` 数的是**行数**不是出现次数。
-  一条恒真的验收命令比没有验收更糟。
-- 404 那条原先只 grep 页面文字，**不看状态码**。实测未知路径返回的是
-  **HTTP 200**（soft 404）——页面对、状态码错，爬虫会把无限多不存在的 URL
-  当正常页面收录。⏸ 这是 `crates/edge` 侧的待修缺陷，不是部署配置问题。
+- 卡片数原先写 `grep -c '<a class="card"'` —— 线上 HTML 压成一行，`grep -c` 数的是
+  **行数**，于是它**永远返回 1**。一条恒真的验收命令比没有验收更糟。
+- 404 原先只 grep 页面文字、不看状态码，于是没发现未命中路径返回的是 **200**（soft 404）：
+  页面对、状态码错，爬虫会把无限多不存在的 URL 当正常页面收录。
+  ✅ 已在 `crates/edge` 修掉（commit `0747663`），实测 404。
 
 ☠️ **两个「站点看起来正常但其实坏了」的症状,第一次部署务必核对**：
 
@@ -215,123 +220,67 @@ module "home_stack" {
 
 ## 7. 交给 CI
 
-[`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) 已经写好整条链
-（门禁 → `build-site` → `worker-build` → 写 `backend.hcl` → `terraform plan` →
-`apply` 那份 plan 文件），**只能手动触发**。
+[`deploy.yml`](../../.github/workflows/deploy.yml) 是整条链（门禁 → `build-site` →
+`worker-build` → 写 `backend.hcl` → `plan` → `apply` 那份 plan 文件），**只能手动触发**。
+✅ 2026-08-23 跑通两次：冷缓存 3 分 37 秒、热缓存 53 秒。
 
-☠️ **CI 部署的硬前置是远端 state 后端。** Terraform 的 state 是「线上现在是什么」的
-唯一记录。CI 每次都是干净 runner，本地 state 等于每次从空开始 —— 它会试图创建已经
-存在的 Worker 然后报错。
+☠️ **硬前置是远端 state 后端。** state 是「线上现在是什么」的唯一记录，而 CI 每次都是
+干净 runner —— 用本地 state 等于每次从空开始，它会去创建已经存在的 Worker 然后报错。
 
-### ✅ 远端 state：2026-08-23 已迁入 R2
+### state：2026-08-23 已迁入 R2
 
-key 是 `terraform-backend/home-stack/cloudflare.tfstate`。⚠️ **桶本体不归本仓库** ——
-只拥有这个 key 前缀，见 [reference/cross-repo-boundary.md](../reference/cross-repo-boundary.md)。
+key 是 `terraform-backend/home-stack/cloudflare.tfstate`。⚠️ **桶本体不归本仓库**，
+只拥有这个 key 前缀 —— 见 [reference/cross-repo-boundary.md](../reference/cross-repo-boundary.md)。
+迁移是一次性的，那条命令留在 `just migrate-state`（recipe 上方写了为什么别再跑）。
 
-下面四步当时是**一起**做完的，别只做一半 —— 两种半成品的症状都很难查：
-只取消注释（不迁移）→ 本地 `plan`/`apply` 卡在「要 init 到 R2」，而 CI 那道检查会放行
-→ CI 拿到空 state，去创建已存在的 Worker；只迁移（不取消注释）→ terraform 继续读本地
-文件，R2 那份从此过期，而**两边都「看着正常」**。
+☠️ **当时那四步必须一起做完**（拿 R2 凭据 → 填 `backend.hcl` → 取消 `versions.tf` 里
+backend 块的注释 → 迁移），两种半成品都很难查：只取消注释 → 本地 plan 卡在「要 init
+到 R2」，而 CI 那道检查会放行、拿着空 state 去重建已存在的资源；只迁移 → terraform
+继续读本地文件、R2 那份从此过期，而**两边都「看着正常」**。
 
-```sh
-# 1) R2 的 S3 凭据：Dashboard → R2 → Manage R2 API tokens → Create API token，
-#    权限 Object Read & Write、范围只勾 terraform-backend 桶。
-#    ⚠️ 别走「从已有 Cloudflare token 派生」那条（AK = token id、SK = token 值的 SHA-256）：
-#    它省的只是一次 Dashboard 往返 —— 而 CI 那枚窄 token 无论如何都得建，所以什么也没省，
-#    代价却是轮换任何一边会同时废掉另一边，而本仓库是公开的。
-export AWS_ACCESS_KEY_ID=…
-export AWS_SECRET_ACCESS_KEY=…
+R2 凭据用**专用窄 token**（Object Read & Write，范围只勾 `terraform-backend` 桶）。
+⚠️ 别走「从已有 Cloudflare token 派生」那条（AK = token id、SK = token 值的 SHA-256）：
+CI 那枚窄 token 反正要建，所以它什么也没省，代价却是轮换任何一边同时废掉另一边。
 
-# 2) endpoint（含账号 id，不进这个公开仓库）
-cp backend.hcl.example backend.hcl && $EDITOR backend.hcl
+**迁完的实际长相**（2026-08-23 实测 —— 直觉在这里会骗人）：
 
-# 3) 取消 versions.tf 里 backend 块的注释
-
-# 4) 迁移。terraform 问一次「copy existing state to the new backend?」——要。
-just migrate-state
-```
-
-⚠️ **迁移前先确认手上那份备份是最新的 —— 比 serial，别看文件名。** 2026-08-23 踩到过：
-留着的那份 `terraform.tfstate.pre-r2-backup` 是 **serial 7**，指向 404 修复**之前**的
-worker version，而线上真相是 **serial 12**。拿它还原会让 terraform 以为线上跑的是旧版本。
-
-```sh
-python3 -c 'import json;d=json.load(open("terraform.tfstate"));print(d["serial"],len(d["resources"]))'
-```
-
-迁完的**实测长相**（旧直觉在这里会骗人）：
-
-| 看哪里 | 实测 |
-|---|---|
-| `.terraform/terraform.tfstate` | `backend.type = s3`，bucket / key / `region = auto` 与四个 `skip_*` 都记着 |
+| 看哪里 | 实际 |
+|--------|------|
 | 本地 `terraform.tfstate` | **被清空成 0 字节** —— 不是「留在原地」。看到它别以为 state 丢了 |
-| `terraform.tfstate.backup` | 迁移前那份本地内容落在这里（serial 12） |
-| 查现状 | `terraform state list`，读的是 R2 |
-| R2 里那份 state | `serial 1` + **一条全新的 lineage** |
+| `terraform.tfstate.backup` | 迁移前那份本地内容（serial 12）落在这里 |
+| R2 里那份 | `serial 1` + **全新的 lineage**（往空后端持久化会重签这两个；本地当时是 `serial 12 / 081799fc`）|
+| 怎么判断迁成了 | 看 `terraform state list` 是不是那 4 个资源，**别看 serial / lineage** |
 
-☠️ **别拿 serial / lineage 去判断迁移成不成功。** 直觉是「拷过去应该原样保留」，实际
-terraform 往一个**空**的目标后端持久化时会重新签发两者：serial 从 0 起步（于是是 1），
-lineage 另起一条。2026-08-23 实测：本地是 `serial 12 / 081799fc`，迁完 R2 里是
-`serial 1 / 0974a83f` —— 而 4 个资源地址一个不少。**看资源，不看这两个数**：
+⚠️ **迁移前先确认手上那份备份是最新的 —— 比 serial，别看文件名。** 当时留着的
+`pre-r2-backup` 是 serial 7、指向 404 修复**之前**的版本（已改名成
+`terraform.tfstate.STALE-serial7-do-not-restore`），而线上真相是 serial 12。
 
-```sh
-terraform state list   # 要 4 行：worker / worker_version / workers_custom_domain[0] / workers_deployment
-```
+### 四个 secret，与验收判据
 
-📌 那条 LibreSSL 的担心不成立：homelab 把 R2 后端注释掉时归因于「本机握手失败」，
-但 terraform 是静态链接的 Go、自带 TLS 栈 —— 同一台机器上迁移一次通过。
-真在本地迁不动了再走绕法（从 runner 迁，或用 rclone / `npx wrangler r2 object put`
-把 `terraform.tfstate` 直接推到那个 key，再 `just init`）。
+`gh secret set <名字> --repo meirongdev/home-stack`（交互式收值，不进 shell history）：
+`CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`CLOUDFLARE_API_TOKEN`。
+☠️ 最后那枚必须是**新建的窄 token**（第 1 步那三条权限，实测够用），**不是** homelab 那枚
+能改全 zone DNS / 隧道 / WAF 的 —— 本仓库是公开的。R2 那对同理，只给一个桶。
 
-### ✅ CI 部署：2026-08-23 首跑通过
-
-四个 secret（`gh secret set <名字> --repo meirongdev/home-stack` 交互式收值，
-不进 shell history）：`CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID`、
-`R2_SECRET_ACCESS_KEY`、`CLOUDFLARE_API_TOKEN`。
-
-☠️ 最后那枚必须是**新建的窄 token**（Workers Scripts: Edit + Account Settings: Read +
-zone Workers Routes: Edit），**不是** homelab 那枚能改全 zone DNS / 隧道 / WAF 的 ——
-本仓库是公开的。R2 那对同理，只给 `terraform-backend` 一个桶。
-✅ 实测这三条权限**够了**：plan 能 refresh 四个资源、apply 能建版本与 deployment。
-
-首跑：[run 32645852445](https://github.com/meirongdev/home-stack/actions/runs/32645852445)，
-3 分 37 秒，`Apply complete! Resources: 2 added, 0 changed, 2 destroyed`。
-
-📌 第二跑（同日，为验 action 升级）只用了 **53 秒** —— 差别是 `Swatinem/rust-cache` 热了。
-看到一分钟内跑完别怀疑「是不是跳过了什么」。它顺便给出**远端 state 连续性**的证据：
-plan 那步 refresh 到的 `worker_version` id 正是**上一跑**建的那个（`a6859592…`），
-两次互不相干的 runner 接的是同一份 state —— 这正是迁到 R2 想买的东西。
-✅ 那一跑部署的是机器人的夜间数据提交（`ffb47a7`），页面上的 `fetched_at` 当场变成当天 ——
-「夜间刷新 → CI 部署 → 线上」这条链整条走通过一次。
-
-☠️ **验收不是「workflow 绿了」。** 第一步那道 fail-closed 检查只 grep「配置里有没有
-backend 块」，看不出 state 是否真接上 —— 空 state 上重建也会一路绿到 apply 才炸。
-判据是 `terraform plan` 那步**碰了哪些资源**：
-
-| 看什么 | 接上了的样子（2026-08-23 实测） | 空 state 的样子 |
-|---|---|---|
-| `cloudflare_worker.this` | 只 `Refreshing state... [id=5db1b949…]`，不在变更里 | `will be created` |
-| `workers_custom_domain.this[0]` | 只 `Refreshing state... [id=558892dd…]` | `will be created`（然后撞「已存在」）|
-| 汇总 | `2 to add / 2 to destroy` | `4 to add` ← **看到这个立刻停** |
-
-📌 而且日志顺手给出了一条更硬的证据：apply 销毁的旧版本 id 是
-`56bbb3c1-1dcc-4078-a767-5f66a20245fb` —— 正是工作站那次部署留下的版本。
-说明 R2 里那份 state 不只是「有四个资源」，内容也是**最新**的那一份。
+☠️ **验收不是「workflow 绿了」，也不是 `No changes`。** 第一步那道 fail-closed 检查只 grep
+「配置里有没有 backend 块」，看不出 state 是否真接上 —— 在空 state 上重建同样会一路绿到
+apply 才炸。判据是 plan **碰了哪些资源**：`cloudflare_worker` 与 `workers_custom_domain[0]`
+只出现在 `Refreshing state...` 里、不在变更里，汇总是 `2 to add / 2 to destroy`。
+**出现 `4 to add` 立刻停** —— 那就是空 state 在重建。
 
 ```sh
-gh run watch <run-id> --repo meirongdev/home-stack --exit-status
-gh run view <run-id> --repo meirongdev/home-stack --log | grep -E 'Refreshing state|must be replaced|Apply complete'
+gh run view <run-id> --repo meirongdev/home-stack --log \
+  | grep -E 'Refreshing state|must be replaced|Apply complete'
 ```
 
-⚠️ **每次 apply 都有一段「Worker 没有任何 deployment」的窗口。** 实测顺序是
-**先销毁 deployment（0s）→ 建新版本（5s）→ 建新 deployment（2s）**，窗口 ≈ **7 秒**
-（`create_before_destroy` 只加在 version 上，deployment 没有）。那正是首次部署撞
-`400 / 100124 Worker has no deployments` 的同一状态。⏸ **未决**：要不要给 deployment
-也加 `create_before_destroy` —— 同一个 Worker 能不能短暂存在两个 deployment 没验过。
+📌 最硬的一条证据要跨两次运行才看得到：第二跑 refresh 到的 `worker_version` id 正是
+**第一跑建的那个** —— 两个互不相干的 runner 接的是同一份 state，这正是迁 R2 买到的东西。
 
-✅ 首跑后站点实测（CI apply 完约 2 分钟）：`/`、`/tools/prometheus`、
-`/domains/observability`、`/pagefind/pagefind-ui.js` 全 200，随机 miss 路径 404，
-首页标题与 97 条计数都在。⚠️ apply 完**立刻** curl 会拿到假阴性 —— 版本传播要十几秒。
+⚠️ **每次 apply 都有 ≈7 秒「Worker 没有任何 deployment」的窗口**：先销毁 deployment（0s）
+→ 建新版本（5s）→ 建新 deployment（2s），`create_before_destroy` 只加在 version 上。
+那正是首次部署撞 `400 / 100124` 的同一状态。⏸ 未决见 [ROADMAP.md](../ROADMAP.md) 开放项 18。
+
+⚠️ apply 完**立刻** curl 会拿到假阴性 —— 版本传播要十几秒。
 
 ## 自定义域名与 DNS 归属冲突
 

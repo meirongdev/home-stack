@@ -23,7 +23,7 @@ jobs:
   gates:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: 文件卫生（密钥 / 体积 / 换行 / 空白）
         run: python3 .githooks/checks/hygiene.py --all
@@ -33,7 +33,7 @@ jobs:
 
       # 部署的 IaC 和 Rust 代码同等待遇：它一样会腐烂，
       # 而它腐烂的症状是「要部署的那天才发现配置不合法」。
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
 

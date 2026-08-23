@@ -13,8 +13,9 @@
 [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md)）。
 
 ⚠️ 每份记录文首的 `状态` 字段是唯一判据 —— 不要按「文档在这儿所以东西跑着」来读。
-本目录里**已生效**与**仍是意图**的内容混在一起：生效的是段 1（`crates/site` / `dev` / `xtask`）
-与段 4 的 GitHub 侧，上边缘与 FieldNote 都还没实施，见 [ROADMAP.md](ROADMAP.md#现状)。
+本目录里**已生效**与**仍是意图**的内容混在一起：生效的是段 1（`crates/site` / `dev` / `xtask`）、
+段 2（**边缘已部署** —— `stack.meirong.dev`，state 在 R2、部署走 CI）与段 4 的 GitHub 侧；
+FieldNote（段 3）还没实施，见 [ROADMAP.md](ROADMAP.md#现状)。
 
 ## 从哪里开始
 
@@ -25,13 +26,15 @@
 | 具体怎么建模 / 怎么抓数据 | [plans/](plans/README.md) — 带日期的规格，写完即冻结 |
 | 还剩什么没做 | [ROADMAP.md](ROADMAP.md) — 开放项 + 四段实施顺序 + 明确不做 |
 | 内容模型现在长什么样 | [reference/content-model.md](reference/content-model.md) — 字段、不变量、五类校验 |
-| 怎么把站点部署上去 | [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) — 六步 + 回滚 + ⚠️ 一个必须先定的 DNS 归属冲突 |
+| 怎么把站点部署上去 | [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) — 七步 + 回滚 + ⚠️ 一个必须先定的 DNS 归属冲突 |
+| 钉着某个 tag 消费本仓库，该不该动 ref | [../CHANGELOG.md](../CHANGELOG.md) — 已发布版本之间的差异，只给外部消费者 |
 
 ## 目录一览
 
 | 位置 | 内容 | 收 | **不收** |
 |------|------|-----|---------|
 | 顶层 [ARCHITECTURE.md](ARCHITECTURE.md) / [ROADMAP.md](ROADMAP.md) | 现在打算长什么样 / 还剩什么没做 | **持续维护**，随决策变化更新 | 论证与步骤（只链不述，见下） |
+| 顶层 [../CHANGELOG.md](../CHANGELOG.md) | 已发布版本之间差了什么 | **只追加不改写**，每条按「消费者要不要动 ref」写 | 未发布的现状（那在上一行）、内部重构 |
 | [decisions/](decisions/README.md) | 为什么选 A 不选 B | 选型场景、被否决的选项、取舍 | 怎么做（步骤） |
 | [plans/](plans/README.md) | 当时打算怎么做 | 带日期的规格，**写完即冻结** | 需要长期维护的事实 |
 | [reference/](reference/README.md) | 现在是什么样 | **随实现变化持续更新**的生效事实 | 当时的判断与论证 |

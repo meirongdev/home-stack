@@ -36,7 +36,7 @@ homelab 自托管技术选型目录，按**主题域**索引，用 Rust 实现�
 
 ## 文档
 
-**[docs/](docs/README.md) 是入口索引**，设计事实都在那里。四个入口：
+**[docs/](docs/README.md) 是入口索引**，设计事实都在那里。入口：
 
 | 想知道什么 | 读这个 |
 |-----------|--------|
@@ -47,6 +47,7 @@ homelab 自托管技术选型目录，按**主题域**索引，用 Rust 实现�
 | 内容模型现在长什么样 | [docs/reference/content-model.md](docs/reference/content-model.md) — 字段、不变量、五类校验、内容如何进到两个目标里 |
 | 怎么把它部署上去 | [docs/runbooks/deploy-cloudflare.md](docs/runbooks/deploy-cloudflare.md) — 七步 + 回滚 + ⚠️ DNS 归属的互斥选择 |
 | **别的项目**怎么部署它 | [cloudflare/terraform/modules/worker/](cloudflare/terraform/modules/worker/README.md) — 可复用子模块的消费方契约（关键：构建产物由调用方生成） |
+| 钉着某个 tag，该不该动 ref | [CHANGELOG.md](CHANGELOG.md) — 已发布版本之间的差异 + 版本口径 |
 
 ## 形态
 
@@ -97,7 +98,7 @@ CI（[.github/workflows/ci.yml](.github/workflows/ci.yml)）跑的是同一套 �
 | 范围 | 许可证 |
 |------|--------|
 | `crates/` `cloudflare/` `.github/` `.githooks/` | MIT **或** Apache-2.0，二选一 |
-| `content/` `docs/` 与本文 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)（署名） |
+| `content/` `docs/` 与仓库根的说明文档（本文、[CHANGELOG.md](CHANGELOG.md)）| [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)（署名） |
 | `content/generated/` | 从上游公开 API 抓来的事实性数据，不主张权利 |
 
 条目文本与（段 3 之后的）FieldNote 是这个站的实质产出，所以要求署名而不是

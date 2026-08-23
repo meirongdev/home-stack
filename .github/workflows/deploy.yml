@@ -1,13 +1,24 @@
 # 部署到 Cloudflare Workers —— 走 Terraform，不走 wrangler。
 #
-# ⚠️ **状态：未验证。** `terraform apply` 从未成功执行过（配置本身已 validate + plan
-# 通过，见 docs/runbooks/deploy-cloudflare.md）。所以它**只能手动触发**：
+# ⚠️ **状态：这条 workflow 本身仍未跑过。** 部署本体已经验证：2026-08-23 在工作站
+# `terraform apply` 成功，站点上线（见 docs/runbooks/deploy-cloudflare.md 第 5 步）。
+# 但「在干净 runner 上跑完整条链」是另一件事，所以它**只能手动触发**：
 # 一个没跑过的部署流程自动跑在 main 上，就是那种「绿着的瞎子」。
 #
 # ☠️ **本 workflow 要求远端 state 后端。** Terraform 的 state 是「线上现在是什么」
 # 的唯一记录；CI 每次都是干净 runner，用本地 state 等于每次都从空开始 ——
-# 它会试图创建已经存在的 Worker，然后报错。没配 R2 后端就**不要**用 CI 部署，
-# 从工作站部署（那里 state 是持久的）。下面第一步就是 fail-closed 地检查这件事。
+# 它会试图创建已经存在的 Worker，然后报错。下面第一步就是 fail-closed 地检查这件事。
+#
+# ⏸ **2026-08-23 状态：这条流水线仍被第一步挡着，这是刻意的。** `versions.tf` 里的
+# R2 后端块已经写好但**仍注释着**，所以那道 fail-closed 检查会失败 —— 在 state 真正
+# 迁进 R2 之前，CI 部署就该被挡住。下面这些步骤（写 backend.hcl → init 带
+# -backend-config）都已经接好，等的只是那一次迁移。整件事是 ROADMAP 开放项 16。
+#
+# ⚠️ 而且要知道那道检查的**盲区**：它只看「配置里有没有 backend 块」，
+# **看不出 state 是否真的迁进去了**。所以别为了让它过而只取消注释 ——
+# 那样 CI 会拿到一个空 state，照样去创建已存在的 Worker（症状与「没配后端」一样）。
+# 需要的 secret：CLOUDFLARE_API_TOKEN、CLOUDFLARE_ACCOUNT_ID、
+# R2_ACCESS_KEY_ID、R2_SECRET_ACCESS_KEY（后两个是 R2 API token 的 S3 凭据对）。
 name: deploy
 
 on:
@@ -58,13 +69,21 @@ jobs:
           cargo install -q worker-build
           cd crates/edge && worker-build --release
 
+      # R2 endpoint 含账号 id，所以它不在仓库里（本仓库是公开的），由这一步现写。
+      # 与本地那份 backend.hcl 是同一个契约，示例见 cloudflare/terraform/backend.hcl.example。
+      - name: 写 backend.hcl
+        working-directory: cloudflare/terraform
+        run: |
+          printf 'endpoints = { s3 = "https://%s.r2.cloudflarestorage.com" }\n' \
+            '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}' > backend.hcl
+
       - name: terraform init
         working-directory: cloudflare/terraform
         env:
           # R2 后端走 S3 兼容协议，凭据是 R2 的 access key
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: terraform init -input=false
+        run: terraform init -input=false -backend-config=backend.hcl
 
       - name: terraform plan
         working-directory: cloudflare/terraform

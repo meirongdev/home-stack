@@ -1,7 +1,8 @@
 # Roadmap
 
-> 日期: 2026-08-22
-> 状态: 🚧 段 1 已完成；段 2 的**代码**已完成、**未部署**；段 4 的 GitHub 侧已完成（含夜间 CI）；段 3 待实施
+> 日期: 2026-08-23
+> 状态: 🚧 段 1 已完成；段 2 **已部署**（2026-08-23，`stack.meirong.dev`，出口判据「公网可访问」已兑现）；
+> 段 4 的 GitHub 侧已完成（含夜间 CI）；段 3 待实施
 > 本文只回答两件事：**还剩什么没做**，和**明确不做什么**。
 > 实施细节不写在这里 —— 每条都链到 [decisions/](decisions/README.md)（取舍）或
 > [plans/](plans/README.md)（规格）。
@@ -38,12 +39,14 @@
   两条红线（wasm32 编译约束 ×2、render-diff）；`nightly-fetch.yml` 每夜刷上游活跃度
 
 **未生效**：段 3（FieldNote）、段 4 的 Prometheus 侧、HTMX 与 calculator / advisor。
-⚠️ **尚未部署**，但部署本身已经 IaC 化：`cloudflare/terraform/`（`cloudflare_worker` +
-`worker_version` + `workers_deployment`，provider 5.23.0）加一个 `justfile`，
-`just build && just plan && just apply` 三条命令。已验证到 `terraform plan` 全绿
-（`Plan: 3 to add`）、`worker-build --release` 实测包体 **346 KiB gz = Free 上限的 11%**；
-**只剩 `terraform apply`** 需要作者的账号（开放项 14）。
-步骤见 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md)，域名可以先不定（开放项 1 / 15）。
+✅ **已部署**（2026-08-23）：<https://stack.meirong.dev>。`cloudflare/terraform/` 建了 4 个资源
+（`cloudflare_worker` + `worker_version` + `workers_deployment` + `workers_custom_domain`，
+provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归属选了**方案 A**
+（Cloudflare 自建 `AAAA 100::` 占位记录并签证书），homelab 那边只留注释、不声明第二份。
+⚠️ 首次 apply 撞过一个模块 bug —— custom domain 缺 `depends_on`，与「上传资源层要十几秒」的
+版本资源并发，撞 `400 / 100124 Worker has no deployments`；已修并写进
+[runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) 第 5 步。
+⏸ 但 state 还是**工作站上的本地文件** —— 等于「只有那台机器能部署」（开放项 16）。
 
 ## 四段实施
 
@@ -52,7 +55,7 @@
 | 段 | 内容 | 出口判据 |
 |---|------|---------|
 | **1** | ✅ 已完成，见「现状」。规格见 [plans/2026-08-20-content-model.md](plans/2026-08-20-content-model.md) | 已验证 |
-| **2** | 🟡 代码与部署 IaC 均已完成、**未 apply**。已有：`crates/edge`、构建期内容内嵌、`dump-html` / `render-diff` / `build-site`、Pagefind 索引与搜索、CI 九道门禁、`cloudflare/terraform`（plan 已验证）。未有：真正 apply（缺 Cloudflare 凭据），以及 render-diff 的 wasm 运行时那一半（开放项 13） | 公网可访问 ❌；`render-diff` 每次合并跑 ✅（但只覆盖内容路径，不覆盖 wasm 运行时 —— 判据只兑现了一半） |
+| **2** | 🟡 **已部署**（2026-08-23，`stack.meirong.dev`）。已有：`crates/edge`、构建期内容内嵌、`dump-html` / `render-diff` / `build-site`、Pagefind 索引与搜索、CI 九道门禁、`cloudflare/terraform`（4 个资源已 apply）。未有：render-diff 的 wasm 运行时那一半（开放项 13）、远端 state（开放项 16） | 公网可访问 ✅（2026-08-23 实测：首页、条目页、域页 12 张卡、`pagefind/pagefind-ui.js` 全 200）；`render-diff` 每次合并跑 ✅（但只覆盖内容路径，不覆盖 wasm 运行时 —— 判据只兑现了一半） |
 | **3** | 一手证据层。`FieldNote` 四态（Running/Retired/Rejected/Evaluating）+ 按状态筛选的视图。目标 10 条，全部取自 homelab 已有文档 —— [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md) 已点名 7 条可直接成稿，余 3 条实施时从 homelab `docs/records/*` 里挑。⚠️ 分母已从 29 变成 97，「10 条」这个目标该怎么摊到域上是开放项 11 | 每条 FieldNote 的数字都能点回一份 decision/record 文档 |
 | **4** | 🟡 GitHub 侧已完成（`xtask fetch` + `nightly-fetch.yml` 每夜刷新并自动提交）。Prometheus 侧**有意不做** —— 见开放项 4：它只服务 FieldNote 的 footprint，而 FieldNote 现在是 0 条 | 连续 7 天夜间构建全绿（待观察）；「断开 tailnet 仍然成功」这条**当前空成立** —— 根本没有 tailnet 依赖 |
 
@@ -65,7 +68,6 @@
 
 | # | 项目 | 说明 |
 |---|------|------|
-| 1 | **域名未定** | 项目已定名 Home Stack（开放项 9 已关），域名仍未定 —— 原先建议的 `obs.meirong.dev` 随范围扩大已不合适（不再只是 observability），建议 `stack.meirong.dev`。⚠️ 定域名同时要定 **DNS 由谁拥有**（开放项 15），那不是配置细节而是一个互斥选择。**不定也能部署**：`workers.dev` 子域足够兑现「公网可访问」 |
 | 3 | **playbook 做不做** | 是否每个 vendor 一份分阶段迁移指南。⚠️ 作者没做过这些迁移，硬写会违反「每个数字都要有出处」的纪律。倾向先不做，段 3 之后按实际经历补。见 [plans/2026-08-20-content-model.md](plans/2026-08-20-content-model.md#未决) |
 | 4 | **Prometheus 侧数据源是否值得** | 只服务少数几条 footprint，却要引入跨仓库 ACL 依赖（开放项 5）。等段 3 的 FieldNote 实际数量出来再定。见 [plans/2026-08-20-data-pipeline.md](plans/2026-08-20-data-pipeline.md#未决) |
 | 5 | **Tailscale ACL 跨仓库依赖** | 段 4 需要 homelab `tailscale/terraform` 放行 `tag:ci` 到中枢 Prometheus。⚠️ 两边都要留注释 —— 日后清 ACL 打断它的症状是「站点数字停止更新」，不会有人立刻发现 |
@@ -74,10 +76,8 @@
 | 11 | **FieldNote 目标怎么摊到 10 个域** | 段 3 的「10 条」是对着 29 条可观测条目定的，现在分母是 97。两种表述：「先把可观测那一域做满」（覆盖率集中、看得出深度）或「每个域至少 1 条」（广度好看、每域都浅）。⚠️ 无论选哪个，都不能为没跑过的工具编造 FieldNote —— 见 [decisions/domain-layer-not-flat-categories.md](decisions/domain-layer-not-flat-categories.md) 的 Consequences。段 3 前置 |
 | 12 | **跨域工具只登记主域，读者会找不到** | Cilium 记在网络域，从「安全加固」域里找不到它；Harbor 的漏洞扫描、Tetragon 与 Cilium 的关系同理。当前缓解只有 `detail` 里的一句话，不是机制。可选解法：域页面加一块「相关但登记在别处」的手写交叉引用（又一个要维护的分类法），或等 Pagefind 搜索（段 2）上线后认定「搜得到就够了」。⚠️ 先别急着改模型 —— 多值域已在 ADR 里被否决过 |
 | 13 | **render-diff 只兑现了一半** | [decisions/dual-target-axum.md](decisions/dual-target-axum.md) 承诺「两个目标逐字节比对」。现在比的是**两条内容路径**（磁盘 vs 构建期内嵌），覆盖「改了 TOML 内嵌表没跟上」这类漂移；**没有**比 wasm32 运行时的输出。补法：CI 里 `worker-build` + `wrangler dev` 起一个本地 Worker，用同一份 `all_paths()` 逐条 curl 再和 `dist/` 比对。⚠️ 在补上之前，不要把那条 ADR 的判据当已满足 |
-| 14 | **`terraform apply` 从未执行过** | 部署已 IaC 化（`cloudflare/terraform/`，3 个资源 + `justfile`）。已验证到 **`terraform plan` 全绿（`Plan: 3 to add`）**，provider 5.23.0；**只剩 `apply` 那一步没人跑过** —— 需要作者的 Cloudflare 账号。步骤与 token 最小权限见 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md)。⚠️ 第一次跑遇到的报错要回头补进 runbook |
-| 15 | **自定义域名归谁：待作者选，不再是设计缺口** | ✅ 两种归属模型现在都在 `modules/worker` 里实现了：`custom_domain`（Cloudflare 建记录）与 `route`（调用方建记录，模块只绑路由），同时设会被 precondition 拦下（已实测）。剩下的是一个**决定**：`meirong.dev` 的 DNS 由 homelab 的 Terraform 全量管理，那就该选 `route`。⚠️ 无论选哪个，**两边都要留注释** —— 和开放项 5（Tailscale ACL）同一类跨仓库依赖：日后有人清理另一侧，症状是站点域名突然不解析、而这一侧没有任何线索。⏸ 定下来之前先用 `workers.dev`（不碰任何 DNS） |
-| 16 | **CI 部署要求远端 state 后端** | ☠️ CI 每次都是干净 runner，本地 state 等于每次从空开始 —— 它会试图创建已存在的 Worker 然后报错。`versions.tf` 里有注释好的 R2（S3 兼容）后端块，与 homelab `docs/plans/architecture/2026-08-03-tf-state-r2.md` 的做法一致。⏸ 在配好之前**只从工作站部署**；`deploy.yml` 第一步已 fail-closed 地检查这件事 |
-| 17 | **没有任何 tag，外部消费者无法钉版本** | `modules/worker` 已经是可复用子模块，外部项目按 `?ref=<tag>` 消费它 —— 但仓库目前 **0 个 tag**，只能钉 `main`。⚠️ 钉 `main` 意味着消费方的部署内容会在它没改任何东西时变（内容与代码一起变）。✅ 前置的授权问题已解决（开放项 10 已关：代码 MIT/Apache-2.0、内容 CC BY 4.0）。第一次 `terraform apply` 成功、站点确实可访问之后就该打 `v0.1.0` |
+| 16 | **CI 部署要求远端 state 后端** | ☠️ CI 每次都是干净 runner，本地 state 等于每次从空开始 —— 它会试图创建已存在的 Worker 然后报错。`versions.tf` 里有注释好的 R2（S3 兼容）后端块，与 homelab `docs/plans/architecture/2026-08-03-tf-state-r2.md` 的做法一致。⏸ 在配好之前**只从工作站部署**；`deploy.yml` 第一步已 fail-closed 地检查这件事。**2026-08-23：接线已备好，待启用（TODO）。** 已就位：`versions.tf` 里写好但**仍注释**的 backend 块（bucket `terraform-backend`、key `home-stack/cloudflare.tfstate`）、`backend.hcl.example`（endpoint 含账号 id，本仓库公开所以不进 git）、`just migrate-state`、workflow 里「写 backend.hcl → init 带 `-backend-config`」两步。**待做（4 步一起，别只做一半）**：① 拿到 R2 的 S3 凭据对（建专用 token，或从现有 CF token 派生：AK = token id、SK = token 值的 SHA-256，前提是它带 `Workers R2 Storage: Edit`）；② 填 `backend.hcl`；③ 取消 backend 块注释；④ `just migrate-state`；然后配 4 个 GitHub secret。⚠️ 只做一半的两种症状都很难查，见 runbook 第 7 步。📌 顺带修正一条二手结论：homelab 那边把 R2 后端注释掉时归因于「本机 LibreSSL 握手失败」，但 terraform 是静态链接的 Go、自带 TLS 栈；2026-08-23 实测这台机器到 R2 的 S3 端点 TLS 正常（400/87ms），所以那个理由对 terraform 不成立 |
+| 17 | **没有任何 tag，外部消费者无法钉版本** | `modules/worker` 已经是可复用子模块，外部项目按 `?ref=<tag>` 消费它 —— 但仓库目前 **0 个 tag**，只能钉 `main`。⚠️ 钉 `main` 意味着消费方的部署内容会在它没改任何东西时变（内容与代码一起变）。✅ 前置的授权问题已解决（开放项 10 已关：代码 MIT/Apache-2.0、内容 CC BY 4.0）。**2026-08-23 起前置条件全部满足**（首次 apply 成功、`stack.meirong.dev` 实测可访问），可以打 `v0.1.0` 了 |
 
 ## 明确不做
 

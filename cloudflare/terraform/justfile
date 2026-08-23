@@ -20,8 +20,17 @@ build:
     cd {{repo}} && cargo run -p xtask -- build-site
     cd {{repo}}/crates/edge && worker-build --release
 
+# state 目前是**本地文件**（versions.tf 里的 R2 后端块还注释着）。
 init:
     terraform init
+
+# 把工作站上的本地 state 迁到 R2。**一次性**，迁完就别再跑。⏸ 现在还跑不了：
+# 前置是先取消 versions.tf 里 backend 块的注释、备好 backend.hcl 与 R2 凭据
+#   export AWS_ACCESS_KEY_ID=… AWS_SECRET_ACCESS_KEY=…   # R2 API token 的那对
+# 完整顺序见 ../../docs/runbooks/deploy-cloudflare.md 第 7 步（ROADMAP 开放项 16）。
+# ⚠️ terraform 会问一次 yes/no（要不要把现有 state 拷到新后端）——**要**。
+migrate-state:
+    terraform init -migrate-state -backend-config=backend.hcl
 
 # 看将要发生什么。凭据从环境变量来：CLOUDFLARE_API_TOKEN
 plan:

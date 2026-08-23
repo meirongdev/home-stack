@@ -30,6 +30,8 @@ crates/*/build/
 *.tfstate
 *.tfstate.*
 *.tfplan
+# 远端后端的 endpoint（含账号 id）。示例见 cloudflare/terraform/backend.hcl.example
+backend.hcl
 # .terraform.lock.hcl **要**提交：它锁 provider 版本与校验和，
 # 是「同一份配置在 CI 与本机解析出同一个 provider」的唯一保证。
 !.terraform.lock.hcl

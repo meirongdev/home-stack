@@ -43,8 +43,10 @@
     "enabled": true
   }
 
-  // 自定义域名先不配 —— 域名还没定（docs/ROADMAP.md 开放项 1）。
-  // 不配就部署到 <name>.<subdomain>.workers.dev，足够验证「公网可访问」。
-  // 定下来之后加：
-  //   "routes": [{ "pattern": "stack.meirong.dev", "custom_domain": true }]
+  // ☠️ **这里刻意不写 `routes`。** 线上域名 stack.meirong.dev 已于 2026-08-23 上线，
+  // 但它由 Terraform 的 `custom_domain` 变量管（cloudflare_workers_custom_domain）——
+  // 部署走 Terraform、不走 wrangler deploy，见 docs/runbooks/deploy-cloudflare.md。
+  // 在这里再写一份 "routes": [{ "custom_domain": true }] 就是双主：
+  // 谁后跑谁改写归属，而 Terraform 下一次 plan 会把它当漂移再改回来。
+  // 本文件的用途只剩调试（wrangler dev / deployments list）。
 }

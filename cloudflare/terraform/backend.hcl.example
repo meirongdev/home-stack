@@ -1,0 +1,11 @@
+# 抄成 backend.hcl（gitignored）再填真值：
+#
+#   cp backend.hcl.example backend.hcl
+#   terraform init -backend-config=backend.hcl
+#
+# 账号 id 在 Cloudflare Dashboard 右侧栏；也可以现取：
+#   cd ../../../homelab/cloudflare/terraform && grep account_id terraform.tfvars
+#
+# ⚠️ 只放 endpoint。bucket / key / region 与那几个 skip_* 在 versions.tf 里，
+# 它们不含身份信息，进仓库没问题 —— 分界就是「含不含账号 id」。
+endpoints = { s3 = "https://<ACCOUNT_ID>.r2.cloudflarestorage.com" }

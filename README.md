@@ -20,8 +20,8 @@ homelab 自托管技术选型目录，按**主题域**索引，用 Rust 实现�
 |---|---|
 | 设计 | ✅ 已定：6 条 ADR + 2 份规格 + 首份 reference |
 | 实现 | ✅ 段 1 全部、段 2 的**代码**全部（wasm32 入口、构建期内容内嵌、静态导出、Pagefind 搜索、CI 九道门禁）、段 4 的 GitHub 侧（含夜间刷新）。内容覆盖 10 个域 / 97 条 |
-| 部署 | ⬜ **未 apply**，但已 IaC 化且**可被别的项目复用**：`cloudflare/terraform/modules/worker` 是无 provider 的子模块，本仓库只是它的第一个消费者。已验证到 `terraform plan` 全绿（自身 + 一个模拟外部消费者）、实测包体 346 KiB gz（Free 上限 11%），只剩 `apply` 需要 Cloudflare 账号 |
-| 下一步 | 把站点真的推上去（段 2 的出口判据「公网可访问」）；然后是段 3（FieldNote） |
+| 部署 | ✅ **已上线**（2026-08-23）：<https://stack.meirong.dev> —— 4 个 Terraform 资源，实测包体 346 KiB gz（Free 上限 11%）。部署逻辑**可被别的项目复用**：`cloudflare/terraform/modules/worker` 是无 provider 的子模块，本仓库只是它的第一个消费者。⏸ 但 state 还是工作站上的本地文件（[ROADMAP](docs/ROADMAP.md) 开放项 16）——CI 部署得先把它迁到 R2 |
+| 下一步 | 段 3（FieldNote）；以及把 state 迁到 R2、部署交给 CI |
 
 ## 目录的两根轴
 
@@ -52,7 +52,7 @@ homelab 自托管技术选型目录，按**主题域**索引，用 Rust 实现�
 
 一份 `axum::Router`，两个编译目标：本地 `tokio` 驱动拿秒级反馈循环，线上编到
 `wasm32-unknown-unknown` 跑在 Cloudflare Workers 上，逻辑只有一份。
-两个入口都已就位并各自过了 wasm32 / 宿主的编译门禁；⬜ **还没部署**。
+两个入口都已就位并各自过了 wasm32 / 宿主的编译门禁；✅ 线上那一份 2026-08-23 已部署。
 
 内容侧：TOML 条目在构建期反序列化成强类型 `Catalog`，分类法字段用 newtype 而非
 `String`，引用写错一个字母就是构建失败，而不是静默生成一个空页面。

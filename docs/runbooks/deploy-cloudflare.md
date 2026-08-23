@@ -29,9 +29,11 @@
 | `rustup target add wasm32-unknown-unknown` | 已装则跳过 |
 | `cargo install worker-build` | ✅ 本机 0.8.5 验证过。它会自行下载 `wasm-bindgen` 与 `wasm-opt` |
 
-⚠️ **域名可以先不定。** 不配 `custom_domain` 就只用 `workers.dev` 子域，
-足够兑现段 2 的出口判据「公网可访问」，而且不碰任何 DNS。
-配自定义域名会牵出一个归属冲突，见[最后一节](#自定义域名与-dns-归属冲突)。
+✅ **域名已定：`stack.meirong.dev`**（2026-08-23，方案 A）。它写在
+`cloudflare/terraform/terraform.tfvars` 的 `custom_domain` 里，归属取舍见
+[最后一节](#自定义域名与-dns-归属冲突)。
+⚠️ 从零复现时仍可**先不配** `custom_domain` —— 只用 `workers.dev` 子域就能兑现
+「公网可访问」，而且不碰任何 DNS；等归属定了再补那一个资源（这也正是本次的实际路径）。
 
 ## 1. 建 API token（Cloudflare 控制台）
 
@@ -96,6 +98,9 @@ Terraform 不编 Rust、不建 Pagefind 索引；而且它在 **plan 阶段就�
 just init
 just plan
 ```
+
+⏸ **state 现在是工作站上的本地文件** —— R2 后端块在 `versions.tf` 里备好了但仍注释着
+（开放项 16 / 本文第 7 步）。所以这一步不需要 R2 凭据，但也意味着**只有这台机器能部署**。
 
 ✅ 已验证：provider 5.23.0 下 `terraform validate` 与 `terraform plan` 全绿，
 输出应当是 **`Plan: 3 to add, 0 to change, 0 to destroy`**（Worker、Version、Deployment）。
@@ -198,18 +203,60 @@ module "home_stack" {
 ## 7. 交给 CI
 
 [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) 已经写好整条链
-（门禁 → `build-site` → `worker-build` → `terraform plan` → `apply` 那份 plan 文件），
-但它**只能手动触发**，且从未成功跑过。
+（门禁 → `build-site` → `worker-build` → 写 `backend.hcl` → `terraform plan` →
+`apply` 那份 plan 文件），**只能手动触发**：部署本体 2026-08-23 已在工作站验证过，
+但「在干净 runner 上跑完整条链」还没跑过。
 
-☠️ **CI 部署有一个硬前置：远端 state 后端。**
-Terraform 的 state 是「线上现在是什么」的唯一记录。CI 每次都是干净 runner，
-用本地 state 等于每次都从空开始 —— 它会试图创建已经存在的 Worker 然后报错。
-`versions.tf` 里有注释好的 R2（S3 兼容）后端配置块，与 homelab 仓库的做法一致。
-**没配后端就不要用 CI 部署**，从工作站部署（那里 state 是持久的）。
-workflow 第一步就 fail-closed 地检查这件事。
+☠️ **CI 部署的硬前置是远端 state 后端。** Terraform 的 state 是「线上现在是什么」的
+唯一记录。CI 每次都是干净 runner，本地 state 等于每次从空开始 —— 它会试图创建已经
+存在的 Worker 然后报错。
 
-需要的 secret：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`，
-以及 R2 后端的 `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`。
+⏸ **当前状态（2026-08-23）：接线全好了，但刻意没启用。** `versions.tf` 里的 R2 后端块
+已经写好、`backend.hcl.example` 与 `just migrate-state` 也备好了、workflow 里「写
+backend.hcl → init 带 -backend-config」两步已接上 —— 唯独 backend 块**仍注释着**，
+于是 workflow 第一步那道 fail-closed 检查仍然会拦住 CI 部署。这是对的：state 没迁进去
+之前，CI 跑起来只会更糟。整件事挂在 [ROADMAP.md](../ROADMAP.md) 开放项 16。
+
+⚠️ **别只做一半。** 那道检查只看「配置里有没有 backend 块」，**看不出 state 是否真的
+迁进去了** —— 只取消注释就让它过，CI 会拿到一个空 state，照样去创建已存在的 Worker。
+反过来只迁移不取消注释，terraform 继续读本地文件、R2 那份从此过期，两边都「看着正常」。
+
+启用时四步一起做：
+
+```sh
+# 1) R2 的 S3 凭据。两条路：
+#    a. Dashboard → R2 → Manage R2 API Tokens → Create API token，
+#       权限 Object Read & Write、范围只勾 terraform-backend 桶（**推荐，给 CI 用这个**）
+#    b. 从已有的 Cloudflare API token 推导（R2 的 S3 凭据本就是派生的）：
+#       AWS_ACCESS_KEY_ID = 那个 token 的 **id**
+#       AWS_SECRET_ACCESS_KEY = 该 token 值的 **SHA-256**
+#       ⚠️ 前提是那个 token 带 `Workers R2 Storage: Edit`；⚠️ 别把宽权限 token 派生出的
+#       凭据放进公开仓库的 CI secret —— 轮换任何一边会同时废掉另一边
+export AWS_ACCESS_KEY_ID=…
+export AWS_SECRET_ACCESS_KEY=…
+
+# 2) endpoint（含账号 id，不进这个公开仓库）
+cp backend.hcl.example backend.hcl && $EDITOR backend.hcl
+
+# 3) 取消 versions.tf 里 backend 块的注释
+
+# 4) 迁移。terraform 会问一次「要不要把现有 state 拷到新后端」——要。
+just migrate-state
+```
+
+⚠️ homelab 仓库的 R2 后端正是因为**本机 LibreSSL 握手失败**才一直注释着
+（见那边 `cloudflare/terraform/provider.tf` 的注释）。同一台机器上这一步可能就地失败；
+那就从 runner 迁，或者拿 rclone / `npx wrangler r2 object put` 把
+`terraform.tfstate` 直接推到 `terraform-backend/home-stack/cloudflare.tfstate`
+再 `just init`（先 `terraform state pull` 存一份备份）。
+
+迁完再配 4 个 secret（`gh secret set <名字> --repo meirongdev/home-stack`）：
+`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID`、
+`R2_SECRET_ACCESS_KEY`。之后部署就是「触发一次 workflow」，工作站不再参与。
+
+📌 迁移完成后**本地那份 `terraform.tfstate` 就不再是真相源**了 ——
+terraform 会把它留在原地（外加一份 `.backup`），两个文件都被 .gitignore 覆盖。
+别再拿它做判断，查现状用 `terraform state list`（那时读的是 R2）。
 
 ## 自定义域名与 DNS 归属冲突
 
@@ -222,11 +269,25 @@ Workers 的 Custom Domain 会**自己创建 DNS 记录并签证书**，而且
 
 | 方案 | 怎么配 | 代价 |
 |------|--------|------|
-| **A. 这个仓库拥有** | 设 `custom_domain` 与 `zone_name` 变量（会创建 `cloudflare_workers_custom_domain`）。homelab 那边**不要**声明这条记录 | 那个 zone 的 DNS 不再只有一个真相源。⚠️ 若 homelab 侧有 prune 逻辑，它会试图删掉这条「不在它代码里」的记录 |
+| **A. 这个仓库拥有** ← **2026-08-23 选了这个** | 设 `custom_domain` 与 `zone_name` 变量（会创建 `cloudflare_workers_custom_domain`）。homelab 那边**不要**声明这条记录 | 那个 zone 的 DNS 不再只有一个真相源 |
 | **B. homelab 拥有** | 这里留空 `custom_domain`；homelab 建一条代理开启的记录，再在这里换成 `cloudflare_workers_route`（按 zone + pattern 绑，不碰 DNS） | 域名与 Worker 路由分别在两个仓库声明，改名要同时改两处 |
 
-⚠️ **两边都要留注释。** 这是又一条跨仓库依赖，和 [ROADMAP.md](../ROADMAP.md)
+**为什么是 A**（原先这张表担心「homelab 侧的 prune 逻辑会删掉这条记录」，2026-08-23 实测
+那个担心不成立，于是 A 的代价只剩「真相源不唯一」这一条）：
+
+- homelab 的两个 external-dns 实例都是 `policy: upsert-only` —— 只增改、**从不删**；
+- 它的 `cloudflare_dns_record.subdomains` 是一个**空 map** 的 `for_each`；
+- terraform 本身不会 prune 不在自己 state 里的记录。
+
+也就是说自动化不会碰这条记录，**唯一的风险是人**。
+
+⚠️ **两边都要留注释,这不是形式。** 这是又一条跨仓库依赖，和 [ROADMAP.md](../ROADMAP.md)
 开放项 5（Tailscale ACL）同一类：日后有人在另一个仓库里「清理」它，
 症状是站点域名突然不解析，而这个仓库里没有任何线索指向原因。
+✅ homelab 侧的注释已经落在三处（2026-08-23）：`cloudflare/terraform/main.tf` 里
+`cloudflare_dns_record.external_origins` 上方那段、`docs/reference/networking-ingress.md`
+的「不走这条链的 meirong.dev 主机名」表、以及服务清单 `docs/reference/services.md`。
 
-定下来之前**先用 `workers.dev`** —— 它不碰任何 DNS，「公网可访问」照样兑现。
+📌 记录长相是 `AAAA stack.meirong.dev → 100::`（橙云）。`100::` 是 IPv6 丢弃地址段，
+Workers 自定义域名建的就是这种占位记录 —— 真实流量在边缘被截走。**别当成配错去"修"。**
+另外这个主机名走橙云,于是吃 `meirong.dev` 的 zone 级 WAF 与限流。

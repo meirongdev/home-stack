@@ -1,9 +1,9 @@
 # Architecture — 一份 Axum Router，两个编译目标
 
-> 日期: 2026-08-22
+> 日期: 2026-08-23
 > 状态: 🟡 部分已完成 —— 段 1 全部、段 2 的代码全部（`crates/edge`、`wrangler.jsonc`、
-> Pagefind、`dump-html` / `render-diff`、CI 双门禁）已就位；**尚未部署**，
-> HTMX 与 calculator / advisor 交互仍待实施
+> Pagefind、`dump-html` / `render-diff`、CI 双门禁）已就位，且 **2026-08-23 已部署到
+> `stack.meirong.dev`**；HTMX 与 calculator / advisor 交互仍待实施
 
 单页总览。选型理由不在这里，在 [decisions/](decisions/README.md)；
 具体建模与数据抓取规格在 [plans/](plans/README.md)。
@@ -157,8 +157,10 @@ provider ≥ 5.11 才有 `assets.directory`；不含 provider 与 backend），
 - ⬜ `"run_worker_first": [...]` —— 先没写。它防的是「同名静态资源遮蔽动态路由」，
   而那几条路由目前不存在，资源目录里也只有 `/pagefind/*`，遮蔽不了任何东西。
   等 calculator / advisor 落地时再加（配置文件里留了注释）。
-- ⬜ 自定义域名 —— 域名未定（[ROADMAP.md](ROADMAP.md) 开放项 1）。不配就部署到
-  `<name>.<subdomain>.workers.dev`，足够验证「公网可访问」。
+- ✅ 自定义域名 `stack.meirong.dev`（2026-08-23）—— 走 Terraform 的 `custom_domain`
+  变量（`cloudflare_workers_custom_domain`），**不在 `wrangler.jsonc` 里配 `routes`**：
+  两处都写就是双主。`workers.dev` 子域仍开着做冒烟测试。
+  归属取舍见 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md#自定义域名与-dns-归属冲突)。
 
 ## 技术栈
 

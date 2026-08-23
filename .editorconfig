@@ -15,6 +15,17 @@ indent_size = 4
 indent_size = 4
 max_line_length = 100
 
+# Terraform / HCL：`terraform fmt` 的规范缩进是 **2** 空格，而 [*] 的基线是 4 ——
+# 不写这一段，编辑器就会和 `terraform fmt -check -recursive` 对着干，而那是 ci.yml
+# 与 pre-push 的门禁。实测：9 份 .tf 加 .terraform.lock.hcl 全是 2 空格。
+[*.{tf,hcl}]
+indent_size = 2
+
+# git 钩子是 shell，实测 2 空格。⚠️ 这个 pattern 只匹配 .githooks 直下的文件 ——
+# .githooks/checks/*.py 是 4 空格（PEP 8），继续走 [*] 的基线，别把它们卷进来。
+[.githooks/{pre-commit,pre-push,install}]
+indent_size = 2
+
 # 内容条目（content/*.toml）、Cargo.toml、wrangler.jsonc、GitHub Actions、Markdown
 [*.{toml,json,jsonc,yml,yaml,js,md}]
 indent_size = 2

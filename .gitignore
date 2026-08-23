@@ -44,6 +44,19 @@ backend.hcl
 .env.*
 !.env.example
 
+# ☠️ 证书 / 私钥。hygiene.py 的 DANGEROUS 名单会按文件名拦下它们，而它给的提示语写着
+# 「已在 .gitignore 里」—— 在补上这几行之前那句是假的。钩子是背手，忽略才是第一道。
+*.pem
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+# 模板带 .example 后缀就不会被上面几行匹配到（`*.pem` 不匹配 `x.pem.example`），
+# hygiene.py 的 ALLOW_NAME 也放行它 —— 两边一致，别只改一边。
+
 # ── Node ──────────────────────────────────────────────────────────────
 # 只用 npx 跑 pagefind / wrangler，但 npx 会落盘
 /node_modules/

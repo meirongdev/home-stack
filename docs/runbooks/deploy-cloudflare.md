@@ -3,8 +3,8 @@
 > 日期: 2026-08-23
 > 状态: 🟢 步骤 1–5 **已完成**（2026-08-23 首次 apply，站点已公网可访问：Worker + 版本 +
 > deployment 三个资源建成）；自定义域名那一个资源当次失败、修复已合入，**待实施**（见第 5 步）。
-> 第 7 步：远端 state ✅ **已迁入 R2**（2026-08-23）；CI 部署本身**仍未验证** ——
-> `deploy.yml` 在干净 runner 上从未跑过
+> 第 7 步 ✅ **全部完成**（2026-08-23）：state 已迁入 R2，`deploy.yml` 在干净 runner 上
+> 首跑通过（run 32645852445），站点实测正常
 
 部署走 **Terraform**（`cloudflare/terraform/`），不走 `wrangler deploy`。
 本篇是「home-stack 自己部署自己」；**别的项目要部署这个站点**看
@@ -110,7 +110,12 @@ just plan
   Deployment），配了 `custom_domain` 则是 4 个
 - 站点已在线、改了内容或代码后重新部署：**`2 to add, 2 to destroy`** —— 新版本 +
   deployment 重建，Worker 与 custom domain 不动、证书不重签（2026-08-23 实测）
-- 什么都没改：**`No changes`**。⚠️ 在 CI 上这一条就是「state 真接上了」的判据
+- 什么都没改、也没重 build：**`No changes`**
+
+☠️ **CI 上永远不会是 `No changes`**，别拿它当判据。干净 runner 编出的 wasm 与 Pagefind
+索引跟工作站那批不是同一份字节 —— 2026-08-23 实测 `asset_manifest_sha256`
+`3cc06409…` → `7e8cfd64…`，连同两个 module 条目一起 forces replacement。
+CI 上「state 真接上了」的判据是另一条，见第 7 步。
 
 读一遍再往下。特别看：`modules` 是不是两个（`index.js` + `index_bg.wasm`）、
 `assets.directory` 指的是不是 `public`。
@@ -262,13 +267,23 @@ python3 -c 'import json;d=json.load(open("terraform.tfstate"));print(d["serial"]
 | 本地 `terraform.tfstate` | **被清空成 0 字节** —— 不是「留在原地」。看到它别以为 state 丢了 |
 | `terraform.tfstate.backup` | 迁移前那份本地内容落在这里（serial 12） |
 | 查现状 | `terraform state list`，读的是 R2 |
+| R2 里那份 state | `serial 1` + **一条全新的 lineage** |
+
+☠️ **别拿 serial / lineage 去判断迁移成不成功。** 直觉是「拷过去应该原样保留」，实际
+terraform 往一个**空**的目标后端持久化时会重新签发两者：serial 从 0 起步（于是是 1），
+lineage 另起一条。2026-08-23 实测：本地是 `serial 12 / 081799fc`，迁完 R2 里是
+`serial 1 / 0974a83f` —— 而 4 个资源地址一个不少。**看资源，不看这两个数**：
+
+```sh
+terraform state list   # 要 4 行：worker / worker_version / workers_custom_domain[0] / workers_deployment
+```
 
 📌 那条 LibreSSL 的担心不成立：homelab 把 R2 后端注释掉时归因于「本机握手失败」，
 但 terraform 是静态链接的 Go、自带 TLS 栈 —— 同一台机器上迁移一次通过。
 真在本地迁不动了再走绕法（从 runner 迁，或用 rclone / `npx wrangler r2 object put`
 把 `terraform.tfstate` 直接推到那个 key，再 `just init`）。
 
-### ⏸ 还剩：在 CI 上真跑一次
+### ✅ CI 部署：2026-08-23 首跑通过
 
 四个 secret（`gh secret set <名字> --repo meirongdev/home-stack` 交互式收值，
 不进 shell history）：`CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID`、
@@ -277,15 +292,39 @@ python3 -c 'import json;d=json.load(open("terraform.tfstate"));print(d["serial"]
 ☠️ 最后那枚必须是**新建的窄 token**（Workers Scripts: Edit + Account Settings: Read +
 zone Workers Routes: Edit），**不是** homelab 那枚能改全 zone DNS / 隧道 / WAF 的 ——
 本仓库是公开的。R2 那对同理，只给 `terraform-backend` 一个桶。
+✅ 实测这三条权限**够了**：plan 能 refresh 四个资源、apply 能建版本与 deployment。
 
-⚠️ **验收不是「workflow 绿了」。** 第一步那道检查只 grep「配置里有没有 backend 块」，
-看不出 state 是否真接上；空 state 上重建也会一路绿到 apply 才炸。要看的是
-`terraform plan` 那步的输出是 **`No changes`**：
+首跑：[run 32645852445](https://github.com/meirongdev/home-stack/actions/runs/32645852445)，
+3 分 37 秒，`Apply complete! Resources: 2 added, 0 changed, 2 destroyed`。
+
+☠️ **验收不是「workflow 绿了」。** 第一步那道 fail-closed 检查只 grep「配置里有没有
+backend 块」，看不出 state 是否真接上 —— 空 state 上重建也会一路绿到 apply 才炸。
+判据是 `terraform plan` 那步**碰了哪些资源**：
+
+| 看什么 | 接上了的样子（2026-08-23 实测） | 空 state 的样子 |
+|---|---|---|
+| `cloudflare_worker.this` | 只 `Refreshing state... [id=5db1b949…]`，不在变更里 | `will be created` |
+| `workers_custom_domain.this[0]` | 只 `Refreshing state... [id=558892dd…]` | `will be created`（然后撞「已存在」）|
+| 汇总 | `2 to add / 2 to destroy` | `4 to add` ← **看到这个立刻停** |
+
+📌 而且日志顺手给出了一条更硬的证据：apply 销毁的旧版本 id 是
+`56bbb3c1-1dcc-4078-a767-5f66a20245fb` —— 正是工作站那次部署留下的版本。
+说明 R2 里那份 state 不只是「有四个资源」，内容也是**最新**的那一份。
 
 ```sh
-gh run watch --repo meirongdev/home-stack
-gh run view --log --repo meirongdev/home-stack | grep -A3 'terraform plan'
+gh run watch <run-id> --repo meirongdev/home-stack --exit-status
+gh run view <run-id> --repo meirongdev/home-stack --log | grep -E 'Refreshing state|must be replaced|Apply complete'
 ```
+
+⚠️ **每次 apply 都有一段「Worker 没有任何 deployment」的窗口。** 实测顺序是
+**先销毁 deployment（0s）→ 建新版本（5s）→ 建新 deployment（2s）**，窗口 ≈ **7 秒**
+（`create_before_destroy` 只加在 version 上，deployment 没有）。那正是首次部署撞
+`400 / 100124 Worker has no deployments` 的同一状态。⏸ **未决**：要不要给 deployment
+也加 `create_before_destroy` —— 同一个 Worker 能不能短暂存在两个 deployment 没验过。
+
+✅ 首跑后站点实测（CI apply 完约 2 分钟）：`/`、`/tools/prometheus`、
+`/domains/observability`、`/pagefind/pagefind-ui.js` 全 200，随机 miss 路径 404，
+首页标题与 97 条计数都在。⚠️ apply 完**立刻** curl 会拿到假阴性 —— 版本传播要十几秒。
 
 ## 自定义域名与 DNS 归属冲突
 

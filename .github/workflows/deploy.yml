@@ -1,20 +1,21 @@
 # 部署到 Cloudflare Workers —— 走 Terraform，不走 wrangler。
 #
-# ⚠️ **状态：这条 workflow 本身仍未跑过。** 部署本体已经验证：2026-08-23 在工作站
-# `terraform apply` 成功，站点上线（见 docs/runbooks/deploy-cloudflare.md 第 5 步）。
-# 但「在干净 runner 上跑完整条链」是另一件事，所以它**只能手动触发**：
-# 一个没跑过的部署流程自动跑在 main 上，就是那种「绿着的瞎子」。
+# ✅ **状态：2026-08-23 首跑通过**（run 32645852445，3m37s，2 added / 2 destroyed，
+# 站点实测正常）。仍**只能手动触发** —— 内容改动走 main 自动部署是另一个决定，
+# 而这条链现在只被跑过一次，样本量是 1。
 #
 # ☠️ **本 workflow 要求远端 state 后端。** Terraform 的 state 是「线上现在是什么」
 # 的唯一记录；CI 每次都是干净 runner，用本地 state 等于每次都从空开始 ——
 # 它会试图创建已经存在的 Worker，然后报错。下面第一步就是 fail-closed 地检查这件事。
 #
 # ✅ **2026-08-23：state 已迁入 R2**（`terraform-backend/home-stack/cloudflare.tfstate`），
-# 于是第一步那道检查现在会放行 —— 但**这条 workflow 本身仍未跑过**（见上一段）。
+# 第一步那道检查因此放行。
 #
 # ⚠️ 那道检查有**盲区**，放行不等于「state 真接上了」：它只 grep「配置里有没有 backend
-# 块」。所以判断这条流水线是否真成功，看的不是绿灯，而是 `terraform plan` 那步的输出
-# 是不是 `No changes` —— 在空 state 上准备重建已存在的资源，也会一路绿到 apply 才炸。
+# 块」。判断这条流水线是否真成功，看的不是绿灯，也**不是 `No changes`**（干净 runner
+# 编出的字节和工作站不同，plan 永远是 `2 to add / 2 to destroy`），而是
+# **`cloudflare_worker` 与 `workers_custom_domain` 只被 Refreshing、不在变更里**。
+# 出现 `4 to add` 就是在空 state 上重建 —— 详见 runbooks/deploy-cloudflare.md 第 7 步。
 # 需要的 secret：CLOUDFLARE_API_TOKEN、CLOUDFLARE_ACCOUNT_ID、
 # R2_ACCESS_KEY_ID、R2_SECRET_ACCESS_KEY（后两个是 R2 API token 的 S3 凭据对）。
 name: deploy

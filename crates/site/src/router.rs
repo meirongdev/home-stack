@@ -6,6 +6,7 @@
 use crate::model::Catalog;
 use crate::templates;
 use axum::extract::{Path, State};
+use axum::http::StatusCode;
 use axum::response::Html;
 use axum::routing::get;
 use axum::Router;
@@ -93,6 +94,17 @@ fn html(markup: maud::Markup) -> Html<String> {
     Html(markup.into_string())
 }
 
+/// 404 响应 —— 页面**和**真正的 404 状态码。
+///
+/// ☠️ 2026-08-23 之前这里只返回页面，状态码是 200（soft 404）。上线当天实测发现：
+/// 任意不存在的路径都返回 200，等于告诉爬虫「无限多个 URL 都是正常页面」。
+/// 页面对、状态码错是最难自查的一类缺陷 —— 人眼看不出，只有 `-w '%{http_code}'` 看得出。
+/// `xtask dump-html` 不受影响：它只取响应体（`dist/404.html`），
+/// 纯静态托管形态下的状态码由托管方给。
+fn not_found_response() -> (StatusCode, Html<String>) {
+    (StatusCode::NOT_FOUND, html(templates::not_found()))
+}
+
 async fn home(State(catalog): State<&'static Catalog>) -> Html<String> {
     html(templates::home(catalog))
 }
@@ -100,49 +112,49 @@ async fn home(State(catalog): State<&'static Catalog>) -> Html<String> {
 async fn domain_page(
     State(catalog): State<&'static Catalog>,
     Path(domain): Path<String>,
-) -> Html<String> {
+) -> (StatusCode, Html<String>) {
     let id = crate::model::DomainId::new(domain);
     match templates::domain_page(catalog, &id) {
-        Some(m) => html(m),
-        None => html(templates::not_found()),
+        Some(m) => (StatusCode::OK, html(m)),
+        None => not_found_response(),
     }
 }
 
 async fn category_page(
     State(catalog): State<&'static Catalog>,
     Path(category): Path<String>,
-) -> Html<String> {
+) -> (StatusCode, Html<String>) {
     let id = crate::model::CategoryId::new(category);
     match templates::category_page(catalog, &id) {
-        Some(m) => html(m),
-        None => html(templates::not_found()),
+        Some(m) => (StatusCode::OK, html(m)),
+        None => not_found_response(),
     }
 }
 
 async fn vendor_page(
     State(catalog): State<&'static Catalog>,
     Path(vendor): Path<String>,
-) -> Html<String> {
+) -> (StatusCode, Html<String>) {
     let id = crate::model::VendorId::new(vendor);
     match templates::vendor_page(catalog, &id) {
-        Some(m) => html(m),
-        None => html(templates::not_found()),
+        Some(m) => (StatusCode::OK, html(m)),
+        None => not_found_response(),
     }
 }
 
 async fn tool_page(
     State(catalog): State<&'static Catalog>,
     Path(slug): Path<String>,
-) -> Html<String> {
+) -> (StatusCode, Html<String>) {
     let id = crate::model::Slug::new(slug);
     match templates::tool_page(catalog, &id) {
-        Some(m) => html(m),
-        None => html(templates::not_found()),
+        Some(m) => (StatusCode::OK, html(m)),
+        None => not_found_response(),
     }
 }
 
-async fn not_found() -> Html<String> {
-    html(templates::not_found())
+async fn not_found() -> (StatusCode, Html<String>) {
+    not_found_response()
 }
 
 #[cfg(test)]
@@ -172,9 +184,27 @@ mod tests {
         let catalog = crate::content::catalog().expect("内嵌内容应当校验通过");
         let catalog: &'static Catalog = Box::leak(Box::new(catalog));
         let (status, body) = render_path(catalog, "/nope/nope");
-        // fallback 渲染 404 页面，HTTP 状态码仍是 200（既有行为）——
-        // 测试把它钉住，改动时必须是有意的。
-        assert_eq!(status, StatusCode::OK);
+        // ☠️ 状态码必须是 404，不是 200。2026-08-23 前是 200（soft 404），
+        // 线上实测才发现 —— 页面对、状态码错，人眼看不出来。
+        assert_eq!(status, StatusCode::NOT_FOUND);
         assert!(body.contains("没有这个页面"));
+    }
+
+    /// 四条带参数的路由，参数指向不存在的实体时也必须是 404 —— 它们不走 fallback，
+    /// 各自 `match` 到 `None` 分支，是另一条独立的代码路径（曾经一起是 200）。
+    #[test]
+    fn missing_entity_paths_return_404() {
+        let catalog = crate::content::catalog().expect("内嵌内容应当校验通过");
+        let catalog: &'static Catalog = Box::leak(Box::new(catalog));
+        for path in [
+            "/domains/nope",
+            "/categories/nope",
+            "/replaces/nope",
+            "/tools/nope",
+        ] {
+            let (status, body) = render_path(catalog, path);
+            assert_eq!(status, StatusCode::NOT_FOUND, "{path} 应当是 404");
+            assert!(body.contains("没有这个页面"), "{path} 应当渲染 404 页");
+        }
     }
 }

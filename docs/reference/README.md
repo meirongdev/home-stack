@@ -1,6 +1,6 @@
 # Reference
 
-> 日期: 2026-08-22
+> 日期: 2026-08-23
 
 **当前生效的架构事实**。和 [decisions/](../decisions/README.md)（当时为什么这么选）与
 [plans/](../plans/README.md)（当时打算怎么做，写完即冻结）的分工是：
@@ -9,6 +9,7 @@
 | 文档 | 内容 |
 |------|------|
 | [content-model.md](content-model.md) | 内容模型唯一真相源：域 / 分类 / vendor / 集群 / 条目的字段与不变量、五类校验、内容如何进到两个编译目标里 |
+| [cross-repo-boundary.md](cross-repo-boundary.md) | 与基础设施仓库的分工：本仓库拥有 Worker + 那一条 DNS 记录 + 自己的 state 前缀；不许碰 zone 设置/WAF/隧道/桶本体；受橙云 WAF 约束、可用性监控在对面、凭据各自最小化 |
 
 ## 什么该放这里
 

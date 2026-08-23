@@ -37,7 +37,8 @@
 | [reference/](reference/README.md) | 现在是什么样 | **随实现变化持续更新**的生效事实 | 当时的判断与论证 |
 | [runbooks/](runbooks/README.md) | 照着做怎么做 | 可重复执行的操作步骤 + 哪几步**验证过** | 为什么这么做（只链不述） |
 
-首份 reference 已就位：[reference/content-model.md](reference/content-model.md)
+已有两份 reference：[reference/content-model.md](reference/content-model.md)（内容模型）与
+[reference/cross-repo-boundary.md](reference/cross-repo-boundary.md)（与基础设施仓库的分工）
 （内容模型 —— `plans/` 那份是冻结档案，不是现状）。
 
 ## 文档约定

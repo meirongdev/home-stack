@@ -297,6 +297,13 @@ zone Workers Routes: Edit），**不是** homelab 那枚能改全 zone DNS / 隧
 首跑：[run 32645852445](https://github.com/meirongdev/home-stack/actions/runs/32645852445)，
 3 分 37 秒，`Apply complete! Resources: 2 added, 0 changed, 2 destroyed`。
 
+📌 第二跑（同日，为验 action 升级）只用了 **53 秒** —— 差别是 `Swatinem/rust-cache` 热了。
+看到一分钟内跑完别怀疑「是不是跳过了什么」。它顺便给出**远端 state 连续性**的证据：
+plan 那步 refresh 到的 `worker_version` id 正是**上一跑**建的那个（`a6859592…`），
+两次互不相干的 runner 接的是同一份 state —— 这正是迁到 R2 想买的东西。
+✅ 那一跑部署的是机器人的夜间数据提交（`ffb47a7`），页面上的 `fetched_at` 当场变成当天 ——
+「夜间刷新 → CI 部署 → 线上」这条链整条走通过一次。
+
 ☠️ **验收不是「workflow 绿了」。** 第一步那道 fail-closed 检查只 grep「配置里有没有
 backend 块」，看不出 state 是否真接上 —— 空 state 上重建也会一路绿到 apply 才炸。
 判据是 `terraform plan` 那步**碰了哪些资源**：

@@ -91,6 +91,17 @@ resource "cloudflare_workers_deployment" "this" {
     version_id = cloudflare_worker_version.this.id
     percentage = 100
   }]
+
+  # ☠️ 和 version 同一个理由，但这一条是**实测**逼出来的。只给 version 加
+  # create_before_destroy 时，apply 的真实顺序是「先销毁 deployment（0s）→ 建新版本
+  # （5s）→ 建新 deployment（2s）」——中间约 7 秒 Worker 处于「没有任何 deployment」的
+  # 状态，而那正是首次部署撞 `400 / 100124 Worker has no deployments` 的同一状态。
+  # 📌 销毁那步耗时 0s 说明 provider 的 Delete 根本不发 API 调用 —— Cloudflare 没有
+  # 「删除 deployment」这回事：deployment 是一份历史记录，新建即接管 100% 流量。
+  # 所以先建后毁不会撞上「同一个 Worker 不能有两个 deployment」。
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # 方案 A：Cloudflare 拥有 DNS。

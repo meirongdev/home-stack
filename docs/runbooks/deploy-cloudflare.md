@@ -77,10 +77,12 @@ Terraform 不编 Rust、不建 Pagefind 索引；而且它在 **plan 阶段就�
 - `public/` —— 资源层，Terraform 只上传这个。约 1.0 MB，全是 Pagefind 索引。
 - `dist/` —— 全站 HTML（185 页 + `404.html`），纯静态逃生舱用。
 
-📌 **`build-site` 不清目录。** 同一台机器反复 build，`public/pagefind/fragment` 会累积
-旧分片，而 `apply` 会把它们一起上传（实测两次构建 = 195 个文件 / 1.4 MB）。
-干净一次构建是 **114 个文件 / 1.0 MB / 97 个 fragment** —— 数字对不上就先
-`rm -rf public dist` 再 build。CI 每次都是新 runner，所以线上不受这条影响。
+📌 **两个目录每次都被重置**（`dist/`、`public/pagefind` 与 `dist/pagefind` 镜像）。
+在此之前 `public/pagefind` 是只写不清的，而 Pagefind 的分片文件名是内容哈希 ——
+改一条条目就是一批新名字、旧的留下，实测本地连着 build 两次就是 195 个文件而不是 114，
+且 `apply` 会把多出来的一起上传到资源层。⚠️ CI 每次是新 runner，所以那个坑只在工作站
+咬人、也因此更难发现；`build-site` 现在会打印**文件数与字节数**（干净一次是
+114 个文件 / 97 个 fragment），数字突然变大就是有东西没清掉。
 
 ☠️ **把 `dist/` 当资源目录是这套部署里最严重的一种配错。** Workers 是资源优先：
 全站 HTML 进了资源层，每个页面都被静态命中、Router 永远不被唤起 ——

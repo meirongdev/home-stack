@@ -695,10 +695,7 @@ fn dump_html() {
 
     // 先清掉旧产物：删了一条条目却留着它的 index.html，纯静态形态下那一页
     // 会永远挂在线上 —— 这正是「站点上有一页对不上任何条目」的来源。
-    if dist.exists() {
-        std::fs::remove_dir_all(&dist)
-            .unwrap_or_else(|e| panic!("清理 {} 失败: {e}", dist.display()));
-    }
+    reset_dir(&dist);
 
     let mut bytes_total = 0usize;
     for p in &paths {
@@ -782,6 +779,11 @@ fn build_site() {
     let dist = dist_dir();
     let out = public_dir().join("pagefind");
 
+    // ☠️ 和 dump_html 清 dist/ 是同一个理由，而这一个更要紧：`public/` 就是资源层，
+    // `terraform apply` 上传的正是它。**Pagefind 自己不清目录**，而它的分片文件名是
+    // 内容哈希 —— 改一条条目就是一批新名字，旧的不会被覆盖而是留下。
+    reset_dir(&out);
+
     // Pagefind 走 npx：不往仓库里塞 node 依赖，也不要求本机预装。
     // 索引是**构建产物**，不进 git（.gitignore 里有 dist/ 与 public/）。
     // 输入是 dist/（全站 HTML），输出落到 public/ —— 索引要被资源层伺服，HTML 不能。
@@ -798,14 +800,19 @@ fn build_site() {
         .status();
     match status {
         Ok(s) if s.success() => {
-            let n = std::fs::read_dir(&out).map(|d| d.count()).unwrap_or(0);
+            let (files, bytes) = dir_stats(&out);
             // 索引也复制进 dist/ —— 纯静态逃生舱同样需要搜索（97 条条目没搜索不能用），
             // 而 Pagefind 是纯客户端的，静态托管照样跑。
+            // 目标目录也重置：dump_html 刚清过 dist/，但不该依赖别处的实现细节。
             let mirror = dist.join("pagefind");
+            reset_dir(&mirror);
             copy_dir_all(&out, &mirror).unwrap_or_else(|e| {
                 panic!("复制索引到 {} 失败: {e}", mirror.display());
             });
-            println!("✓ build-site：Pagefind 索引就位（{n} 项）");
+            println!(
+                "✓ build-site：Pagefind 索引就位（{files} 个文件 / {} KiB）",
+                bytes / 1024
+            );
             println!("  资源层 → {}（wrangler 上传这个）", out.display());
             println!(
                 "  逃生舱 → {}（纯静态托管用，含同一份索引）",
@@ -827,6 +834,47 @@ fn build_site() {
     }
 }
 
+/// 把目录**重置成空的** —— 不是「确保它存在」。
+///
+/// ☠️ 构建产物目录必须每次从零开始。Pagefind 的分片文件名是内容哈希：改一条条目就是
+/// 一批新名字，旧的不会被覆盖而是**留下**。实测本地连着 build 两次 = 195 个文件 /
+/// 1.4 MB，而干净一次是 114 / 1.0 MB —— 且 `terraform apply` 会把多出来的一起上传。
+/// ⚠️ CI 每次是新 runner，所以这个坑只在工作站咬人，也正因如此更难发现。
+fn reset_dir(dir: &Path) {
+    if dir.exists() {
+        std::fs::remove_dir_all(dir).unwrap_or_else(|e| panic!("清理 {} 失败: {e}", dir.display()));
+    }
+    std::fs::create_dir_all(dir).unwrap_or_else(|e| panic!("建 {} 失败: {e}", dir.display()));
+}
+
+/// 递归数出文件数与总字节数。
+///
+/// ⚠️ 原先这里是 `read_dir(out).count()` —— 只数**顶层**，而 Pagefind 的分片都在
+/// `fragment/` 子目录里，于是那个数字恒定是 15，累积多少都看不出来。
+/// 一个永远不变的计数器比没有计数器更糟。
+fn dir_stats(dir: &Path) -> (usize, u64) {
+    let mut files = 0usize;
+    let mut bytes = 0u64;
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return (0, 0);
+    };
+    for entry in entries.flatten() {
+        match entry.file_type() {
+            Ok(ft) if ft.is_dir() => {
+                let (f, b) = dir_stats(&entry.path());
+                files += f;
+                bytes += b;
+            }
+            Ok(_) => {
+                files += 1;
+                bytes += entry.metadata().map(|m| m.len()).unwrap_or(0);
+            }
+            Err(_) => {}
+        }
+    }
+    (files, bytes)
+}
+
 /// 递归复制目录。只服务于「索引同时进 public/ 与 dist/」这一件事，
 /// 不值得为它引一个依赖。
 fn copy_dir_all(from: &Path, to: &Path) -> std::io::Result<()> {
@@ -841,4 +889,53 @@ fn copy_dir_all(from: &Path, to: &Path) -> std::io::Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn scratch(name: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("xtask-{name}-{}", std::process::id()))
+    }
+
+    /// `reset_dir` 必须**清空**目录，不能只是「确保存在」。
+    /// 回归的是一个真实事故：`public/pagefind` 没被清，Pagefind 的内容哈希分片逐次
+    /// 累积，而 apply 把旧分片一起上传到资源层。
+    #[test]
+    fn reset_dir_removes_stale_files() {
+        let dir = scratch("reset");
+        let stale = dir.join("fragment/stale.pf_fragment");
+        std::fs::create_dir_all(stale.parent().expect("有父目录")).expect("建目录");
+        std::fs::write(&stale, b"old").expect("写旧文件");
+
+        reset_dir(&dir);
+
+        assert!(dir.is_dir(), "目录本身要留着");
+        assert!(!stale.exists(), "旧分片必须被清掉");
+        assert_eq!(
+            std::fs::read_dir(&dir).expect("能读").count(),
+            0,
+            "重置后必须是空的"
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// `dir_stats` 必须**递归**。只数顶层的话，Pagefind 的分片全在子目录里，
+    /// 那个数字永远不变 —— 正是它让上面那个累积在本地看不出来。
+    #[test]
+    fn dir_stats_counts_recursively() {
+        let dir = scratch("stats");
+        reset_dir(&dir);
+        std::fs::create_dir_all(dir.join("fragment")).expect("建子目录");
+        std::fs::write(dir.join("top.js"), b"12345").expect("写顶层文件");
+        std::fs::write(dir.join("fragment/a"), b"123").expect("写子目录文件");
+        std::fs::write(dir.join("fragment/b"), b"1").expect("写子目录文件");
+
+        let (files, bytes) = dir_stats(&dir);
+
+        assert_eq!(files, 3, "子目录里的文件也要数进去");
+        assert_eq!(bytes, 9);
+        std::fs::remove_dir_all(&dir).ok();
+    }
 }

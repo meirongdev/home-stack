@@ -20,8 +20,8 @@ homelab 自托管技术选型目录，按**主题域**索引，用 Rust 实现�
 |---|---|
 | 设计 | ✅ 已定：6 条 ADR + 2 份规格 + 2 份 reference（内容模型、[跨仓库边界](docs/reference/cross-repo-boundary.md)）|
 | 实现 | ✅ 段 1 全部、段 2 的**代码**全部（wasm32 入口、构建期内容内嵌、静态导出、Pagefind 搜索、CI 九道门禁）、段 4 的 GitHub 侧（含夜间刷新）。内容覆盖 10 个域 / 97 条 |
-| 部署 | ✅ **已上线**（2026-08-23）：<https://stack.meirong.dev> —— 4 个 Terraform 资源，实测包体 346 KiB gz（Free 上限 11%）。部署逻辑**可被别的项目复用**：`cloudflare/terraform/modules/worker` 是无 provider 的子模块，本仓库只是它的第一个消费者。⏸ 但 state 还是工作站上的本地文件（[ROADMAP](docs/ROADMAP.md) 开放项 16）——CI 部署得先把它迁到 R2 |
-| 下一步 | 段 3（FieldNote）；以及把 state 迁到 R2、部署交给 CI |
+| 部署 | ✅ **已上线**（2026-08-23）：<https://stack.meirong.dev> —— 4 个 Terraform 资源，实测包体 346 KiB gz（Free 上限 11%）。部署逻辑**可被别的项目复用**：`cloudflare/terraform/modules/worker` 是无 provider 的子模块，本仓库只是它的第一个消费者。✅ state 已在 R2（2026-08-23 迁入，`terraform-backend/home-stack/`），工作站不再是唯一能部署的机器。⏸ 但 `deploy.yml` 在干净 runner 上**还没跑过**（[ROADMAP](docs/ROADMAP.md) 开放项 16）|
+| 下一步 | 段 3（FieldNote）；以及把 `deploy.yml` 在 CI 上真跑通一次 |
 
 ## 目录的两根轴
 

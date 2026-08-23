@@ -9,14 +9,12 @@
 # 的唯一记录；CI 每次都是干净 runner，用本地 state 等于每次都从空开始 ——
 # 它会试图创建已经存在的 Worker，然后报错。下面第一步就是 fail-closed 地检查这件事。
 #
-# ⏸ **2026-08-23 状态：这条流水线仍被第一步挡着，这是刻意的。** `versions.tf` 里的
-# R2 后端块已经写好但**仍注释着**，所以那道 fail-closed 检查会失败 —— 在 state 真正
-# 迁进 R2 之前，CI 部署就该被挡住。下面这些步骤（写 backend.hcl → init 带
-# -backend-config）都已经接好，等的只是那一次迁移。整件事是 ROADMAP 开放项 16。
+# ✅ **2026-08-23：state 已迁入 R2**（`terraform-backend/home-stack/cloudflare.tfstate`），
+# 于是第一步那道检查现在会放行 —— 但**这条 workflow 本身仍未跑过**（见上一段）。
 #
-# ⚠️ 而且要知道那道检查的**盲区**：它只看「配置里有没有 backend 块」，
-# **看不出 state 是否真的迁进去了**。所以别为了让它过而只取消注释 ——
-# 那样 CI 会拿到一个空 state，照样去创建已存在的 Worker（症状与「没配后端」一样）。
+# ⚠️ 那道检查有**盲区**，放行不等于「state 真接上了」：它只 grep「配置里有没有 backend
+# 块」。所以判断这条流水线是否真成功，看的不是绿灯，而是 `terraform plan` 那步的输出
+# 是不是 `No changes` —— 在空 state 上准备重建已存在的资源，也会一路绿到 apply 才炸。
 # 需要的 secret：CLOUDFLARE_API_TOKEN、CLOUDFLARE_ACCOUNT_ID、
 # R2_ACCESS_KEY_ID、R2_SECRET_ACCESS_KEY（后两个是 R2 API token 的 S3 凭据对）。
 name: deploy

@@ -20,23 +20,27 @@ build:
     cd {{repo}} && cargo run -p xtask -- build-site
     cd {{repo}}/crates/edge && worker-build --release
 
-# state 目前是**本地文件**（versions.tf 里的 R2 后端块还注释着）。
+# state 在 **R2**（见 versions.tf 的 backend 块）。所以 init 必须带 endpoint —— 裸
+# `terraform init` 会报缺 endpoint（endpoint 含账号 id，不进这个公开仓库）：
+#   cp backend.hcl.example backend.hcl && $EDITOR backend.hcl   # 一次性
+#   export AWS_ACCESS_KEY_ID=… AWS_SECRET_ACCESS_KEY=…          # R2 API token 的那对
+# 连上 R2 里的那份 state（要 backend.hcl + R2 凭据）
 init:
-    terraform init
+    terraform init -backend-config=backend.hcl
 
-# 把工作站上的本地 state 迁到 R2。**一次性**，迁完就别再跑。⏸ 现在还跑不了：
-# 前置是先取消 versions.tf 里 backend 块的注释、备好 backend.hcl 与 R2 凭据
-#   export AWS_ACCESS_KEY_ID=… AWS_SECRET_ACCESS_KEY=…   # R2 API token 的那对
-# 完整顺序见 ../../docs/runbooks/deploy-cloudflare.md 第 7 步（ROADMAP 开放项 16）。
-# ⚠️ terraform 会问一次 yes/no（要不要把现有 state 拷到新后端）——**要**。
+# ✅ **一次性，2026-08-23 已经跑过了 —— 别再跑。** 留着只为记录当时那条命令。
+# ☠️ 真正的危险不是重跑本身（backend 没变时 terraform 什么都不做），而是**在另一台
+# 机器上、本地又有一份过期 `terraform.tfstate` 时**跑它 —— 那等于把旧 state 推上去。
+# 迁移过程见 ../../docs/runbooks/deploy-cloudflare.md 第 7 步。
+# ⛔ 一次性，2026-08-23 已跑过 —— 别再跑（理由见上方注释）
 migrate-state:
     terraform init -migrate-state -backend-config=backend.hcl
 
-# 看将要发生什么。凭据从环境变量来：CLOUDFLARE_API_TOKEN
+# 看将要发生什么。凭据从环境变量来：CLOUDFLARE_API_TOKEN + R2 那对 AWS_*
 plan:
     terraform plan
 
-# 部署。⚠️ 先读 plan 的输出再确认，别盲 apply
+# 部署。⚠️ 先读 plan 的输出再确认，别盲 apply。凭据同 plan
 apply:
     terraform apply
 

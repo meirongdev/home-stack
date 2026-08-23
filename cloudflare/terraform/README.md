@@ -44,7 +44,13 @@ just apply
 
 - token 只从环境变量 `CLOUDFLARE_API_TOKEN` 读，**不作为 terraform 变量** ——
   变量会进 state，而 state 要被备份和传阅。
-- 首次部署用本地 state 最省事。**CI 部署必须换成远端后端**：
-  干净 runner + 本地 state = 每次从空开始，会去创建已存在的 Worker 然后报错。
-  `versions.tf` 里有注释好的 R2（S3 兼容）配置块。
+- **state 在 R2**（S3 兼容后端，key `home-stack/cloudflare.tfstate`，2026-08-23 迁入）。
+  于是任何 terraform 命令都要两样东西：R2 的 S3 凭据（`AWS_ACCESS_KEY_ID` /
+  `AWS_SECRET_ACCESS_KEY`）和 `-backend-config=backend.hcl`（endpoint 含账号 id，
+  不进这个公开仓库 —— 用 `just init`，它带上了）。
+  ☠️ 换成远端后端不是洁癖而是 CI 的硬前置：干净 runner + 本地 state = 每次从空开始，
+  会去创建已存在的 Worker 然后报错。
+- R2 凭据用**专用的窄 token**（Object Read & Write，范围只勾 `terraform-backend` 桶），
+  不用「从宽权限 Cloudflare token 派生」那条路 —— 轮换任何一边会同时废掉另一边，
+  而本仓库是公开的。见 [reference/cross-repo-boundary.md](../../docs/reference/cross-repo-boundary.md)。
 - `.terraform.lock.hcl` **要提交**：它是「CI 与本机解析出同一个 provider」的唯一保证。

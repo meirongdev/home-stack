@@ -3,7 +3,8 @@
 > 日期: 2026-08-23
 > 状态: 🟢 步骤 1–5 **已完成**（2026-08-23 首次 apply，站点已公网可访问：Worker + 版本 +
 > deployment 三个资源建成）；自定义域名那一个资源当次失败、修复已合入，**待实施**（见第 5 步）。
-> 第 7 步（CI 部署）仍未验证 —— 它要求远端 state 后端，而本次用的是工作站本地 state
+> 第 7 步：远端 state ✅ **已迁入 R2**（2026-08-23）；CI 部署本身**仍未验证** ——
+> `deploy.yml` 在干净 runner 上从未跑过
 
 部署走 **Terraform**（`cloudflare/terraform/`），不走 `wrangler deploy`。
 本篇是「home-stack 自己部署自己」；**别的项目要部署这个站点**看
@@ -99,12 +100,17 @@ just init
 just plan
 ```
 
-⏸ **state 现在是工作站上的本地文件** —— R2 后端块在 `versions.tf` 里备好了但仍注释着
-（开放项 16 / 本文第 7 步）。所以这一步不需要 R2 凭据，但也意味着**只有这台机器能部署**。
+⚠️ **state 在 R2**（2026-08-23 迁入），所以 `just init` 要带上 R2 的 S3 凭据与
+`backend.hcl` —— 见第 7 步。少任何一样都会在「缺 endpoint」或「凭据无效」处响亮失败，
+不会静默退回本地文件。
 
-✅ 已验证：provider 5.23.0 下 `terraform validate` 与 `terraform plan` 全绿，
-输出应当是 **`Plan: 3 to add, 0 to change, 0 to destroy`**（Worker、Version、Deployment）。
-配了 `custom_domain` 则是 4 个。
+✅ 已验证：provider 5.23.0 下 `terraform validate` 与 `terraform plan` 全绿。
+⚠️ **plan 长什么样取决于是不是首次部署**：
+- 首次（空 state）：**`Plan: 3 to add, 0 to change, 0 to destroy`**（Worker、Version、
+  Deployment），配了 `custom_domain` 则是 4 个
+- 站点已在线、改了内容或代码后重新部署：**`2 to add, 2 to destroy`** —— 新版本 +
+  deployment 重建，Worker 与 custom domain 不动、证书不重签（2026-08-23 实测）
+- 什么都没改：**`No changes`**。⚠️ 在 CI 上这一条就是「state 真接上了」的判据
 
 读一遍再往下。特别看：`modules` 是不是两个（`index.js` + `index_bg.wasm`）、
 `assets.directory` 指的是不是 `public`。
@@ -206,34 +212,28 @@ module "home_stack" {
 
 [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) 已经写好整条链
 （门禁 → `build-site` → `worker-build` → 写 `backend.hcl` → `terraform plan` →
-`apply` 那份 plan 文件），**只能手动触发**：部署本体 2026-08-23 已在工作站验证过，
-但「在干净 runner 上跑完整条链」还没跑过。
+`apply` 那份 plan 文件），**只能手动触发**。
 
 ☠️ **CI 部署的硬前置是远端 state 后端。** Terraform 的 state 是「线上现在是什么」的
 唯一记录。CI 每次都是干净 runner，本地 state 等于每次从空开始 —— 它会试图创建已经
 存在的 Worker 然后报错。
 
-⏸ **当前状态（2026-08-23）：接线全好了，但刻意没启用。** `versions.tf` 里的 R2 后端块
-已经写好、`backend.hcl.example` 与 `just migrate-state` 也备好了、workflow 里「写
-backend.hcl → init 带 -backend-config」两步已接上 —— 唯独 backend 块**仍注释着**，
-于是 workflow 第一步那道 fail-closed 检查仍然会拦住 CI 部署。这是对的：state 没迁进去
-之前，CI 跑起来只会更糟。整件事挂在 [ROADMAP.md](../ROADMAP.md) 开放项 16。
+### ✅ 远端 state：2026-08-23 已迁入 R2
 
-⚠️ **别只做一半。** 那道检查只看「配置里有没有 backend 块」，**看不出 state 是否真的
-迁进去了** —— 只取消注释就让它过，CI 会拿到一个空 state，照样去创建已存在的 Worker。
-反过来只迁移不取消注释，terraform 继续读本地文件、R2 那份从此过期，两边都「看着正常」。
+key 是 `terraform-backend/home-stack/cloudflare.tfstate`。⚠️ **桶本体不归本仓库** ——
+只拥有这个 key 前缀，见 [reference/cross-repo-boundary.md](../reference/cross-repo-boundary.md)。
 
-启用时四步一起做：
+下面四步当时是**一起**做完的，别只做一半 —— 两种半成品的症状都很难查：
+只取消注释（不迁移）→ 本地 `plan`/`apply` 卡在「要 init 到 R2」，而 CI 那道检查会放行
+→ CI 拿到空 state，去创建已存在的 Worker；只迁移（不取消注释）→ terraform 继续读本地
+文件，R2 那份从此过期，而**两边都「看着正常」**。
 
 ```sh
-# 1) R2 的 S3 凭据。两条路：
-#    a. Dashboard → R2 → Manage R2 API Tokens → Create API token，
-#       权限 Object Read & Write、范围只勾 terraform-backend 桶（**推荐，给 CI 用这个**）
-#    b. 从已有的 Cloudflare API token 推导（R2 的 S3 凭据本就是派生的）：
-#       AWS_ACCESS_KEY_ID = 那个 token 的 **id**
-#       AWS_SECRET_ACCESS_KEY = 该 token 值的 **SHA-256**
-#       ⚠️ 前提是那个 token 带 `Workers R2 Storage: Edit`；⚠️ 别把宽权限 token 派生出的
-#       凭据放进公开仓库的 CI secret —— 轮换任何一边会同时废掉另一边
+# 1) R2 的 S3 凭据：Dashboard → R2 → Manage R2 API tokens → Create API token，
+#    权限 Object Read & Write、范围只勾 terraform-backend 桶。
+#    ⚠️ 别走「从已有 Cloudflare token 派生」那条（AK = token id、SK = token 值的 SHA-256）：
+#    它省的只是一次 Dashboard 往返 —— 而 CI 那枚窄 token 无论如何都得建，所以什么也没省，
+#    代价却是轮换任何一边会同时废掉另一边，而本仓库是公开的。
 export AWS_ACCESS_KEY_ID=…
 export AWS_SECRET_ACCESS_KEY=…
 
@@ -242,23 +242,50 @@ cp backend.hcl.example backend.hcl && $EDITOR backend.hcl
 
 # 3) 取消 versions.tf 里 backend 块的注释
 
-# 4) 迁移。terraform 会问一次「要不要把现有 state 拷到新后端」——要。
+# 4) 迁移。terraform 问一次「copy existing state to the new backend?」——要。
 just migrate-state
 ```
 
-⚠️ homelab 仓库的 R2 后端正是因为**本机 LibreSSL 握手失败**才一直注释着
-（见那边 `cloudflare/terraform/provider.tf` 的注释）。同一台机器上这一步可能就地失败；
-那就从 runner 迁，或者拿 rclone / `npx wrangler r2 object put` 把
-`terraform.tfstate` 直接推到 `terraform-backend/home-stack/cloudflare.tfstate`
-再 `just init`（先 `terraform state pull` 存一份备份）。
+⚠️ **迁移前先确认手上那份备份是最新的 —— 比 serial，别看文件名。** 2026-08-23 踩到过：
+留着的那份 `terraform.tfstate.pre-r2-backup` 是 **serial 7**，指向 404 修复**之前**的
+worker version，而线上真相是 **serial 12**。拿它还原会让 terraform 以为线上跑的是旧版本。
 
-迁完再配 4 个 secret（`gh secret set <名字> --repo meirongdev/home-stack`）：
-`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID`、
-`R2_SECRET_ACCESS_KEY`。之后部署就是「触发一次 workflow」，工作站不再参与。
+```sh
+python3 -c 'import json;d=json.load(open("terraform.tfstate"));print(d["serial"],len(d["resources"]))'
+```
 
-📌 迁移完成后**本地那份 `terraform.tfstate` 就不再是真相源**了 ——
-terraform 会把它留在原地（外加一份 `.backup`），两个文件都被 .gitignore 覆盖。
-别再拿它做判断，查现状用 `terraform state list`（那时读的是 R2）。
+迁完的**实测长相**（旧直觉在这里会骗人）：
+
+| 看哪里 | 实测 |
+|---|---|
+| `.terraform/terraform.tfstate` | `backend.type = s3`，bucket / key / `region = auto` 与四个 `skip_*` 都记着 |
+| 本地 `terraform.tfstate` | **被清空成 0 字节** —— 不是「留在原地」。看到它别以为 state 丢了 |
+| `terraform.tfstate.backup` | 迁移前那份本地内容落在这里（serial 12） |
+| 查现状 | `terraform state list`，读的是 R2 |
+
+📌 那条 LibreSSL 的担心不成立：homelab 把 R2 后端注释掉时归因于「本机握手失败」，
+但 terraform 是静态链接的 Go、自带 TLS 栈 —— 同一台机器上迁移一次通过。
+真在本地迁不动了再走绕法（从 runner 迁，或用 rclone / `npx wrangler r2 object put`
+把 `terraform.tfstate` 直接推到那个 key，再 `just init`）。
+
+### ⏸ 还剩：在 CI 上真跑一次
+
+四个 secret（`gh secret set <名字> --repo meirongdev/home-stack` 交互式收值，
+不进 shell history）：`CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID`、
+`R2_SECRET_ACCESS_KEY`、`CLOUDFLARE_API_TOKEN`。
+
+☠️ 最后那枚必须是**新建的窄 token**（Workers Scripts: Edit + Account Settings: Read +
+zone Workers Routes: Edit），**不是** homelab 那枚能改全 zone DNS / 隧道 / WAF 的 ——
+本仓库是公开的。R2 那对同理，只给 `terraform-backend` 一个桶。
+
+⚠️ **验收不是「workflow 绿了」。** 第一步那道检查只 grep「配置里有没有 backend 块」，
+看不出 state 是否真接上；空 state 上重建也会一路绿到 apply 才炸。要看的是
+`terraform plan` 那步的输出是 **`No changes`**：
+
+```sh
+gh run watch --repo meirongdev/home-stack
+gh run view --log --repo meirongdev/home-stack | grep -A3 'terraform plan'
+```
 
 ## 自定义域名与 DNS 归属冲突
 

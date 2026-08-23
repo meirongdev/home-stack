@@ -26,26 +26,29 @@ terraform {
   #
   # ⏸ **无锁**：R2 没有 DynamoDB。Terraform 1.10+ 的 `use_lockfile`（S3 原生条件写）
   # 理论上能用，但**没实测过** —— 单人单机的现状下并发写不是真问题，想开就自己先验。
-  # ⏸ **块已备好但刻意仍注释着** —— 见 docs/ROADMAP.md 开放项 16。
-  # ☠️ 取消注释**和**迁移 state 必须一起做，缺一不可：
-  #   - 只取消注释 → 本地 `plan`/`apply` 立刻要求 init 到 R2（凭据还没有 → 全卡死）
-  #   - 只迁移不取消注释 → terraform 继续读本地文件，R2 里那份从此过期，
-  #     而两边都"看着正常"，是最难发现的一种
-  # 正确顺序、凭据从哪来、以及本地迁移失败时的绕法：runbooks/deploy-cloudflare.md 第 7 步。
   #
-  # backend "s3" {
-  #   bucket = "terraform-backend"
-  #   key    = "home-stack/cloudflare.tfstate"
-  #   region = "auto"
+  # ✅ **已启用**（2026-08-23，state 已迁入 R2）。两条随之改变的事：
+  #   - 本地 `terraform.tfstate` **不再是真相源**：迁移把它**清空成 0 字节**，最后一份
+  #     本地内容落到 `terraform.tfstate.backup`（都 gitignored）。⚠️ 看到那个 0 字节的
+  #     文件别以为 state 丢了 —— 查现状用 `terraform state list`，读的是 R2。
+  #   - 任何 terraform 命令都要 R2 的 S3 凭据（`AWS_ACCESS_KEY_ID` /
+  #     `AWS_SECRET_ACCESS_KEY`）**和** `-backend-config=backend.hcl`。裸 `terraform init`
+  #     会报缺 endpoint —— 用 `just init`，它带上了。
+  # 迁移过程、凭据从哪来、失败时的绕法：runbooks/deploy-cloudflare.md 第 7 步。
   #
-  #   # ⚠️ R2 不是真 S3：这四个校验/签名步骤必须关，否则 init/plan 会在
-  #   # 「校验凭据」「解析 region」「算 checksum」这些 AWS 专属环节上失败。
-  #   skip_credentials_validation = true
-  #   skip_region_validation      = true
-  #   skip_requesting_account_id  = true
-  #   skip_s3_checksum            = true
-  #   use_path_style              = true
-  # }
+  backend "s3" {
+    bucket = "terraform-backend"
+    key    = "home-stack/cloudflare.tfstate"
+    region = "auto"
+
+    # ⚠️ R2 不是真 S3：这四个校验/签名步骤必须关，否则 init/plan 会在
+    # 「校验凭据」「解析 region」「算 checksum」这些 AWS 专属环节上失败。
+    skip_credentials_validation = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+    use_path_style              = true
+  }
 }
 
 # 凭据只从环境变量来：CLOUDFLARE_API_TOKEN。

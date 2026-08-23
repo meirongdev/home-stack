@@ -31,7 +31,7 @@ crates/
 
 cloudflare/terraform/       薄根模块：配 provider + backend，喂本仓库的构建产物路径
 └── modules/worker/         可复用子模块（3 个核心资源 + 可选 custom_domain 或 route，无 provider / 无 backend）
-.github/workflows/      ci（9 道门禁）/ nightly-fetch（段 4）/ deploy（手动触发，已跑通）
+.github/workflows/      ci（gates 9 道 + runtime-diff）/ nightly-fetch（段 4）/ deploy（手动触发，已跑通）
 ```
 
 `crates/edge` 的依赖挂在 `[target.'cfg(target_arch = "wasm32")'.dependencies]` 下 ——
@@ -113,15 +113,23 @@ content/*.toml
 不直接调模板 —— 绕过 Router 去渲染就是又一份渲染路径，必然漂移。
 `all_paths()` 与 `app()` 的一致性由单元测试钉住（清单里每条都必须返回 200）。
 
-### render-diff 覆盖什么、不覆盖什么
+### 「两个目标逐字节一致」由两道门禁分别兜住
 
-✅ 覆盖：`build.rs` 生成的内嵌表是否忠实于 `content/`（页面清单 + 每页字节）。
-这道门禁把「改了 TOML 但内嵌表没跟上」变成构建失败。
+[decisions/dual-target-axum.md](decisions/dual-target-axum.md) 承诺的判据现在**整条兑现**
+（2026-08-23），但它是两件事，别混成一件：
 
-❌ **不覆盖：wasm32 运行时是否渲染出同一份字节。** 那需要在 CI 里用 wrangler 真起一个
-Worker 再比，目前没有。[decisions/dual-target-axum.md](decisions/dual-target-axum.md)
-承诺的「两个目标逐字节比对」因此只兑现了一半 —— 见
-[ROADMAP.md](ROADMAP.md) 开放项 13。
+| 门禁 | 比的是什么 | 拦得住什么 | 跑在哪 |
+|------|-----------|-----------|--------|
+| `render-diff` | 两条**内容路径**：磁盘 vs `build.rs` 的构建期内嵌表 | 改了 TOML 但内嵌表没跟上 | pre-push + CI |
+| `runtime-diff` | **wasm32 运行时**的输出 vs 构建期渲染，185 页 + 404 | wasm 工具链（wasm-bindgen / wasm-opt / JS shim / worker 的 Request↔Response 转换）任一环改变输出 | 只在 CI |
+
+⚠️ `render-diff` 两侧都是 **native** 渲染 —— 它证明不了「编成 wasm 跑起来也一样」，
+那是 `runtime-diff` 的活：CI 里用 `wrangler dev` 起一个真 Worker（跑的是 worker-build
+出来的 wasm + JS shim），再用同一份 `all_paths()` 逐条请求比对。
+☠️ 它顺带比**状态码**，这不是附赠：2026-08-23 那次 soft 404（未命中返回 200、页面内容
+却完全正确）逐字节比对根本发现不了。
+📌 `runtime-diff` 不进 pre-push —— 它要 node + wrangler + worker-build，本地每次 push
+都装一遍不划算；在 CI 里它是独立 job，与 `gates` 并行。
 
 ## 请求路由：什么走静态资源，什么进 Worker
 

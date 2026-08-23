@@ -35,8 +35,9 @@
 - `xtask dump-html`（185 页 + 404.html → `dist/`，纯静态逃生舱从设想变成实物）、
   `xtask render-diff`、`xtask build-site`（Pagefind 1.5.2 索引 → `public/`）
 - **站内搜索**：Pagefind 只索引 97 个工具页（列表页不进索引），按域做 facet
-- **CI 存在了**：`.github/workflows/ci.yml` 跑 9 道门禁，含 ADR 承诺外包给 CI 的
-  两条红线（wasm32 编译约束 ×2、render-diff）；`nightly-fetch.yml` 每夜刷上游活跃度
+- **CI 存在了**：`.github/workflows/ci.yml` —— `gates` job 9 道门禁（与 pre-push 同一套）
+  加一个独立的 `runtime-diff` job，ADR 承诺外包给 CI 的**三条**红线都在里面
+  （wasm32 编译约束 ×2、render-diff、runtime-diff）；`nightly-fetch.yml` 每夜刷上游活跃度
 
 **未生效**：段 3（FieldNote）、段 4 的 Prometheus 侧、HTMX 与 calculator / advisor。
 ✅ **已部署**（2026-08-23）：<https://stack.meirong.dev>。`cloudflare/terraform/` 建了 4 个资源
@@ -63,7 +64,7 @@ provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归�
 | 段 | 内容 | 出口判据 |
 |---|------|---------|
 | **1** | ✅ 已完成，见「现状」。规格见 [plans/2026-08-20-content-model.md](plans/2026-08-20-content-model.md) | 已验证 |
-| **2** | 🟡 **已部署**（2026-08-23，`stack.meirong.dev`）。已有：`crates/edge`、构建期内容内嵌、`dump-html` / `render-diff` / `build-site`、Pagefind 索引与搜索、CI 九道门禁、`cloudflare/terraform`（4 个资源已 apply）、远端 state（R2）、CI 部署（`deploy.yml` 干净 runner 首跑通过）。未有：render-diff 的 wasm 运行时那一半（开放项 13） | 公网可访问 ✅（2026-08-23 实测：首页、条目页、域页 12 张卡、`pagefind/pagefind-ui.js` 全 200）；`render-diff` 每次合并跑 ✅（但只覆盖内容路径，不覆盖 wasm 运行时 —— 判据只兑现了一半） |
+| **2** | 🟡 **已部署**（2026-08-23，`stack.meirong.dev`）。已有：`crates/edge`、构建期内容内嵌、`dump-html` / `render-diff` / `build-site`、Pagefind 索引与搜索、CI 门禁（`gates` 9 道 + `runtime-diff`）、`cloudflare/terraform`（4 个资源已 apply）、远端 state（R2）、CI 部署（`deploy.yml` 干净 runner 跑通两次）。段 2 的代码侧**已无缺口** | 公网可访问 ✅（2026-08-23 实测：首页、条目页、域页 12 张卡、`pagefind/pagefind-ui.js` 全 200）；「两个目标逐字节一致」✅ **整条兑现** —— `render-diff` 管内容路径、`runtime-diff` 管 wasm32 运行时（185 页 + 404，含状态码） |
 | **3** | 一手证据层。`FieldNote` 四态（Running/Retired/Rejected/Evaluating）+ 按状态筛选的视图。目标 10 条，全部取自 homelab 已有文档 —— [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md) 已点名 7 条可直接成稿，余 3 条实施时从 homelab `docs/records/*` 里挑。⚠️ 分母已从 29 变成 97，「10 条」这个目标该怎么摊到域上是开放项 11 | 每条 FieldNote 的数字都能点回一份 decision/record 文档 |
 | **4** | 🟡 GitHub 侧已完成（`xtask fetch` + `nightly-fetch.yml` 每夜刷新并自动提交）。Prometheus 侧**有意不做** —— 见开放项 4：它只服务 FieldNote 的 footprint，而 FieldNote 现在是 0 条 | 连续 7 天夜间构建全绿（待观察）；「断开 tailnet 仍然成功」这条**当前空成立** —— 根本没有 tailnet 依赖 |
 
@@ -83,7 +84,6 @@ provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归�
 | 8 | **缺一篇「为什么是 Rust」的 ADR** | 6 条 ADR 论证了落点、双目标、内容模型、差异化、SSR 值不值、域层，唯独最底层的语言选择是公理：[decisions/cloudflare-workers-not-pages.md](decisions/cloudflare-workers-not-pages.md) 把「Axum + Maud + HTMX」当既定前提带过，而 [decisions/typed-content-model-not-hugo.md](decisions/typed-content-model-not-hugo.md) 还主动禁掉了「Rust 更快」这个理由却没给替代。真实理由可能很朴素（想练 / 工具链已有 / Pagefind 本身就是 Rust）—— 但按本仓库「把隐假设显式化」的标准，该写出来。**理由待作者本人填，不代拟** |
 | 11 | **FieldNote 目标怎么摊到 10 个域** | 段 3 的「10 条」是对着 29 条可观测条目定的，现在分母是 97。两种表述：「先把可观测那一域做满」（覆盖率集中、看得出深度）或「每个域至少 1 条」（广度好看、每域都浅）。⚠️ 无论选哪个，都不能为没跑过的工具编造 FieldNote —— 见 [decisions/domain-layer-not-flat-categories.md](decisions/domain-layer-not-flat-categories.md) 的 Consequences。段 3 前置 |
 | 12 | **跨域工具只登记主域，读者会找不到** | Cilium 记在网络域，从「安全加固」域里找不到它；Harbor 的漏洞扫描、Tetragon 与 Cilium 的关系同理。当前缓解只有 `detail` 里的一句话，不是机制。可选解法：域页面加一块「相关但登记在别处」的手写交叉引用（又一个要维护的分类法），或等 Pagefind 搜索（段 2）上线后认定「搜得到就够了」。⚠️ 先别急着改模型 —— 多值域已在 ADR 里被否决过 |
-| 13 | **render-diff 只兑现了一半** | [decisions/dual-target-axum.md](decisions/dual-target-axum.md) 承诺「两个目标逐字节比对」。现在比的是**两条内容路径**（磁盘 vs 构建期内嵌），覆盖「改了 TOML 内嵌表没跟上」这类漂移；**没有**比 wasm32 运行时的输出。补法：CI 里 `worker-build` + `wrangler dev` 起一个本地 Worker，用同一份 `all_paths()` 逐条 curl 再和 `dist/` 比对。⚠️ 在补上之前，不要把那条 ADR 的判据当已满足 |
 
 ## 明确不做
 

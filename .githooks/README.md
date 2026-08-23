@@ -32,9 +32,11 @@ Rust 那几条在 `Cargo.toml` 出现之前自动跳过 —— 段 1 之前仓�
    ⚠️ `crates/edge` 要**单独查一条**：它的依赖挂在 `cfg(target_arch = "wasm32")` 下，
    宿主侧的 `fmt` / `clippy` / `test` 一行都看不到它 —— site 编得过但 edge 的胶水编不过，
    等于线上没有站。
-2. **`xtask render-diff`** —— 不一致即硬失败。⚠️ 它当前比的是**两条内容路径**
-   （磁盘 vs 构建期内嵌），**不覆盖** wasm32 运行时的输出；那半个判据还没兑现，
-   见 `docs/ROADMAP.md` 开放项 13。
+2. **`xtask render-diff`** —— 不一致即硬失败。⚠️ 它比的是**两条内容路径**
+   （磁盘 vs 构建期内嵌），两侧都是 native 渲染，**不覆盖** wasm32 运行时的输出。
+   那一半由 `xtask runtime-diff` 兜住（对着 `wrangler dev` 起的真 Worker 比），
+   而它**只在 CI 跑** —— 要 node + wrangler + worker-build，本地每次 push 都装不划算。
+   所以钩子过了不等于那条 ADR 的判据全过；那一条只有 CI 说了算。
 
 钩子是这些的**本地前哨**：在 dev 循环里就把漂移拦下，而不是等 CI 或线上才暴露。
 CI 已经存在（`.github/workflows/ci.yml`，跑的是同一套加产物抽查）——

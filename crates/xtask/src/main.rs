@@ -2,7 +2,8 @@
 //!
 //! 已实现 `validate`（内容引用完整性，硬失败）、`fetch`（上游活跃度，fail-soft）、
 //! `dump-html`（全站静态导出）、`render-diff`（两条内容路径逐字节比对）、
-//! `build-site`（dump-html + Pagefind 索引）。
+//! `build-site`（dump-html + Pagefind 索引）、
+//! `runtime-diff`（对着真起来的 wasm32 Worker 逐字节比对 —— 需要外部 Worker，只在 CI 跑）。
 //! `--help` 里没有的子命令，pre-push 钩子会自动跳过。
 
 use std::path::Path;
@@ -22,6 +23,10 @@ const SUBCOMMANDS: &[(&str, &str)] = &[
         "两条内容路径（磁盘 / 构建期内嵌）渲染结果逐字节比对，不一致即硬失败",
     ),
     ("build-site", "dump-html 之后再建 Pagefind 索引（需要 npx）"),
+    (
+        "runtime-diff",
+        "对着一个已起好的 wasm32 Worker 逐条比对状态码与字节（默认 http://127.0.0.1:8787）",
+    ),
 ];
 
 fn main() {
@@ -34,6 +39,7 @@ fn main() {
         Some("dump-html") => dump_html(),
         Some("render-diff") => render_diff(),
         Some("build-site") => build_site(),
+        Some("runtime-diff") => runtime_diff(args.get(1).map(String::as_str)),
         Some("--help") | Some("-h") | None => {
             print_help();
             std::process::exit(0);
@@ -656,6 +662,135 @@ fn catalog_embedded() -> site::model::Catalog {
     }
 }
 
+/// dual-target-axum 那条 ADR 承诺的「两个目标逐字节比对」的**运行时那一半**。
+///
+/// `render-diff` 比的是两条**内容路径**（磁盘 vs 构建期内嵌），但两侧都是 native 渲染 ——
+/// 它证明不了「wasm32 上跑出来也一样」。这条对着**真的产物**比：先在外部起一个本地
+/// Worker（`wrangler dev`，跑的是 worker-build 出来的 wasm + JS shim），再用同一份
+/// `all_paths()` 逐条请求，和构建期渲染的字节比对。
+///
+/// ☠️ 顺带比**状态码** —— 这不是附赠：2026-08-23 那次 soft 404（未命中路径返回 200、
+/// 页面内容却是对的）逐字节比对根本发现不了，只有比状态码才拦得住。
+///
+/// ⚠️ 它需要一个已经起好的 Worker，所以是 **CI 门禁、不进 pre-push**：
+/// 本地每次 push 都装 node + wrangler + worker-build 不划算。
+fn runtime_diff(base_arg: Option<&str>) {
+    let base = base_arg
+        .map(str::to_string)
+        .or_else(|| std::env::var("XTASK_BASE_URL").ok())
+        .unwrap_or_else(|| "http://127.0.0.1:8787".to_string());
+    let base = base.trim_end_matches('/').to_string();
+
+    let catalog = leak_catalog(catalog_embedded());
+    let paths = site::router::all_paths(catalog);
+    println!("→ runtime-diff：{base} vs 构建期渲染，{} 页", paths.len());
+
+    let mut diffs = 0usize;
+    for p in &paths {
+        let url = format!("{base}{p}");
+        let (code, body) = match http_fetch(&url) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("runtime-diff 失败：请求 {url} 出错 —— {e}");
+                eprintln!(
+                    "  help: 先起 Worker：cd crates/edge && npx wrangler dev --port 8787\n\
+                     \x20       （它会自己跑 worker-build；换端口就把地址作为参数传进来）"
+                );
+                std::process::exit(1);
+            }
+        };
+        let (_, expect) = site::router::render_path(catalog, p);
+        if code != 200 {
+            diffs += 1;
+            eprintln!("runtime-diff 失败：{p} 状态码 {code}，应为 200");
+            continue;
+        }
+        if body != expect.as_bytes() {
+            diffs += 1;
+            eprintln!(
+                "runtime-diff 失败：{p} 字节不一致（Worker {} B / 构建期 {} B）",
+                body.len(),
+                expect.len()
+            );
+            report_first_diff(&body, expect.as_bytes());
+        }
+    }
+
+    // 未命中路径：必须是**真** 404，而且渲染的就是那张 404 页。
+    // all_paths() 里没有这一条，所以单独走一次。
+    let miss = format!("{base}/__runtime_diff_miss__");
+    match http_fetch(&miss) {
+        Ok((code, body)) => {
+            let (_, expect) = site::router::render_path(catalog, "/__not_found__");
+            if code != 404 {
+                diffs += 1;
+                eprintln!("runtime-diff 失败：未命中路径状态码 {code}，应为 404（soft 404 就是这么漏过去的）");
+            } else if body != expect.as_bytes() {
+                diffs += 1;
+                eprintln!("runtime-diff 失败：404 页字节不一致");
+                report_first_diff(&body, expect.as_bytes());
+            }
+        }
+        Err(e) => {
+            eprintln!("runtime-diff 失败：请求 {miss} 出错 —— {e}");
+            std::process::exit(1);
+        }
+    }
+
+    if diffs > 0 {
+        eprintln!("\nruntime-diff 未通过：{diffs} 处不一致");
+        std::process::exit(1);
+    }
+    println!(
+        "✓ runtime-diff：{} 页 + 404 在 wasm32 运行时与构建期渲染上逐字节一致，状态码也对",
+        paths.len()
+    );
+}
+
+/// 打印第一处差异的上下文 —— 逐字节报「不一致」而不指出哪里，等于让人自己去 diff。
+fn report_first_diff(got: &[u8], want: &[u8]) {
+    let i = got
+        .iter()
+        .zip(want)
+        .position(|(a, b)| a != b)
+        .unwrap_or(got.len().min(want.len()));
+    let lo = i.saturating_sub(60);
+    let show = |b: &[u8]| String::from_utf8_lossy(&b[lo..(i + 60).min(b.len())]).to_string();
+    eprintln!("  Worker  …{}…", show(got));
+    eprintln!("  构建期  …{}…", show(want));
+}
+
+/// 一次 GET，拿回（状态码, 响应体）。
+///
+/// 走 `curl` 子进程，和 `fetch` 同一个理由（构建期工具不引异步栈）。响应体写进临时
+/// 文件而不是从 stdout 切 —— HTML 里什么分隔符都可能出现，靠标记切分早晚会切错。
+fn http_fetch(url: &str) -> Result<(u16, Vec<u8>), String> {
+    let tmp = std::env::temp_dir().join(format!("xtask-runtime-diff-{}.body", std::process::id()));
+    let out = std::process::Command::new("curl")
+        .args([
+            "-sS",
+            "--max-time",
+            "20",
+            "-o",
+            tmp.to_str().ok_or("临时文件路径不是 UTF-8")?,
+            "-w",
+            "%{http_code}",
+            url,
+        ])
+        .output()
+        .map_err(|e| format!("起不动 curl: {e}"))?;
+    if !out.status.success() {
+        return Err(String::from_utf8_lossy(&out.stderr).trim().to_string());
+    }
+    let code: u16 = String::from_utf8_lossy(&out.stdout)
+        .trim()
+        .parse()
+        .map_err(|_| format!("curl 给的状态码看不懂: {:?}", out.stdout))?;
+    let body = std::fs::read(&tmp).map_err(|e| format!("读响应体失败: {e}"))?;
+    let _ = std::fs::remove_file(&tmp);
+    Ok((code, body))
+}
+
 /// 纯静态导出目录 —— 「退回纯静态站」那个逃生舱的产物，也是 Pagefind 的**输入**。
 fn dist_dir() -> std::path::PathBuf {
     match std::env::var("XTASK_DIST_DIR") {
@@ -768,9 +903,8 @@ fn render_diff() {
         a.len()
     );
     println!(
-        "  note: 这条门禁覆盖的是**内容路径**（build.rs 的内嵌表是否忠实于 content/）。\n\
-         \x20       它**不**证明 wasm32 运行时渲染相同 —— 那需要在 CI 里跑起 Worker 再比，\n\
-         \x20       见 docs/ROADMAP.md 开放项 13。"
+        "  note: 这条门禁覆盖的是**内容路径**（build.rs 的内嵌表是否忠实于 content/），\n\
+         \x20       两侧都是 native 渲染。wasm32 运行时那一半是 `runtime-diff`（CI 里跑）。"
     );
 }
 

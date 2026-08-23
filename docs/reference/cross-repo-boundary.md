@@ -19,7 +19,7 @@ Terraform state、两枚凭据在写。
 | 静态资源层（Pagefind 索引） | 同上（`assets.directory`）|
 | `stack.meirong.dev` 这**一条** DNS 记录 | `cloudflare_workers_custom_domain`（Cloudflare 自建 `AAAA 100::`，橙云）|
 | 远端 state 里 `home-stack/` 这个 key 前缀 | `versions.tf` 的 backend 块（✅ 2026-08-23 启用，`terraform-backend/home-stack/cloudflare.tfstate`）。⚠️ **桶本体不归本仓库** —— 只拥有这个 key 前缀 |
-| 应用层正确性：内容校验、两条渲染路径一致、包体大小 | `xtask validate` / `render-diff` / CI 九道门禁 |
+| 应用层正确性：内容校验、两条渲染路径一致、包体大小 | `xtask validate` / `render-diff` / `runtime-diff` / CI 门禁 |
 
 ## 本仓库不许碰
 

@@ -1,9 +1,12 @@
-# 合并前的完整门禁 —— 与 .githooks/pre-push 跑的是同一套检查。
+# 合并前的完整门禁。`gates` 这个 job 跑的与 .githooks/pre-push 是同一套检查；
+# `runtime-diff` 那个 job **只在 CI 跑**（见它自己的注释）。
 #
-# 其中两条是 docs/decisions/dual-target-axum.md **明确承诺外包给 CI** 的红线：
+# 其中三条是 docs/decisions/dual-target-axum.md **明确承诺外包给 CI** 的红线：
 #   1. crates/site 每一行都必须编到 wasm32-unknown-unknown
 #   2. xtask render-diff：两条内容路径渲染结果逐字节一致
-# 在此之前它们只有本地 pre-push 在跑，也就是「靠每个人都装了钩子」。
+#   3. xtask runtime-diff：wasm32 **运行时**的输出与构建期渲染逐字节一致
+# 在此之前 1 与 2 只有本地 pre-push 在跑，也就是「靠每个人都装了钩子」；
+# 3 则根本没有 —— 那条 ADR 的判据长期只兑现了一半。
 name: ci
 
 on:
@@ -93,3 +96,51 @@ jobs:
           test -d public/pagefind
           test -f public/pagefind/pagefind-ui.js
           echo "dist 页面数: $(find dist -name index.html | wc -l)"
+
+  # ── ADR 红线 3：wasm32 **运行时**的输出必须和构建期渲染逐字节一致 ──
+  #
+  # gates 里的 render-diff 比的是两条**内容路径**（磁盘 vs 构建期内嵌），但两侧都是
+  # native 渲染 —— 它证明不了「编成 wasm 跑起来也一样」。这个 job 对着真产物比：
+  # wrangler dev 起一个本地 Worker（跑的是 worker-build 出来的 wasm + JS shim），
+  # 再用同一份 all_paths() 逐条请求。
+  #
+  # ⚠️ **单独一个 job、且不进 pre-push**：它要 node + wrangler + worker-build，
+  # 本地每次 push 都装一遍不划算；独立成 job 则与 gates 并行，不拖长 PR 的关键路径。
+  # ☠️ 它顺带比**状态码** —— 2026-08-23 那次 soft 404（未命中返回 200、页面内容却是对的）
+  # 逐字节比对根本发现不了，只有比状态码才拦得住。
+  runtime-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      # 资源目录（../../public）是 build-site 的产物；它不存在 wrangler dev 起不来。
+      - name: 构建期渲染 + 资源层
+        run: cargo run -p xtask -- build-site
+
+      - name: 起本地 Worker
+        run: |
+          cargo install -q worker-build
+          cd crates/edge
+          # wrangler.jsonc 里的 build.command 会让它自己跑 worker-build --release。
+          # 版本钉在大版本 4：wrangler 的大版本会改 dev 的默认行为（本地/远程）。
+          npx --yes wrangler@4 dev --port 8787 --ip 127.0.0.1 \
+            --show-interactive-dev-session=false > /tmp/wrangler-dev.log 2>&1 &
+          # fail-closed 地等就绪：起不来就把日志打出来再红，不能静默跳过这道门禁。
+          curl -sS --retry-connrefused --retry 60 --retry-delay 2 --retry-max-time 240 \
+            -o /dev/null http://127.0.0.1:8787/ \
+            || { echo "::error::wrangler dev 没起来，runtime-diff 无法执行"; cat /tmp/wrangler-dev.log; exit 1; }
+
+      - name: runtime-diff（wasm32 运行时 vs 构建期渲染）
+        run: cargo run -p xtask -- runtime-diff
+
+      - name: wrangler 日志
+        if: failure()
+        run: cat /tmp/wrangler-dev.log

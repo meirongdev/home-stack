@@ -6,7 +6,7 @@ homelab 或任何用 Terraform 管 Cloudflare 的项目都可以调用它，把�
 
 ```hcl
 module "home_stack" {
-  source = "github.com/meirongdev/home-stack//cloudflare/terraform/modules/worker?ref=<tag>"
+  source = "github.com/meirongdev/home-stack//cloudflare/terraform/modules/worker?ref=v0.1.0"
 
   account_id = var.cloudflare_account_id
   name       = "home-stack"
@@ -26,7 +26,7 @@ module "home_stack" {
 所以调用方必须先 checkout home-stack 并构建：
 
 ```sh
-git clone --depth 1 --branch <tag> https://github.com/meirongdev/home-stack .build/home-stack
+git clone --depth 1 --branch v0.1.0 https://github.com/meirongdev/home-stack .build/home-stack
 cd .build/home-stack
 cargo run -p xtask -- validate      # 内容五类校验
 cargo run -p xtask -- render-diff   # 两条内容路径逐字节一致
@@ -47,7 +47,7 @@ Node（`npx`，只为跑 pagefind）。
 - uses: actions/checkout@v4                    # 再 checkout home-stack
   with:
     repository: meirongdev/home-stack
-    ref: <tag>
+    ref: v0.1.0
     path: .build/home-stack
 - uses: dtolnay/rust-toolchain@stable
   with: { targets: wasm32-unknown-unknown }
@@ -64,6 +64,11 @@ Node（`npx`，只为跑 pagefind）。
 
 ⚠️ **`ref` 要钉死在一个 tag 上，别用 `main`。** 内容与代码是一起变的：
 钉 `main` 意味着你的部署内容会在你没改任何东西的时候变。
+☠️ 而且**两个 `ref` 必须是同一个 tag** —— `source` 里那个决定用哪份 `.tf`，
+checkout 那个决定构建出哪份内容与 wasm。两处写岔了不会报错，只会静默部署
+「A 版的基础设施 + B 版的内容」。
+上面的例子钉的是 `v0.1.0`（本仓库首个 tag，2026-08-23）；当前有哪些：
+`git ls-remote --tags https://github.com/meirongdev/home-stack`。
 
 ## 输入
 

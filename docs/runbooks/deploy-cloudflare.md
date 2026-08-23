@@ -179,7 +179,7 @@ homelab 或任何用 Terraform 管 Cloudflare 的项目照同样方式调用它�
 
 ```hcl
 module "home_stack" {
-  source = "github.com/meirongdev/home-stack//cloudflare/terraform/modules/worker?ref=<tag>"
+  source = "github.com/meirongdev/home-stack//cloudflare/terraform/modules/worker?ref=v0.1.0"
 
   account_id       = var.cloudflare_account_id
   name             = "home-stack"
@@ -197,8 +197,10 @@ module "home_stack" {
 [模块 README](../../cloudflare/terraform/modules/worker/README.md#契约模块不构建调用方构建)。
 
 ⚠️ `ref` 要钉死在 tag 上，别用 `main` —— 内容与代码一起变，钉 `main` 意味着
-你的部署内容会在你没改任何东西的时候变。⏸ 这个仓库目前**还没有任何 tag**
-（ROADMAP 开放项 17）。
+你的部署内容会在你没改任何东西的时候变。✅ 首个可钉版本是 **`v0.1.0`**（2026-08-23，
+指向首次 apply 成功、站点实测可访问的那个状态）；当前有哪些 tag：
+`git ls-remote --tags origin`。⚠️ 消费方那边还有一处 `ref`（checkout home-stack 来构建），
+两处必须是同一个 tag —— 见[模块 README](../../cloudflare/terraform/modules/worker/README.md)。
 
 ## 7. 交给 CI
 

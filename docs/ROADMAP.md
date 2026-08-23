@@ -47,6 +47,10 @@ provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归�
 版本资源并发，撞 `400 / 100124 Worker has no deployments`；已修并写进
 [runbooks/deploy-cloudflare.md](runbooks/deploy-cloudflare.md) 第 5 步。
 ⏸ 但 state 还是**工作站上的本地文件** —— 等于「只有那台机器能部署」（开放项 16）。
+✅ **可钉版本**：`v0.1.0`（2026-08-23，仓库首个 tag，指向上面这个已验证的状态）。
+外部项目按 `?ref=v0.1.0` 消费 `modules/worker`，不再只能钉 `main` —— 契约与
+「两处 `ref` 必须同一个 tag」这一脚，见
+[modules/worker/README.md](../cloudflare/terraform/modules/worker/README.md)。
 
 ## 四段实施
 
@@ -77,7 +81,6 @@ provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归�
 | 12 | **跨域工具只登记主域，读者会找不到** | Cilium 记在网络域，从「安全加固」域里找不到它；Harbor 的漏洞扫描、Tetragon 与 Cilium 的关系同理。当前缓解只有 `detail` 里的一句话，不是机制。可选解法：域页面加一块「相关但登记在别处」的手写交叉引用（又一个要维护的分类法），或等 Pagefind 搜索（段 2）上线后认定「搜得到就够了」。⚠️ 先别急着改模型 —— 多值域已在 ADR 里被否决过 |
 | 13 | **render-diff 只兑现了一半** | [decisions/dual-target-axum.md](decisions/dual-target-axum.md) 承诺「两个目标逐字节比对」。现在比的是**两条内容路径**（磁盘 vs 构建期内嵌），覆盖「改了 TOML 内嵌表没跟上」这类漂移；**没有**比 wasm32 运行时的输出。补法：CI 里 `worker-build` + `wrangler dev` 起一个本地 Worker，用同一份 `all_paths()` 逐条 curl 再和 `dist/` 比对。⚠️ 在补上之前，不要把那条 ADR 的判据当已满足 |
 | 16 | **CI 部署要求远端 state 后端** | ☠️ CI 每次都是干净 runner，本地 state 等于每次从空开始 —— 它会试图创建已存在的 Worker 然后报错。`versions.tf` 里有注释好的 R2（S3 兼容）后端块，与 homelab `docs/plans/architecture/2026-08-03-tf-state-r2.md` 的做法一致。⏸ 在配好之前**只从工作站部署**；`deploy.yml` 第一步已 fail-closed 地检查这件事。**2026-08-23：接线已备好，待启用（TODO）。** 已就位：`versions.tf` 里写好但**仍注释**的 backend 块（bucket `terraform-backend`、key `home-stack/cloudflare.tfstate`）、`backend.hcl.example`（endpoint 含账号 id，本仓库公开所以不进 git）、`just migrate-state`、workflow 里「写 backend.hcl → init 带 `-backend-config`」两步。**待做（4 步一起，别只做一半）**：① 拿到 R2 的 S3 凭据对（建专用 token，或从现有 CF token 派生：AK = token id、SK = token 值的 SHA-256，前提是它带 `Workers R2 Storage: Edit`）；② 填 `backend.hcl`；③ 取消 backend 块注释；④ `just migrate-state`；然后配 4 个 GitHub secret。⚠️ 只做一半的两种症状都很难查，见 runbook 第 7 步。📌 顺带修正一条二手结论：homelab 那边把 R2 后端注释掉时归因于「本机 LibreSSL 握手失败」，但 terraform 是静态链接的 Go、自带 TLS 栈；2026-08-23 实测这台机器到 R2 的 S3 端点 TLS 正常（400/87ms），所以那个理由对 terraform 不成立 |
-| 17 | **没有任何 tag，外部消费者无法钉版本** | `modules/worker` 已经是可复用子模块，外部项目按 `?ref=<tag>` 消费它 —— 但仓库目前 **0 个 tag**，只能钉 `main`。⚠️ 钉 `main` 意味着消费方的部署内容会在它没改任何东西时变（内容与代码一起变）。✅ 前置的授权问题已解决（开放项 10 已关：代码 MIT/Apache-2.0、内容 CC BY 4.0）。**2026-08-23 起前置条件全部满足**（首次 apply 成功、`stack.meirong.dev` 实测可访问），可以打 `v0.1.0` 了 |
 
 ## 明确不做
 

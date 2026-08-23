@@ -101,6 +101,14 @@ resource "cloudflare_workers_custom_domain" "this" {
   hostname   = var.custom_domain.hostname
   zone_name  = var.custom_domain.zone_name
   service    = cloudflare_worker.this.name
+
+  # ☠️ 这条 depends_on 不是保险，是**必需**的。本资源只引用 worker 的 `name`，
+  # 依赖图里因此没有任何指向 version/deployment 的边 —— Terraform 会把它与
+  # `cloudflare_worker_version`（上传资源层要十几秒）**并发**执行，而 Cloudflare
+  # 拒绝给「还没有任何 deployment」的 Worker 挂自定义域名：
+  #   400 / 100124 Cannot attach custom domain: Worker 'x' has no deployments
+  # 2026-08-23 首次 apply 实撞：前 3 个资源建成、这一个失败。
+  depends_on = [cloudflare_workers_deployment.this]
 }
 
 # 方案 B：调用方拥有 DNS，这里只绑路由。
@@ -110,4 +118,9 @@ resource "cloudflare_workers_route" "this" {
   zone_id = var.route.zone_id
   pattern = var.route.pattern
   script  = cloudflare_worker.this.name
+
+  # 同上那条边的理由。⚠️ 区别在证据强度：custom_domain 那个是 2026-08-23 实撞的，
+  # route 这条**没有实测过**（本仓库走的是方案 A）。它同样只引用 worker 的 `name`、
+  # 同样会与 version 并发，把顺序钉死不吃亏。
+  depends_on = [cloudflare_workers_deployment.this]
 }

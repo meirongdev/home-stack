@@ -1,7 +1,9 @@
 # 部署到 Cloudflare Workers
 
-> 日期: 2026-08-22
-> 状态: 🟡 步骤 1–4 已在本机验证（含 `terraform plan` 全绿）；第 5 步 `terraform apply` **待实施** —— 从未执行过，需要作者的 Cloudflare 账号
+> 日期: 2026-08-23
+> 状态: 🟢 步骤 1–5 **已完成**（2026-08-23 首次 apply，站点已公网可访问：Worker + 版本 +
+> deployment 三个资源建成）；自定义域名那一个资源当次失败、修复已合入，**待实施**（见第 5 步）。
+> 第 7 步（CI 部署）仍未验证 —— 它要求远端 state 后端，而本次用的是工作站本地 state
 
 部署走 **Terraform**（`cloudflare/terraform/`），不走 `wrangler deploy`。
 本篇是「home-stack 自己部署自己」；**别的项目要部署这个站点**看
@@ -104,8 +106,19 @@ just plan
 
 ## 5. apply
 
-> ⚠️ **这一步从未执行过。** 前四步都在本机验证过，但真正的 API 调用没人跑过。
-> 第一次跑遇到的报错请回头补进本文 —— 别让下一个人再踩一遍。
+> ✅ **2026-08-23 首次执行**（工作站，本地 state，带 `custom_domain` 的 4 资源 plan）。
+> 前 3 个成功：Worker（1s）→ 版本（上传两个 module + `public/` 里 114 个文件，14s）→
+> deployment 100%。站点当场公网可访问。
+>
+> ☠️ **第 4 个 `cloudflare_workers_custom_domain` 失败**：
+> `400 / 100124 Cannot attach custom domain: Worker 'home-stack' has no deployments`。
+> 不是权限也不是配置错，是**依赖图缺一条边** —— 那个资源只引用 worker 的 `name`，
+> Terraform 于是把它和「上传资源层要十几秒」的版本资源并发执行，撞上「Worker 还没有
+> deployment」。已在 `modules/worker/main.tf` 补 `depends_on`（那里有完整注释），
+> 修完重跑即可：已建成的 3 个资源不受影响，plan 只剩 `1 to add`。
+>
+> ⚠️ **部分失败时退出码是 1，但 state 已经写了**（3 个资源在里面）。别把它当成
+> 「什么都没发生」而去重建 —— 那会撞上本文开头那条「Worker 已存在」的坑。
 
 ```sh
 just apply
@@ -120,10 +133,20 @@ Terraform 会：建 Worker → 上传两个 module + 扫 `public/` 分片上传�
 BASE=https://home-stack.<你的子域>.workers.dev
 curl -sI  $BASE/ | head -1                                      # 200
 curl -s   $BASE/tools/cilium | grep -o '<title>[^<]*'           # 条目页
-curl -s   $BASE/domains/networking | grep -c '<a class="card"'  # 应为 12
+curl -s   $BASE/domains/networking | grep -o 'class="card"' | wc -l  # 应为 12
 curl -sI  $BASE/pagefind/pagefind-ui.js | head -1               # 200 ← 资源层通了
 curl -s   $BASE/nope/nope | grep -o '没有这个页面'                # Worker 渲染的 404
+curl -s -o /dev/null -w '%{http_code}\n' $BASE/nope/nope        # 应为 404
 ```
+
+⚠️ **上面两条命令都是 2026-08-23 修过/补过的,原因值得记住**：
+
+- 卡片数那条原先写的是 `grep -c '<a class="card"'` —— 它**永远返回 1**。
+  线上 HTML 是压成一行的，`grep -c` 数的是**行数**不是出现次数。
+  一条恒真的验收命令比没有验收更糟。
+- 404 那条原先只 grep 页面文字，**不看状态码**。实测未知路径返回的是
+  **HTTP 200**（soft 404）——页面对、状态码错，爬虫会把无限多不存在的 URL
+  当正常页面收录。⏸ 这是 `crates/edge` 侧的待修缺陷，不是部署配置问题。
 
 ☠️ **两个「站点看起来正常但其实坏了」的症状,第一次部署务必核对**：
 

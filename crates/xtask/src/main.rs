@@ -672,6 +672,11 @@ fn catalog_embedded() -> site::model::Catalog {
 /// ☠️ 顺带比**状态码** —— 这不是附赠：2026-08-23 那次 soft 404（未命中路径返回 200、
 /// 页面内容却是对的）逐字节比对根本发现不了，只有比状态码才拦得住。
 ///
+/// ☠️ 也比**尾斜杠归一**。`all_paths()` 里一条尾斜杠都没有，而站内搜索的链接**全都**
+/// 带尾斜杠（Pagefind 从目录式静态导出建索引）—— 2026-08-24 之前那批 URL 在线上全是
+/// 404，这里每一道门禁都绿着。清单驱动的门禁只能覆盖清单里那些形态，别把它当成
+/// 「线上所有 URL 都比过了」。
+///
 /// ⚠️ 它需要一个已经起好的 Worker，所以是 **CI 门禁、不进 pre-push**：
 /// 本地每次 push 都装 node + wrangler + worker-build 不划算。
 fn runtime_diff(base_arg: Option<&str>) {
@@ -688,7 +693,7 @@ fn runtime_diff(base_arg: Option<&str>) {
     let mut diffs = 0usize;
     for p in &paths {
         let url = format!("{base}{p}");
-        let (code, body) = match http_fetch(&url) {
+        let res = match http_fetch(&url) {
             Ok(v) => v,
             Err(e) => {
                 eprintln!("runtime-diff 失败：请求 {url} 出错 —— {e}");
@@ -700,19 +705,19 @@ fn runtime_diff(base_arg: Option<&str>) {
             }
         };
         let (_, expect) = site::router::render_path(catalog, p);
-        if code != 200 {
+        if res.code != 200 {
             diffs += 1;
-            eprintln!("runtime-diff 失败：{p} 状态码 {code}，应为 200");
+            eprintln!("runtime-diff 失败：{p} 状态码 {} ，应为 200", res.code);
             continue;
         }
-        if body != expect.as_bytes() {
+        if res.body != expect.as_bytes() {
             diffs += 1;
             eprintln!(
                 "runtime-diff 失败：{p} 字节不一致（Worker {} B / 构建期 {} B）",
-                body.len(),
+                res.body.len(),
                 expect.len()
             );
-            report_first_diff(&body, expect.as_bytes());
+            report_first_diff(&res.body, expect.as_bytes());
         }
     }
 
@@ -720,19 +725,91 @@ fn runtime_diff(base_arg: Option<&str>) {
     // all_paths() 里没有这一条，所以单独走一次。
     let miss = format!("{base}/__runtime_diff_miss__");
     match http_fetch(&miss) {
-        Ok((code, body)) => {
+        Ok(res) => {
             let (_, expect) = site::router::render_path(catalog, "/__not_found__");
-            if code != 404 {
+            if res.code != 404 {
                 diffs += 1;
-                eprintln!("runtime-diff 失败：未命中路径状态码 {code}，应为 404（soft 404 就是这么漏过去的）");
-            } else if body != expect.as_bytes() {
+                eprintln!(
+                    "runtime-diff 失败：未命中路径状态码 {}，应为 404（soft 404 就是这么漏过去的）",
+                    res.code
+                );
+            } else if res.body != expect.as_bytes() {
                 diffs += 1;
                 eprintln!("runtime-diff 失败：404 页字节不一致");
-                report_first_diff(&body, expect.as_bytes());
+                report_first_diff(&res.body, expect.as_bytes());
             }
         }
         Err(e) => {
             eprintln!("runtime-diff 失败：请求 {miss} 出错 —— {e}");
+            std::process::exit(1);
+        }
+    }
+
+    // ── 尾斜杠归一 ──────────────────────────────────────────────────────
+    // ☠️ `all_paths()` 里**一条尾斜杠都没有**，所以上面那圈碰不到搜索结果真正用的
+    // 那批 URL：站内搜索的链接来自 Pagefind，它从目录式静态导出建索引，产出的全是
+    // `/tools/sloth/` 这种带尾斜杠的形态。2026-08-24 之前它们在线上**全是 404**，
+    // 而逐字节比对与状态码比对都从没请求过它们 —— 门禁齐全，覆盖面有个洞。
+    // 这里就着同一份清单造出带尾斜杠形态，比的是状态码与 Location（308 的响应体是空的）。
+    let mut slash_checked = 0usize;
+    for p in &paths {
+        // 根路径不是尾斜杠问题：`/` 必须 200，上面那圈已经比过了。
+        if p == "/" {
+            continue;
+        }
+        let url = format!("{base}{p}/");
+        let res = match http_fetch(&url) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("runtime-diff 失败：请求 {url} 出错 —— {e}");
+                std::process::exit(1);
+            }
+        };
+        let want = format!("{base}{p}");
+        if res.code != 308 {
+            diffs += 1;
+            eprintln!(
+                "runtime-diff 失败：{p}/ 状态码 {}，应为 308（搜索结果链的就是这个形态）",
+                res.code
+            );
+        } else if res.redirect != want {
+            diffs += 1;
+            eprintln!(
+                "runtime-diff 失败：{p}/ 重定向到 {}，应为 {want}",
+                res.redirect
+            );
+        }
+        slash_checked += 1;
+    }
+
+    // 查询串必须活着穿过那一跳，百分号编码不能被改写。
+    // ⚠️ 这条**只有在运行时才有意义**：线上那段 URI 是 JS shim 从 worker 的 `Request`
+    // 重建出来的，native 测试再怎么比都证明不了 shim 没动它。
+    let sample = paths
+        .iter()
+        .find(|p| p.starts_with("/tools/"))
+        .expect("all_paths() 里应当有工具页");
+    let query = "q=1&x=%E4%B8%AD";
+    match http_fetch(&format!("{base}{sample}/?{query}")) {
+        Ok(res) => {
+            let want = format!("{base}{sample}?{query}");
+            if res.code != 308 {
+                diffs += 1;
+                eprintln!(
+                    "runtime-diff 失败：{sample}/?{query} 状态码 {}，应为 308",
+                    res.code
+                );
+            } else if res.redirect != want {
+                diffs += 1;
+                eprintln!(
+                    "runtime-diff 失败：带查询串的重定向到 {}，应为 {want}\n\
+                     \x20       （查询串或百分号编码在那一跳上被改写了）",
+                    res.redirect
+                );
+            }
+        }
+        Err(e) => {
+            eprintln!("runtime-diff 失败：请求带查询串的 {sample}/ 出错 —— {e}");
             std::process::exit(1);
         }
     }
@@ -742,7 +819,8 @@ fn runtime_diff(base_arg: Option<&str>) {
         std::process::exit(1);
     }
     println!(
-        "✓ runtime-diff：{} 页 + 404 在 wasm32 运行时与构建期渲染上逐字节一致，状态码也对",
+        "✓ runtime-diff：{} 页 + 404 在 wasm32 运行时与构建期渲染上逐字节一致，状态码也对；\n\
+         \x20 另有 {slash_checked} 条尾斜杠 URL（+1 条带查询串）均 308 到无尾斜杠的权威 URL",
         paths.len()
     );
 }
@@ -760,11 +838,22 @@ fn report_first_diff(got: &[u8], want: &[u8]) {
     eprintln!("  构建期  …{}…", show(want));
 }
 
-/// 一次 GET，拿回（状态码, 响应体）。
+/// 一次 GET 的结果。
+struct Fetched {
+    code: u16,
+    /// `Location` 解析成的绝对 URL（curl 的 `%{redirect_url}`）；非重定向响应上是空串。
+    ///
+    /// ⚠️ **刻意不跟随**重定向（没有 `-L`）：尾斜杠那一跳本身就是要比的东西，
+    /// 跟随了就只看到终点的 200，看不到中间那步对不对。
+    redirect: String,
+    body: Vec<u8>,
+}
+
+/// 一次 GET，拿回状态码 / 重定向目标 / 响应体。
 ///
 /// 走 `curl` 子进程，和 `fetch` 同一个理由（构建期工具不引异步栈）。响应体写进临时
 /// 文件而不是从 stdout 切 —— HTML 里什么分隔符都可能出现，靠标记切分早晚会切错。
-fn http_fetch(url: &str) -> Result<(u16, Vec<u8>), String> {
+fn http_fetch(url: &str) -> Result<Fetched, String> {
     let tmp = std::env::temp_dir().join(format!("xtask-runtime-diff-{}.body", std::process::id()));
     let out = std::process::Command::new("curl")
         .args([
@@ -774,7 +863,9 @@ fn http_fetch(url: &str) -> Result<(u16, Vec<u8>), String> {
             "-o",
             tmp.to_str().ok_or("临时文件路径不是 UTF-8")?,
             "-w",
-            "%{http_code}",
+            // 两个字段，空格分隔。非重定向响应上 `%{redirect_url}` 是空的，
+            // 所以按空白切完可能只有一个字段 —— 下面按「缺就是空串」处理。
+            "%{http_code} %{redirect_url}",
             url,
         ])
         .output()
@@ -782,13 +873,21 @@ fn http_fetch(url: &str) -> Result<(u16, Vec<u8>), String> {
     if !out.status.success() {
         return Err(String::from_utf8_lossy(&out.stderr).trim().to_string());
     }
-    let code: u16 = String::from_utf8_lossy(&out.stdout)
-        .trim()
+    let written = String::from_utf8_lossy(&out.stdout);
+    let mut fields = written.split_whitespace();
+    let code: u16 = fields
+        .next()
+        .unwrap_or_default()
         .parse()
         .map_err(|_| format!("curl 给的状态码看不懂: {:?}", out.stdout))?;
+    let redirect = fields.next().unwrap_or_default().to_string();
     let body = std::fs::read(&tmp).map_err(|e| format!("读响应体失败: {e}"))?;
     let _ = std::fs::remove_file(&tmp);
-    Ok((code, body))
+    Ok(Fetched {
+        code,
+        redirect,
+        body,
+    })
 }
 
 /// 纯静态导出目录 —— 「退回纯静态站」那个逃生舱的产物，也是 Pagefind 的**输入**。

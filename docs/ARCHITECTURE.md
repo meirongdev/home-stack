@@ -121,13 +121,18 @@ content/*.toml
 | 门禁 | 比的是什么 | 拦得住什么 | 跑在哪 |
 |------|-----------|-----------|--------|
 | `render-diff` | 两条**内容路径**：磁盘 vs `build.rs` 的构建期内嵌表 | 改了 TOML 但内嵌表没跟上 | pre-push + CI |
-| `runtime-diff` | **wasm32 运行时**的输出 vs 构建期渲染，185 页 + 404 | wasm 工具链（wasm-bindgen / wasm-opt / JS shim / worker 的 Request↔Response 转换）任一环改变输出 | 只在 CI |
+| `runtime-diff` | **wasm32 运行时**的输出 vs 构建期渲染，185 页 + 404 + 184 条尾斜杠 URL | wasm 工具链（wasm-bindgen / wasm-opt / JS shim / worker 的 Request↔Response 转换）任一环改变输出；尾斜杠归一失效 | 只在 CI |
 
 ⚠️ `render-diff` 两侧都是 **native** 渲染 —— 它证明不了「编成 wasm 跑起来也一样」，
 那是 `runtime-diff` 的活：CI 里用 `wrangler dev` 起一个真 Worker（跑的是 worker-build
 出来的 wasm + JS shim），再用同一份 `all_paths()` 逐条请求比对。
 ☠️ 它顺带比**状态码**，这不是附赠：2026-08-23 那次 soft 404（未命中返回 200、页面内容
 却完全正确）逐字节比对根本发现不了。
+☠️ 也比**尾斜杠归一**（每条路径的 `/xxx/` 形态必须 308 到 `/xxx`，含一条带查询串的）。
+这条是 2026-08-24 补的，教训是**清单驱动的门禁只覆盖清单里的形态**：`all_paths()` 里
+一条尾斜杠都没有，而站内搜索的链接全都带尾斜杠（Pagefind 从目录式静态导出建索引）——
+那批 URL 在线上全是 404，而这里每一道门禁都绿着。带查询串那条尤其只能在**运行时**验：
+线上那段 URI 是 JS shim 从 worker 的 `Request` 重建的，native 测试比不到它。
 📌 `runtime-diff` 不进 pre-push —— 它要 node + wrangler + worker-build，本地每次 push
 都装一遍不划算；在 CI 里它是独立 job，与 `gates` 并行。
 

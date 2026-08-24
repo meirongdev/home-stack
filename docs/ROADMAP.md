@@ -64,7 +64,7 @@ provider 5.23.0），实测包体 **346 KiB gz = Free 上限的 11%**。DNS 归�
 | 段 | 内容 | 出口判据 |
 |---|------|---------|
 | **1** | ✅ 已完成，见「现状」。规格见 [plans/2026-08-20-content-model.md](plans/2026-08-20-content-model.md) | 已验证 |
-| **2** | 🟡 **已部署**（2026-08-23，`stack.meirong.dev`）。已有：`crates/edge`、构建期内容内嵌、`dump-html` / `render-diff` / `build-site`、Pagefind 索引与搜索、CI 门禁（`gates` 9 道 + `runtime-diff`）、`cloudflare/terraform`（4 个资源已 apply）、远端 state（R2）、CI 部署（`deploy.yml` 干净 runner 跑通两次）。段 2 的代码侧**已无缺口** | 公网可访问 ✅（2026-08-23 实测：首页、条目页、域页 12 张卡、`pagefind/pagefind-ui.js` 全 200）；「两个目标逐字节一致」✅ **整条兑现** —— `render-diff` 管内容路径、`runtime-diff` 管 wasm32 运行时（185 页 + 404，含状态码） |
+| **2** | 🟡 **已部署**（2026-08-23，`stack.meirong.dev`）。已有：`crates/edge`、构建期内容内嵌、`dump-html` / `render-diff` / `build-site`、Pagefind 索引与搜索、CI 门禁（`gates` 9 道 + `runtime-diff`）、`cloudflare/terraform`（4 个资源已 apply）、远端 state（R2）、CI 部署（`deploy.yml` 干净 runner 跑通两次）。段 2 的代码侧**已无缺口** | 公网可访问 ✅（2026-08-23 实测：首页、条目页、域页 12 张卡、`pagefind/pagefind-ui.js` 全 200）；「两个目标逐字节一致」✅ **整条兑现** —— `render-diff` 管内容路径、`runtime-diff` 管 wasm32 运行时（185 页 + 404 + 184 条尾斜杠 URL，含状态码） |
 | **3** | 一手证据层。`FieldNote` 四态（Running/Retired/Rejected/Evaluating）+ 按状态筛选的视图。目标 10 条，全部取自 homelab 已有文档 —— [decisions/field-notes-as-differentiator.md](decisions/field-notes-as-differentiator.md) 已点名 7 条可直接成稿，余 3 条实施时从 homelab `docs/records/*` 里挑。⚠️ 分母已从 29 变成 97，「10 条」这个目标该怎么摊到域上是开放项 11 | 每条 FieldNote 的数字都能点回一份 decision/record 文档 |
 | **4** | 🟡 GitHub 侧已完成（`xtask fetch` + `nightly-fetch.yml` 每夜刷新并自动提交）。Prometheus 侧**有意不做** —— 见开放项 4：它只服务 FieldNote 的 footprint，而 FieldNote 现在是 0 条 | 连续 7 天夜间构建全绿（待观察）；「断开 tailnet 仍然成功」这条**当前空成立** —— 根本没有 tailnet 依赖 |
 

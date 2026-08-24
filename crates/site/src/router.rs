@@ -5,9 +5,10 @@
 
 use crate::model::Catalog;
 use crate::templates;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Request, State};
 use axum::http::StatusCode;
-use axum::response::Html;
+use axum::middleware::{self, Next};
+use axum::response::{Html, IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
 
@@ -22,6 +23,10 @@ pub fn app() -> Router<&'static Catalog> {
         .route("/replaces/{vendor}", get(vendor_page))
         .route("/tools/{slug}", get(tool_page))
         .fallback(not_found)
+        // 尾斜杠归一：`/tools/sloth/` 与 `/tools/sloth` 是同一页。
+        // 站内搜索（Pagefind）从静态导出建索引，目录式 URL 天然带尾斜杠并链接到它，
+        // 而这里只路由无尾斜杠形态 —— 归一前每个搜索结果的链接都是 404。
+        .layer(middleware::from_fn(normalize_trailing_slash))
 }
 
 /// 全站可枚举的 URL —— **必须与上面的 `app()` 同步改动**。
@@ -92,6 +97,24 @@ pub fn render_path(catalog: &'static Catalog, path: &str) -> (axum::http::Status
 
 fn html(markup: maud::Markup) -> Html<String> {
     Html(markup.into_string())
+}
+
+/// 尾斜杠归一化：非根路径以 `/` 结尾时，308 永久重定向到去掉尾斜杠的同一 URL。
+///
+/// 路由只声明无尾斜杠的形态，但站内搜索（Pagefind）链接自静态导出、天然带尾斜杠；
+/// 这里让两条形态收敛到同一个无斜杠的权威 URL，避免搜索链接进入 404 的 fallback。
+async fn normalize_trailing_slash(req: Request, next: Next) -> Response {
+    let uri = req.uri();
+    let path = uri.path();
+    if path.len() > 1 && path.ends_with('/') {
+        let stripped = &path[..path.len() - 1];
+        let location = match uri.query() {
+            Some(q) => format!("{stripped}?{q}"),
+            None => stripped.to_string(),
+        };
+        return (StatusCode::PERMANENT_REDIRECT, [("location", location)]).into_response();
+    }
+    next.run(req).await
 }
 
 /// 404 响应 —— 页面**和**真正的 404 状态码。
@@ -206,5 +229,58 @@ mod tests {
             assert_eq!(status, StatusCode::NOT_FOUND, "{path} 应当是 404");
             assert!(body.contains("没有这个页面"), "{path} 应当渲染 404 页");
         }
+    }
+
+    /// ☠️ 上线的搜索结果链接自 Pagefind（静态导出建索引，目录式 URL 天然带尾斜杠）。
+    /// 尾斜杠形态在这套路由里原本全部 404 —— 每条真实页都必须 308 而非 404；
+    /// 根路径「/」不是尾斜杠问题，必须保持 200。
+    #[test]
+    fn trailing_slash_urls_redirect_not_404() {
+        let catalog = crate::content::catalog().expect("内嵌内容应当校验通过");
+        let catalog: &'static Catalog = Box::leak(Box::new(catalog));
+        for path in [
+            "/tools/sloth/",
+            "/tools/prometheus/",
+            "/domains/observability/",
+            "/categories/alerts/",
+            "/replaces/datadog/",
+        ] {
+            let (status, _) = render_path(catalog, path);
+            assert_eq!(
+                status,
+                StatusCode::PERMANENT_REDIRECT,
+                "{path} 应当 308 重定向到无尾斜杠的权威 URL"
+            );
+        }
+        let (status, _) = render_path(catalog, "/");
+        assert_eq!(status, StatusCode::OK, "根路径不应被当作尾斜杠重定向");
+    }
+
+    /// 重定向的 Location 必须指向去掉尾斜杠的权威 URL，且保留查询串 ——
+    /// 只有状态码 308 而 Location 不对，搜索链接照样落不到页面上。
+    #[test]
+    fn trailing_slash_redirect_location_header() {
+        let catalog = crate::content::catalog().expect("内嵌内容应当校验通过");
+        let catalog: &'static Catalog = Box::leak(Box::new(catalog));
+        let mut app = app().with_state(catalog);
+        let req = Request::builder()
+            .uri("/tools/sloth/?q=1")
+            .body(axum::body::Body::empty())
+            .expect("构造请求");
+        use std::future::Future;
+        use std::task::{Context, Poll, Waker};
+        use tower_service::Service;
+        let mut fut = std::pin::pin!(app.call(req));
+        let waker = Waker::noop();
+        let mut cx = Context::from_waker(waker);
+        let res = match fut.as_mut().poll(&mut cx) {
+            Poll::Ready(v) => v.expect("Router 不该出错"),
+            Poll::Pending => panic!("handler 返回了 Pending —— 不该有 I/O"),
+        };
+        assert_eq!(res.status(), StatusCode::PERMANENT_REDIRECT);
+        assert_eq!(
+            res.headers().get("location").map(|v| v.to_str().unwrap()),
+            Some("/tools/sloth?q=1")
+        );
     }
 }

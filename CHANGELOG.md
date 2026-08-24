@@ -33,6 +33,14 @@
 
 ### Fixed
 
+- **带尾斜杠的 URL 不再 404**：路由只声明无尾斜杠形态（`/tools/sloth`），而站内搜索
+  （Pagefind）从静态导出建索引 —— 目录式产物天然映射成带尾斜杠的 `/tools/sloth/`，
+  于是**每一条搜索结果的链接**在 Worker 上都是 404（`/tools/`、`/domains/`、
+  `/categories/`、`/replaces/` 全中；首页 `/` 不受影响）。现在共享 Router 上加了一层
+  尾斜杠归一：非根路径以 `/` 结尾时 **308** 重定向到去掉尾斜杠的权威 URL（保留查询串）。
+  `dev` 与 `edge` 共用同一 Router，一次修复两处受益。
+  ☠️ 根因是**两种 URL 形态不一致**：Worker 只认无斜杠，静态导出/搜索索引产出带斜杠 ——
+  两边各自都「看着正常」，只有点搜索结果才踩到。
 - **`modules/worker` 的 apply 不再有「Worker 没有任何 deployment」的窗口**：
   `create_before_destroy` 原先只加在 `cloudflare_worker_version` 上，于是每次 apply
   中间约 7 秒该 Worker 处于无 deployment 状态 —— 与首次部署撞

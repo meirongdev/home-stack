@@ -1,23 +1,23 @@
 {
-  "fetched_at": "2026-11-12",
+  "fetched_at": "2026-11-13",
   "repos": {
     "adguard-home": {
       "full_name": "AdguardTeam/AdGuardHome",
       "host": "github",
       "latest_release": "v0.107.80",
       "license": "GPL-3.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-03",
-      "stars": 38398
+      "stars": 38440
     },
     "alertmanager": {
       "full_name": "prometheus/alertmanager",
       "host": "github",
       "latest_release": "v0.35.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-11",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-09",
-      "stars": 8699
+      "stars": 8700
     },
     "ansible": {
       "full_name": "ansible/ansible",
@@ -26,43 +26,43 @@
       "license": "GPL-3.0",
       "pushed_at": "2026-11-11",
       "released_at": "2026-11-02",
-      "stars": 71456
+      "stars": 71460
     },
     "argocd": {
       "full_name": "argoproj/argo-cd",
       "host": "github",
       "latest_release": "v3.6.1",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-04",
-      "stars": 24601
+      "stars": 24606
     },
     "argocd-image-updater": {
       "full_name": "argoproj-labs/argocd-image-updater",
       "host": "github",
       "latest_release": "v1.5.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 1729
+      "stars": 1730
     },
     "authelia": {
       "full_name": "authelia/authelia",
       "host": "github",
       "latest_release": "v4.39.28",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-09-17",
-      "stars": 29637
+      "stars": 29649
     },
     "authentik": {
       "full_name": "goauthentik/authentik",
       "host": "github",
       "latest_release": "version/2026.8.5",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-21",
-      "stars": 26325
+      "stars": 26342
     },
     "cadvisor": {
       "full_name": "google/cadvisor",
@@ -71,14 +71,14 @@
       "license": null,
       "pushed_at": "2026-10-12",
       "released_at": "2026-09-18",
-      "stars": 19528
+      "stars": 19529
     },
     "calico": {
       "full_name": "projectcalico/calico",
       "host": "github",
       "latest_release": "v3.33.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-01",
       "stars": 7420
     },
@@ -87,27 +87,27 @@
       "host": "github",
       "latest_release": "v1.21.3",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-23",
-      "stars": 14158
+      "stars": 14162
     },
     "cilium": {
       "full_name": "cilium/cilium",
       "host": "github",
       "latest_release": "v1.20.4",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-23",
-      "stars": 25825
+      "stars": 25831
     },
     "cloud-init": {
       "full_name": "canonical/cloud-init",
       "host": "github",
       "latest_release": "26.2",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-07-29",
-      "stars": 3862
+      "stars": 3866
     },
     "cloudflared": {
       "full_name": "cloudflare/cloudflared",
@@ -116,25 +116,25 @@
       "license": "Apache-2.0",
       "pushed_at": "2026-11-12",
       "released_at": "2026-11-12",
-      "stars": 16559
+      "stars": 16580
     },
     "cloudnative-pg": {
       "full_name": "cloudnative-pg/cloudnative-pg",
       "host": "github",
       "latest_release": "v1.30.1",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-09-23",
-      "stars": 9584
+      "stars": 9589
     },
     "crossplane": {
       "full_name": "crossplane/crossplane",
       "host": "github",
       "latest_release": "v2.4.3",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-22",
-      "stars": 12243
+      "stars": 12244
     },
     "csi-driver-nfs": {
       "full_name": "kubernetes-csi/csi-driver-nfs",
@@ -150,25 +150,25 @@
       "host": "github",
       "latest_release": "v5.7.1",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-11",
-      "stars": 38813
+      "stars": 38824
     },
     "dragonfly": {
       "full_name": "dragonflydb/dragonfly",
       "host": "github",
       "latest_release": "v2.1",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-04",
-      "stars": 31887
+      "stars": 31868
     },
     "envoy-gateway": {
       "full_name": "envoyproxy/gateway",
       "host": "github",
       "latest_release": "v1.10.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-06",
       "stars": 3144
     },
@@ -177,9 +177,9 @@
       "host": "github",
       "latest_release": "v0.24.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-23",
-      "stars": 9153
+      "stars": 9154
     },
     "external-secrets": {
       "full_name": "external-secrets/external-secrets",
@@ -188,7 +188,7 @@
       "license": "Apache-2.0",
       "pushed_at": "2026-11-12",
       "released_at": "2026-11-10",
-      "stars": 6947
+      "stars": 6948
     },
     "falco": {
       "full_name": "falcosecurity/falco",
@@ -213,16 +213,16 @@
       "host": "github",
       "latest_release": "v5.2.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-09",
-      "stars": 8189
+      "stars": 8188
     },
     "fluxcd": {
       "full_name": "fluxcd/flux2",
       "host": "github",
       "latest_release": "v2.10.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-09",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-26",
       "stars": 8513
     },
@@ -233,25 +233,25 @@
       "license": "AGPL-3.0",
       "pushed_at": "2026-11-07",
       "released_at": null,
-      "stars": 4867
+      "stars": 4872
     },
     "gatekeeper": {
       "full_name": "open-policy-agent/gatekeeper",
       "host": "github",
       "latest_release": "v3.23.1",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-11",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-08-27",
-      "stars": 4304
+      "stars": 4303
     },
     "gitea": {
       "full_name": "go-gitea/gitea",
       "host": "github",
       "latest_release": "v28.3.0",
       "license": "MIT",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-01",
-      "stars": 59049
+      "stars": 59079
     },
     "glitchtip": {
       "full_name": "glitchtip/glitchtip",
@@ -267,9 +267,9 @@
       "host": "github",
       "latest_release": null,
       "license": "MIT",
-      "pushed_at": "2026-11-10",
+      "pushed_at": "2026-11-13",
       "released_at": null,
-      "stars": 21130
+      "stars": 21131
     },
     "gotify": {
       "full_name": "gotify/server",
@@ -278,25 +278,25 @@
       "license": null,
       "pushed_at": "2026-11-09",
       "released_at": "2026-09-15",
-      "stars": 16202
+      "stars": 16207
     },
     "grafana": {
       "full_name": "grafana/grafana",
       "host": "github",
       "latest_release": "v13.3.1",
       "license": "AGPL-3.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-10",
-      "stars": 77874
+      "stars": 77890
     },
     "grafana-alloy": {
       "full_name": "grafana/alloy",
       "host": "github",
-      "latest_release": "v1.21.3",
+      "latest_release": "v1.22.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-10-28",
-      "stars": 3689
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 3690
     },
     "grafana-oncall": {
       "full_name": "grafana/oncall",
@@ -305,14 +305,14 @@
       "license": "AGPL-3.0",
       "pushed_at": "2026-03-24",
       "released_at": "2026-02-11",
-      "stars": 3880
+      "stars": 3879
     },
     "graylog": {
       "full_name": "Graylog2/graylog2-server",
       "host": "github",
       "latest_release": null,
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": null,
       "stars": 8176
     },
@@ -321,54 +321,54 @@
       "host": "github",
       "latest_release": "v2.15.5",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 29724
+      "stars": 29726
     },
     "headscale": {
       "full_name": "juanfont/headscale",
       "host": "github",
       "latest_release": "v0.29.7",
       "license": "BSD-3-Clause",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-30",
-      "stars": 45641
+      "stars": 45676
     },
     "healthchecks": {
       "full_name": "healthchecks/healthchecks",
       "host": "github",
       "latest_release": "v5.0.3",
       "license": "BSD-3-Clause",
-      "pushed_at": "2026-11-10",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-27",
-      "stars": 10514
+      "stars": 10516
     },
     "helm": {
       "full_name": "helm/helm",
       "host": "github",
-      "latest_release": "v4.3.1",
+      "latest_release": "v4.3.2",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-10-15",
-      "stars": 30436
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 30421
     },
     "incus": {
       "full_name": "lxc/incus",
       "host": "github",
       "latest_release": "v7.6.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-30",
-      "stars": 6632
+      "stars": 6639
     },
     "infisical": {
       "full_name": "Infisical/infisical",
       "host": "github",
-      "latest_release": "v0.167.8",
+      "latest_release": "v0.167.10",
       "license": null,
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-11-10",
-      "stars": 30460
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 30498
     },
     "ingress-nginx": {
       "full_name": "kubernetes/ingress-nginx",
@@ -377,52 +377,52 @@
       "license": "Apache-2.0",
       "pushed_at": "2026-03-23",
       "released_at": "2026-03-19",
-      "stars": 19438
+      "stars": 19436
     },
     "jaeger": {
       "full_name": "jaegertracing/jaeger",
       "host": "github",
       "latest_release": "v2.23.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-05",
-      "stars": 23405
+      "stars": 23407
     },
     "k0s": {
       "full_name": "k0sproject/k0s",
       "host": "github",
       "latest_release": "v1.37.2+k0s.1",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-06",
-      "stars": 6592
+      "stars": 6594
     },
     "k3s": {
       "full_name": "k3s-io/k3s",
       "host": "github",
       "latest_release": "v1.37.2+k3s1",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-03",
-      "stars": 34409
+      "stars": 34398
     },
     "keycloak": {
       "full_name": "keycloak/keycloak",
       "host": "github",
       "latest_release": "26.8.2",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-05",
-      "stars": 37836
+      "stars": 37860
     },
     "kopia": {
       "full_name": "kopia/kopia",
       "host": "github",
       "latest_release": "v0.23.1",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-10",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-06-16",
-      "stars": 14664
+      "stars": 14669
     },
     "kube-bench": {
       "full_name": "aquasecurity/kube-bench",
@@ -436,11 +436,11 @@
     "kube-prometheus-stack": {
       "full_name": "prometheus-community/helm-charts",
       "host": "github",
-      "latest_release": "prom-label-proxy-0.25.1",
+      "latest_release": "kube-prometheus-stack-93.3.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-11-12",
-      "stars": 6230
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 6231
     },
     "kustomize": {
       "full_name": "kubernetes-sigs/kustomize",
@@ -449,43 +449,43 @@
       "license": "Apache-2.0",
       "pushed_at": "2026-11-08",
       "released_at": "2026-10-08",
-      "stars": 12200
+      "stars": 12204
     },
     "kyverno": {
       "full_name": "kyverno/kyverno",
       "host": "github",
       "latest_release": "v1.20.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 8339
+      "stars": 8338
     },
     "local-path-provisioner": {
       "full_name": "rancher/local-path-provisioner",
       "host": "github",
       "latest_release": "v0.0.37",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-08-05",
-      "stars": 2956
+      "stars": 2955
     },
     "loki": {
       "full_name": "grafana/loki",
       "host": "github",
-      "latest_release": "v3.7.9",
+      "latest_release": "v3.7.10",
       "license": "AGPL-3.0",
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-10-20",
-      "stars": 29169
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 29153
     },
     "longhorn": {
       "full_name": "longhorn/longhorn",
       "host": "github",
       "latest_release": "v1.13.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-09-29",
-      "stars": 8060
+      "stars": 8063
     },
     "minio": {
       "full_name": "minio/minio",
@@ -494,16 +494,16 @@
       "license": "AGPL-3.0",
       "pushed_at": "2026-04-24",
       "released_at": "2025-10-16",
-      "stars": 61260
+      "stars": 61254
     },
     "netdata": {
       "full_name": "netdata/netdata",
       "host": "github",
       "latest_release": "v2.12.3",
       "license": "GPL-3.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-04",
-      "stars": 81384
+      "stars": 81402
     },
     "node-exporter": {
       "full_name": "prometheus/node_exporter",
@@ -512,16 +512,16 @@
       "license": "Apache-2.0",
       "pushed_at": "2026-11-10",
       "released_at": "2026-07-14",
-      "stars": 13923
+      "stars": 13926
     },
     "ntfy": {
       "full_name": "binwiederhier/ntfy",
       "host": "github",
       "latest_release": "v2.37.2",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-11",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-04",
-      "stars": 35502
+      "stars": 35525
     },
     "oauth2-proxy": {
       "full_name": "oauth2-proxy/oauth2-proxy",
@@ -530,7 +530,7 @@
       "license": "MIT",
       "pushed_at": "2026-11-08",
       "released_at": "2026-11-05",
-      "stars": 15365
+      "stars": 15370
     },
     "openbao": {
       "full_name": "openbao/openbao",
@@ -539,52 +539,52 @@
       "license": "MPL-2.0",
       "pushed_at": "2026-11-12",
       "released_at": "2026-10-26",
-      "stars": 8992
+      "stars": 9002
     },
     "openobserve": {
       "full_name": "openobserve/openobserve",
       "host": "github",
       "latest_release": "v1.2.0-rc2",
       "license": "AGPL-3.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 23037
+      "stars": 23051
     },
     "opentofu": {
       "full_name": "opentofu/opentofu",
       "host": "github",
       "latest_release": "v1.13.9",
       "license": "MPL-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-05",
-      "stars": 30820
+      "stars": 30842
     },
     "otel-collector": {
       "full_name": "open-telemetry/opentelemetry-collector",
       "host": "github",
       "latest_release": "v0.165.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-06",
-      "stars": 7761
+      "stars": 7765
     },
     "pocket-id": {
       "full_name": "pocket-id/pocket-id",
       "host": "github",
       "latest_release": "v2.19.2",
       "license": "BSD-2-Clause",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-02",
-      "stars": 10284
+      "stars": 10296
     },
     "podman": {
       "full_name": "containers/podman",
       "host": "github",
       "latest_release": "v6.2.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-10",
-      "stars": 33253
+      "stars": 33266
     },
     "postgres-operator-zalando": {
       "full_name": "zalando/postgres-operator",
@@ -593,32 +593,32 @@
       "license": "MIT",
       "pushed_at": "2026-11-12",
       "released_at": "2026-10-02",
-      "stars": 5273
+      "stars": 5272
     },
     "prometheus": {
       "full_name": "prometheus/prometheus",
       "host": "github",
       "latest_release": "v3.16.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-05",
-      "stars": 67595
+      "stars": 67594
     },
     "pulumi": {
       "full_name": "pulumi/pulumi",
       "host": "github",
       "latest_release": "v3.276.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 25900
+      "stars": 25903
     },
     "pyroscope": {
       "full_name": "grafana/pyroscope",
       "host": "github",
       "latest_release": "v2.4.3",
       "license": "AGPL-3.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-03",
       "stars": 11720
     },
@@ -627,18 +627,18 @@
       "host": "github",
       "latest_release": "8.10.3",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-26",
-      "stars": 77484
+      "stars": 77491
     },
     "renovate": {
       "full_name": "renovatebot/renovate",
       "host": "github",
-      "latest_release": "44.236.4",
+      "latest_release": "44.239.1",
       "license": "AGPL-3.0",
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-11-12",
-      "stars": 23103
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 23112
     },
     "restic": {
       "full_name": "restic/restic",
@@ -647,16 +647,16 @@
       "license": "BSD-2-Clause",
       "pushed_at": "2026-11-06",
       "released_at": "2026-07-05",
-      "stars": 37203
+      "stars": 37209
     },
     "rook-ceph": {
       "full_name": "rook/rook",
       "host": "github",
       "latest_release": "v1.21.2",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-05",
-      "stars": 13707
+      "stars": 13711
     },
     "sealed-secrets": {
       "full_name": "bitnami-labs/sealed-secrets",
@@ -665,25 +665,25 @@
       "license": "Apache-2.0",
       "pushed_at": "2026-11-10",
       "released_at": "2026-10-26",
-      "stars": 9340
+      "stars": 9344
     },
     "sentry": {
       "full_name": "getsentry/sentry",
       "host": "github",
       "latest_release": "26.10.1",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-28",
-      "stars": 45768
+      "stars": 45773
     },
     "signoz": {
       "full_name": "SigNoz/signoz",
       "host": "github",
-      "latest_release": "v0.149.0",
+      "latest_release": "v0.150.0",
       "license": null,
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-11-04",
-      "stars": 32608
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 32625
     },
     "sloth": {
       "full_name": "slok/sloth",
@@ -692,7 +692,7 @@
       "license": "Apache-2.0",
       "pushed_at": "2026-10-28",
       "released_at": "2026-04-04",
-      "stars": 2573
+      "stars": 2572
     },
     "sops": {
       "full_name": "getsops/sops",
@@ -701,32 +701,32 @@
       "license": "MPL-2.0",
       "pushed_at": "2026-11-09",
       "released_at": "2026-07-23",
-      "stars": 23699
+      "stars": 23703
     },
     "tailscale": {
       "full_name": "tailscale/tailscale",
       "host": "github",
       "latest_release": "v1.104.7",
       "license": "BSD-3-Clause",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 39012
+      "stars": 39060
     },
     "talos-linux": {
       "full_name": "siderolabs/talos",
       "host": "github",
       "latest_release": "v1.14.6",
       "license": "MPL-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-11",
-      "stars": 11520
+      "stars": 11521
     },
     "tempo": {
       "full_name": "grafana/tempo",
       "host": "github",
       "latest_release": "v3.1.1",
       "license": "AGPL-3.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-21",
       "stars": 5573
     },
@@ -735,61 +735,61 @@
       "host": "github",
       "latest_release": "v1.17.2",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-11",
-      "stars": 50219
+      "stars": 50227
     },
     "tetragon": {
       "full_name": "cilium/tetragon",
       "host": "github",
       "latest_release": "v1.8.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-30",
-      "stars": 5181
+      "stars": 5182
     },
     "thanos": {
       "full_name": "thanos-io/thanos",
       "host": "github",
       "latest_release": "v0.42.5",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-27",
       "stars": 14275
     },
     "traefik": {
       "full_name": "traefik/traefik",
       "host": "github",
-      "latest_release": "v3.7.18",
+      "latest_release": "v3.7.19",
       "license": "MIT",
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-11-10",
-      "stars": 65549
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 65539
     },
     "trivy": {
       "full_name": "aquasecurity/trivy",
       "host": "github",
       "latest_release": "v0.76.2",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-05",
-      "stars": 39278
+      "stars": 39314
     },
     "uptime-kuma": {
       "full_name": "louislam/uptime-kuma",
       "host": "github",
       "latest_release": "2.5.11",
       "license": "MIT",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 93578
+      "stars": 93845
     },
     "valkey": {
       "full_name": "valkey-io/valkey",
       "host": "github",
       "latest_release": "9.1.3",
       "license": "BSD-3-Clause",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-26",
       "stars": 27707
     },
@@ -798,63 +798,63 @@
       "host": "github",
       "latest_release": "v2.2.2",
       "license": null,
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-12",
-      "stars": 36504
+      "stars": 36509
     },
     "vector": {
       "full_name": "vectordotdev/vector",
       "host": "github",
       "latest_release": "v0.61.0",
       "license": "MPL-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-29",
-      "stars": 22884
+      "stars": 22871
     },
     "velero": {
       "full_name": "vmware-tanzu/velero",
       "host": "github",
       "latest_release": "v1.18.4",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-11",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-09-28",
-      "stars": 10376
+      "stars": 10377
     },
     "victoriametrics": {
       "full_name": "VictoriaMetrics/VictoriaMetrics",
       "host": "github",
       "latest_release": "v1.156.0",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-09",
-      "stars": 18106
+      "stars": 18101
     },
     "woodpecker-ci": {
       "full_name": "woodpecker-ci/woodpecker",
       "host": "github",
       "latest_release": "v3.20.1",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-10-29",
-      "stars": 8182
+      "stars": 8191
     },
     "zitadel": {
       "full_name": "zitadel/zitadel",
       "host": "github",
-      "latest_release": "v4.20.2",
+      "latest_release": "v4.20.3",
       "license": "AGPL-3.0",
-      "pushed_at": "2026-11-12",
-      "released_at": "2026-11-09",
-      "stars": 15570
+      "pushed_at": "2026-11-13",
+      "released_at": "2026-11-13",
+      "stars": 15575
     },
     "zot": {
       "full_name": "project-zot/zot",
       "host": "github",
       "latest_release": "v2.1.23",
       "license": "Apache-2.0",
-      "pushed_at": "2026-11-12",
+      "pushed_at": "2026-11-13",
       "released_at": "2026-11-02",
-      "stars": 2996
+      "stars": 3005
     }
   }
 }
